@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_ds/organic-93eaa0c0-d23c-427f-bae2-b040c3e8a898/styles.css">
+<link rel="stylesheet" href="tokens.css">
+<script src="_ds/organic-93eaa0c0-d23c-427f-bae2-b040c3e8a898/_ds_bundle.js"></script>
+<script src="icons.js"></script>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:var(--color-bg)}
+a{color:var(--color-accent-text)} a:hover{color:var(--color-accent-hover)}
+input::placeholder,textarea::placeholder{color:var(--color-text-subtle)}
+@keyframes sb-spin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div data-theme="{{ theme }}" style="position:fixed; inset:0; display:flex; background:var(--color-bg); color:var(--color-text); font-family:var(--font-ui); font-size:var(--text-md); line-height:var(--leading-normal); overflow:hidden">
+
+<sc-if value="{{ isSignin }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Sign-in" style="flex:1; display:grid; place-items:center; padding:var(--space-8)">
+    <form onSubmit="{{ signIn }}" style="width:340px; display:flex; flex-direction:column; gap:var(--space-3)">
+      <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-2)">
+        <lc-icon name="logo" size="44"></lc-icon>
+        <div style="font-family:var(--font-display); font-size:var(--text-3xl); line-height:1">Shoebox</div>
+      </div>
+      <div style="color:var(--color-text-muted)">Library at <span style="font-family:var(--font-mono); font-size:var(--text-sm); color:var(--color-text)">D:\Photos</span> on this PC</div>
+      <div class="field" style="margin-top:var(--space-4)">
+        <label for="pw">Password</label>
+        <input id="pw" class="input" type="password" value="{{ pw }}" onChange="{{ onPw }}" autoFocus="{{ true }}" placeholder="Enter password" style="min-height:var(--size-control-lg)">
+      </div>
+      <sc-if value="{{ pwError }}">
+        <div style="display:flex; align-items:center; gap:6px; color:var(--color-critical); font-size:var(--text-sm)"><lc-icon name="alert" size="14"></lc-icon>Enter your password to continue.</div>
+      </sc-if>
+      <button class="btn btn-primary btn-block" type="submit" style="min-height:var(--size-control-lg)">Sign in</button>
+      <div style="font-size:var(--text-xs); color:var(--color-text-subtle); margin-top:var(--space-2)">Forgot it? Run <span style="font-family:var(--font-mono)">shoebox reset-password</span> on this PC.</div>
+    </form>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isShell }}" hint-placeholder-val="{{ true }}">
+  <aside style="width:var(--size-sidebar); flex:none; display:flex; flex-direction:column; gap:var(--space-4); padding:var(--space-4) var(--space-3); background:var(--color-surface); border-right:1px solid var(--color-divider)">
+    <div style="display:flex; align-items:center; gap:10px; padding:2px 10px 6px">
+      <lc-icon name="logo" size="28"></lc-icon>
+      <span style="font-family:var(--font-display); font-size:var(--text-xl); line-height:1">Shoebox</span>
+    </div>
+    <nav style="display:flex; flex-direction:column; gap:2px">
+      <div role="button" onClick="{{ goTimeline }}" style="display:flex; align-items:center; gap:12px; height:36px; padding:0 12px; border-radius:var(--radius-pill); cursor:pointer; font-weight:600; color:{{ nav.tlFg }}; background:{{ nav.tlBg }}" style-hover="background:{{ nav.tlHover }}"><lc-icon name="images" size="18"></lc-icon><span>Timeline</span></div>
+      <div role="button" style="display:flex; align-items:center; gap:12px; height:36px; padding:0 12px; border-radius:var(--radius-pill); cursor:pointer; font-weight:600; color:var(--color-text-muted)" style-hover="background:var(--color-surface-hover)"><lc-icon name="folder" size="18"></lc-icon><span>Folders</span></div>
+      <div role="button" style="display:flex; align-items:center; gap:12px; height:36px; padding:0 12px; border-radius:var(--radius-pill); cursor:pointer; font-weight:600; color:var(--color-text-muted)" style-hover="background:var(--color-surface-hover)"><lc-icon name="album" size="18"></lc-icon><span>Albums</span></div>
+      <div role="button" style="display:flex; align-items:center; gap:12px; height:36px; padding:0 12px; border-radius:var(--radius-pill); cursor:pointer; font-weight:600; color:var(--color-text-muted)" style-hover="background:var(--color-surface-hover)"><lc-icon name="map" size="18"></lc-icon><span>Map</span></div>
+    </nav>
+    <div style="display:flex; flex-direction:column; gap:2px">
+      <div style="font-size:var(--text-2xs); font-weight:700; letter-spacing:var(--tracking-caps); text-transform:uppercase; color:var(--color-text-subtle); padding:0 12px 6px">Clean up</div>
+      <div role="button" onClick="{{ goReview }}" style="display:flex; align-items:center; gap:12px; height:36px; padding:0 8px 0 12px; border-radius:var(--radius-pill); cursor:pointer; font-weight:600; color:{{ nav.dupFg }}; background:{{ nav.dupBg }}" style-hover="background:{{ nav.dupHover }}"><lc-icon name="copy" size="18"></lc-icon><span style="flex:1">Duplicates</span><span style="min-width:30px; height:20px; padding:0 8px; display:inline-grid; place-items:center; border-radius:var(--radius-pill); background:var(--color-warning-subtle); color:var(--color-warning); font-size:var(--text-2xs); font-weight:700; font-variant-numeric:var(--numeric)">{{ dupCount }}</span></div>
+      <div role="button" style="display:flex; align-items:center; gap:12px; height:36px; padding:0 12px; border-radius:var(--radius-pill); cursor:pointer; font-weight:600; color:var(--color-text-muted)" style-hover="background:var(--color-surface-hover)"><lc-icon name="trash" size="18"></lc-icon><span style="flex:1">Trash</span><span style="font-size:var(--text-xs); font-variant-numeric:var(--numeric); color:var(--color-text-subtle)">{{ trashCount }}</span></div>
+      <div role="button" style="display:flex; align-items:center; gap:12px; height:36px; padding:0 12px; border-radius:var(--radius-pill); cursor:pointer; font-weight:600; color:var(--color-text-subtle)" style-hover="background:var(--color-surface-hover)"><lc-icon name="users" size="18"></lc-icon><span style="flex:1">People</span><span style="font-size:10px; font-weight:700; letter-spacing:0.04em; padding:2px 8px; border-radius:var(--radius-pill); border:1px solid var(--color-border)">Phase 2</span></div>
+    </div>
+    <div style="flex:1"></div>
+    <div style="display:flex; flex-direction:column; gap:2px">
+      <div role="button" style="display:flex; align-items:center; gap:12px; height:36px; padding:0 12px; border-radius:var(--radius-pill); cursor:pointer; font-weight:600; color:var(--color-text-muted)" style-hover="background:var(--color-surface-hover)"><lc-icon name="settings" size="18"></lc-icon><span>Settings</span></div>
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 6px 0 12px; margin-top:8px; border-top:1px solid var(--color-divider)">
+        <lc-icon name="drive" size="16" style="color:var(--color-text-subtle)"></lc-icon>
+        <div style="flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.3">
+          <span style="font-family:var(--font-mono); font-size:var(--text-xs)">D:\Photos</span>
+          <span style="font-size:var(--text-2xs); color:var(--color-text-subtle); font-variant-numeric:var(--numeric)">{{ libSummary }}</span>
+        </div>
+        <button onClick="{{ toggleTheme }}" title="Switch theme" style="width:32px; height:32px; display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text-muted); cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="{{ themeIcon }}" size="16"></lc-icon></button>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:1; min-width:0; display:flex; flex-direction:column; position:relative">
+    <sc-if value="{{ noSelection }}" hint-placeholder-val="{{ true }}">
+      <header style="height:var(--size-topbar); flex:none; display:flex; align-items:center; gap:var(--space-2); padding:0 var(--space-4) 0 var(--space-6); border-bottom:1px solid var(--color-divider); position:relative; z-index:var(--z-topbar)">
+        <label style="position:relative; display:flex; align-items:center; width:min(420px, 42%); color:var(--color-text-subtle)">
+          <lc-icon name="search" size="16" style="position:absolute; left:14px; pointer-events:none"></lc-icon>
+          <input class="input" value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search places, files, cameras, tags" style="padding-left:40px; padding-right:56px; min-height:var(--size-control); font-size:var(--text-sm)">
+          <span style="position:absolute; right:12px; font-size:var(--text-2xs); font-weight:600; padding:1px 6px; border-radius:var(--radius-xs); border:1px solid var(--color-border); pointer-events:none">Ctrl K</span>
+        </label>
+        <button style="display:inline-flex; align-items:center; gap:7px; height:var(--size-control); padding:0 14px; border:1px solid var(--color-border); border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="filter" size="16"></lc-icon>Filters</button>
+        <div style="flex:1"></div>
+        <sc-if value="{{ scan.idle }}">
+          <div style="display:flex; align-items:center; gap:8px; height:var(--size-control); padding:0 12px; border-radius:var(--radius-pill); font-size:var(--text-sm); cursor:pointer; white-space:nowrap" style-hover="background:var(--color-surface-hover)">
+            <span style="width:8px; height:8px; border-radius:50%; background:var(--color-success)"></span>
+            <span style="font-weight:600">Up to date</span><span style="color:var(--color-text-subtle)">{{ scan.last }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ scan.running }}">
+          <div style="display:flex; align-items:center; gap:10px; height:var(--size-control); padding:0 12px; border-radius:var(--radius-pill); font-size:var(--text-sm); cursor:pointer; white-space:nowrap" style-hover="background:var(--color-surface-hover)">
+            <lc-icon name="loader" size="15" style="color:var(--color-accent); animation:sb-spin 1s linear infinite"></lc-icon>
+            <span style="font-weight:600">{{ scan.label }}</span>
+            <span style="color:var(--color-text-muted); font-variant-numeric:var(--numeric)">{{ scan.count }}</span>
+            <span style="width:72px; height:4px; border-radius:var(--radius-pill); background:var(--color-surface-active); overflow:hidden"><span style="display:block; height:100%; width:{{ scan.pct }}%; background:var(--color-accent)"></span></span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ scan.errors }}">
+          <div style="display:flex; align-items:center; gap:8px; height:var(--size-control); padding:0 12px; border-radius:var(--radius-pill); font-size:var(--text-sm); cursor:pointer; white-space:nowrap; background:var(--color-warning-subtle); color:var(--color-warning)" style-hover="filter:brightness(1.1)">
+            <lc-icon name="alert" size="15"></lc-icon>
+            <span style="font-weight:600; font-variant-numeric:var(--numeric)">{{ scan.errorLabel }}</span>
+            <span style="color:var(--color-text-muted)">{{ scan.last }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ scan.none }}">
+          <div style="display:flex; align-items:center; gap:8px; height:var(--size-control); padding:0 12px; font-size:var(--text-sm); color:var(--color-text-muted)">
+            <span style="width:8px; height:8px; border-radius:50%; border:1.5px solid var(--color-text-subtle)"></span>No library folder
+          </div>
+        </sc-if>
+        <button title="Activity" style="width:var(--size-control); height:var(--size-control); display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text-muted); cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="history" size="17"></lc-icon></button>
+        <button onClick="{{ rescan }}" disabled="{{ scan.busy }}" style="display:inline-flex; align-items:center; gap:7px; height:var(--size-control); padding:0 14px; border:1px solid var(--color-border); border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer; opacity:{{ scan.btnOpacity }}" style-hover="background:var(--color-surface-hover)"><lc-icon name="refresh" size="15"></lc-icon>Rescan</button>
+      </header>
+    </sc-if>
+
+    <sc-if value="{{ hasSelection }}">
+      <header style="height:var(--size-topbar); flex:none; display:flex; align-items:center; gap:var(--space-1); padding:0 var(--space-4) 0 var(--space-6); border-bottom:1px solid var(--color-accent-subtle); background:var(--color-accent-subtle); position:relative; z-index:var(--z-topbar)">
+        <div style="display:flex; align-items:baseline; gap:6px; min-width:170px; font-variant-numeric:var(--numeric)">
+          <span style="font-weight:700; font-size:var(--text-lg)">{{ selCount }}</span><span style="font-weight:600">selected</span><span style="color:var(--color-text-muted); font-size:var(--text-sm)">{{ selSize }}</span>
+        </div>
+        <div data-pop="1" style="position:relative">
+          <button onClick="{{ pop.openAlbum }}" style="display:inline-flex; align-items:center; gap:7px; height:var(--size-control); padding:0 12px; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="album" size="16"></lc-icon>Add to album</button>
+          <sc-if value="{{ pop.album }}">
+            <div style="position:absolute; top:42px; left:0; z-index:var(--z-popover); width:250px; padding:6px; border-radius:var(--radius-md); background:var(--color-surface-raised); box-shadow:var(--shadow-md); display:flex; flex-direction:column">
+              <sc-for list="{{ albums }}" as="a" hint-placeholder-count="4">
+                <button onClick="{{ a.onPick }}" style="display:flex; align-items:center; gap:10px; height:34px; padding:0 10px; border:0; border-radius:10px; background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); text-align:left; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="album" size="15" style="color:var(--color-text-subtle)"></lc-icon><span style="flex:1">{{ a.name }}</span><span style="color:var(--color-text-subtle); font-variant-numeric:var(--numeric)">{{ a.count }}</span></button>
+              </sc-for>
+              <div style="height:1px; background:var(--color-divider); margin:4px 6px"></div>
+              <button style="display:flex; align-items:center; gap:10px; height:34px; padding:0 10px; border:0; border-radius:10px; background:transparent; color:var(--color-accent-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="plus" size="15"></lc-icon>New album…</button>
+            </div>
+          </sc-if>
+        </div>
+        <div data-pop="1" style="position:relative">
+          <button onClick="{{ pop.openTag }}" style="display:inline-flex; align-items:center; gap:7px; height:var(--size-control); padding:0 12px; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="tag" size="16"></lc-icon>Tag</button>
+          <sc-if value="{{ pop.tag }}">
+            <div style="position:absolute; top:42px; left:0; z-index:var(--z-popover); width:280px; padding:10px; border-radius:var(--radius-md); background:var(--color-surface-raised); box-shadow:var(--shadow-md); display:flex; flex-direction:column; gap:10px">
+              <input class="input" placeholder="Add a tag and press Enter" value="{{ tagDraft }}" onChange="{{ onTagDraft }}" onKeyDown="{{ onTagKey }}" autoFocus="{{ true }}" style="min-height:32px; font-size:var(--text-sm)">
+              <div style="display:flex; flex-wrap:wrap; gap:6px">
+                <sc-for list="{{ tagSuggestions }}" as="t" hint-placeholder-count="5">
+                  <button onClick="{{ t.onPick }}" style="height:26px; padding:0 10px; border:1px solid var(--color-border); border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-xs); cursor:pointer" style-hover="background:var(--color-surface-hover)">{{ t.name }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <div data-pop="1" style="position:relative">
+          <button onClick="{{ pop.openRate }}" style="display:inline-flex; align-items:center; gap:7px; height:var(--size-control); padding:0 12px; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="star" size="16"></lc-icon>Rate</button>
+          <sc-if value="{{ pop.rate }}">
+            <div style="position:absolute; top:42px; left:0; z-index:var(--z-popover); padding:8px; border-radius:var(--radius-pill); background:var(--color-surface-raised); box-shadow:var(--shadow-md); display:flex; align-items:center; gap:2px">
+              <sc-for list="{{ rateOptions }}" as="r" hint-placeholder-count="5">
+                <button onClick="{{ r.onPick }}" title="{{ r.title }}" style="width:34px; height:34px; display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-accent); cursor:pointer" style-hover="background:var(--color-accent-subtle)"><lc-icon name="star" size="18" fill="currentColor"></lc-icon></button>
+              </sc-for>
+              <button onClick="{{ rateClear }}" style="height:34px; padding:0 12px; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text-muted); font:inherit; font-size:var(--text-xs); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)">Clear</button>
+            </div>
+          </sc-if>
+        </div>
+        <button onClick="{{ favSel }}" style="display:inline-flex; align-items:center; gap:7px; height:var(--size-control); padding:0 12px; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="heart" size="16"></lc-icon>Favourite</button>
+        <div data-pop="1" style="position:relative">
+          <button onClick="{{ pop.openMove }}" style="display:inline-flex; align-items:center; gap:7px; height:var(--size-control); padding:0 12px; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="folder-input" size="16"></lc-icon>Move</button>
+          <sc-if value="{{ pop.move }}">
+            <div style="position:absolute; top:42px; left:0; z-index:var(--z-popover); width:300px; padding:6px; border-radius:var(--radius-md); background:var(--color-surface-raised); box-shadow:var(--shadow-md); display:flex; flex-direction:column">
+              <div style="padding:6px 10px 4px; font-size:var(--text-2xs); font-weight:700; letter-spacing:var(--tracking-caps); text-transform:uppercase; color:var(--color-text-subtle)">Move files on disk to</div>
+              <sc-for list="{{ folders }}" as="f" hint-placeholder-count="3">
+                <button onClick="{{ f.onPick }}" style="display:flex; align-items:center; gap:10px; height:34px; padding:0 10px; border:0; border-radius:10px; background:transparent; color:var(--color-text); font-family:var(--font-mono); font-size:var(--text-xs); text-align:left; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="folder" size="15" style="color:var(--color-text-subtle)"></lc-icon>{{ f.path }}</button>
+              </sc-for>
+              <div style="height:1px; background:var(--color-divider); margin:4px 6px"></div>
+              <button style="display:flex; align-items:center; gap:10px; height:34px; padding:0 10px; border:0; border-radius:10px; background:transparent; color:var(--color-accent-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="folder-open" size="15"></lc-icon>Organise into folders…</button>
+            </div>
+          </sc-if>
+        </div>
+        <button onClick="{{ trashSel }}" style="display:inline-flex; align-items:center; gap:7px; height:var(--size-control); padding:0 12px; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-critical); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-critical-subtle)"><lc-icon name="trash" size="16"></lc-icon>Delete</button>
+        <div style="flex:1"></div>
+        <button onClick="{{ clearSel }}" style="display:inline-flex; align-items:center; gap:7px; height:var(--size-control); padding:0 14px; border:1px solid var(--color-border); border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="x" size="15"></lc-icon>Clear<span style="font-size:var(--text-2xs); color:var(--color-text-subtle); font-weight:600">Esc</span></button>
+      </header>
+    </sc-if>
+
+    <sc-if value="{{ isTimeline }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="Timeline" style="flex:1; min-height:0; display:flex; flex-direction:column">
+        <sc-if value="{{ firstScan.show }}">
+          <div style="flex:none; display:flex; align-items:center; gap:14px; padding:12px var(--space-6); background:var(--color-surface); border-bottom:1px solid var(--color-divider)">
+            <lc-icon name="loader" size="18" style="color:var(--color-accent); animation:sb-spin 1s linear infinite"></lc-icon>
+            <div style="display:flex; flex-direction:column; line-height:1.35">
+              <span style="font-weight:600">First scan in progress</span>
+              <span style="font-size:var(--text-sm); color:var(--color-text-muted); font-variant-numeric:var(--numeric)">{{ firstScan.text }}</span>
+            </div>
+            <div style="flex:1; max-width:360px; height:6px; margin-left:auto; border-radius:var(--radius-pill); background:var(--color-surface-active); overflow:hidden"><div style="height:100%; width:{{ firstScan.pct }}%; background:var(--color-accent)"></div></div>
+            <span style="font-size:var(--text-sm); font-weight:600; font-variant-numeric:var(--numeric); min-width:40px; text-align:right">{{ firstScan.pctLabel }}</span>
+          </div>
+        </sc-if>
+        <div style="flex:1; min-height:0; position:relative">
+          <div data-tl-scroll="1" ref="{{ setScrollEl }}" onScroll="{{ onScroll }}" style="position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:none">
+            <div style="position:relative; height:{{ totalH }}px">
+              <sc-for list="{{ heads }}" as="h" hint-placeholder-count="0">
+                <sc-if value="{{ h.isMonth }}">
+                  <div style="position:absolute; left:24px; right:72px; top:{{ h.y }}px; height:64px; display:flex; align-items:flex-end; gap:12px; padding-bottom:8px">
+                    <span style="font-family:var(--font-display); font-size:var(--text-2xl); line-height:1">{{ h.label }}</span>
+                    <span style="color:var(--color-text-subtle); font-size:var(--text-sm); font-variant-numeric:var(--numeric); padding-bottom:2px">{{ h.count }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ h.isDay }}">
+                  <div onMouseEnter="{{ h.onEnter }}" onMouseLeave="{{ h.onLeave }}" style="position:absolute; left:24px; right:72px; top:{{ h.y }}px; height:40px; display:flex; align-items:center; gap:10px; font-size:var(--text-sm)">
+                    <sc-if value="{{ h.showCheck }}">
+                      <button onClick="{{ h.onCheck }}" title="Select day" style="width:20px; height:20px; display:grid; place-items:center; padding:0; border-radius:50%; border:2px solid {{ h.checkBorder }}; background:{{ h.checkBg }}; color:var(--color-text-on-accent); cursor:pointer"><sc-if value="{{ h.all }}"><lc-icon name="check" size="12" stroke="3.5"></lc-icon></sc-if></button>
+                    </sc-if>
+                    <span style="font-weight:600">{{ h.label }}</span>
+                    <span style="color:var(--color-text-muted)">{{ h.place }}</span>
+                    <span style="color:var(--color-text-subtle); font-variant-numeric:var(--numeric)">{{ h.count }}</span>
+                  </div>
+                </sc-if>
+              </sc-for>
+              <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="0">
+                <div onClick="{{ t.onClick }}" onMouseEnter="{{ t.onEnter }}" onMouseLeave="{{ t.onLeave }}" style="position:absolute; left:{{ t.x }}px; top:{{ t.y }}px; width:{{ t.w }}px; height:{{ t.h }}px; border-radius:var(--radius-tile); background:{{ t.cellBg }}; cursor:pointer; overflow:hidden; user-select:none">
+                  <div style="position:absolute; inset:{{ t.inset }}px; border-radius:{{ t.radius }}; background:{{ t.bg }}; box-shadow:{{ t.ring }}; transition:inset var(--duration-fast) var(--ease-standard), border-radius var(--duration-fast) var(--ease-standard)"></div>
+                  <div style="position:absolute; inset:0; background:linear-gradient(rgb(0 0 0 / 0.42), transparent 38%); opacity:{{ t.scrim }}; pointer-events:none; transition:opacity var(--duration-fast)"></div>
+                  <sc-if value="{{ t.showCheck }}">
+                    <div onClick="{{ t.onCheck }}" style="position:absolute; top:6px; left:6px; width:30px; height:30px; display:grid; place-items:center">
+                      <div style="width:20px; height:20px; display:grid; place-items:center; border-radius:50%; border:2px solid {{ t.checkBorder }}; background:{{ t.checkBg }}; color:var(--color-text-on-accent)"><sc-if value="{{ t.sel }}"><lc-icon name="check" size="12" stroke="3.5"></lc-icon></sc-if></div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ t.hasBadge }}">
+                    <div style="position:absolute; top:{{ t.badgeTop }}px; right:{{ t.badgeTop }}px; display:flex; align-items:center; gap:4px; height:20px; padding:0 7px; border-radius:var(--radius-xs); background:var(--color-media-badge); color:var(--color-text-on-media); font-size:10.5px; font-weight:700; letter-spacing:0.03em; font-variant-numeric:var(--numeric)"><sc-if value="{{ t.isVideo }}"><lc-icon name="play" size="9" fill="currentColor" stroke="0"></lc-icon></sc-if>{{ t.badge }}</div>
+                  </sc-if>
+                  <sc-if value="{{ t.fav }}">
+                    <div style="position:absolute; left:{{ t.favLeft }}px; bottom:{{ t.favLeft }}px; color:var(--color-text-on-media); filter:drop-shadow(0 1px 2px rgb(0 0 0 / 0.5))"><lc-icon name="heart" size="15" fill="currentColor" stroke="0"></lc-icon></div>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <sc-if value="{{ tail.show }}">
+                <div style="position:absolute; left:24px; right:72px; top:{{ tail.y }}px; height:96px; display:flex; align-items:center; gap:12px; padding:0 18px; border-radius:var(--radius-md); border:1.5px dashed var(--color-border); color:var(--color-text-muted); font-size:var(--text-sm)">
+                  <lc-icon name="loader" size="16" style="animation:sb-spin 1s linear infinite"></lc-icon>Still reading older folders. Photos appear here as they're found.
+                </div>
+              </sc-if>
+            </div>
+          </div>
+
+          <sc-if value="{{ sticky.show }}">
+            <div style="position:absolute; top:0; left:0; right:var(--size-scrubber); height:46px; display:flex; align-items:center; gap:12px; padding:0 24px; background:color-mix(in srgb, var(--color-bg) 90%, transparent); backdrop-filter:blur(14px); border-bottom:1px solid var(--color-divider); z-index:var(--z-sticky); pointer-events:none">
+              <span style="font-family:var(--font-display); font-size:var(--text-lg); line-height:1">{{ sticky.month }}</span>
+              <span style="color:var(--color-text-muted); font-size:var(--text-sm); font-weight:600">{{ sticky.day }}</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scrub.show }}">
+            <div data-scrub="1" ref="{{ setScrubEl }}" onMouseDown="{{ scrubDown }}" onMouseMove="{{ scrubMove }}" onMouseLeave="{{ scrubLeave }}" style="position:absolute; top:0; right:0; bottom:0; width:var(--size-scrubber); z-index:var(--z-scrubber); cursor:ns-resize; user-select:none">
+              <div style="position:absolute; top:18px; bottom:18px; left:0; right:0">
+                <sc-for list="{{ scrub.months }}" as="m" hint-placeholder-count="0">
+                  <div style="position:absolute; right:8px; top:{{ m.top }}%; width:3px; height:3px; border-radius:50%; background:var(--color-border-strong)"></div>
+                </sc-for>
+                <sc-for list="{{ scrub.years }}" as="y" hint-placeholder-count="0">
+                  <div style="position:absolute; right:16px; top:{{ y.top }}%; transform:translateY(-50%); font-size:var(--text-2xs); font-weight:700; color:var(--color-text-subtle); font-variant-numeric:var(--numeric); background:var(--color-bg); padding:1px 2px">{{ y.label }}</div>
+                </sc-for>
+                <div style="position:absolute; right:4px; top:{{ scrub.thumb }}%; width:30px; height:3px; margin-top:-1.5px; border-radius:2px; background:var(--color-accent)"></div>
+                <sc-if value="{{ scrub.hovering }}">
+                  <div style="position:absolute; right:0; top:{{ scrub.hover }}%; width:var(--size-scrubber); height:1px; background:var(--color-text-muted)">
+                    <div style="position:absolute; right:calc(100% + 6px); top:-13px; height:26px; padding:0 12px; display:flex; align-items:center; border-radius:var(--radius-pill); background:var(--color-surface-raised); box-shadow:var(--shadow-md); font-size:var(--text-sm); font-weight:600; white-space:nowrap; font-variant-numeric:var(--numeric)">{{ scrub.hoverLabel }}</div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ emptyLib }}">
+            <div style="position:absolute; inset:0; display:flex; align-items:center; padding:0 10%">
+              <div style="max-width:480px; display:flex; flex-direction:column; gap:var(--space-3); align-items:flex-start">
+                <div style="width:72px; height:72px; border-radius:50%; display:grid; place-items:center; background:var(--color-accent-subtle); color:var(--color-accent-text); margin-bottom:var(--space-2)"><lc-icon name="folder-open" size="30"></lc-icon></div>
+                <div style="font-family:var(--font-display); font-size:var(--text-3xl); line-height:1.1">No library folder yet</div>
+                <p style="margin:0; color:var(--color-text-muted); text-wrap:pretty">Shoebox reads one folder on this PC and works with the files where they are. Nothing is imported or copied. Choose the folder in Settings and the first scan starts straight away.</p>
+                <button class="btn btn-primary" style="margin-top:var(--space-2)"><lc-icon name="settings" size="16"></lc-icon>Open Settings</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ noResults }}">
+            <div style="position:absolute; inset:0; display:flex; align-items:center; padding:0 10%">
+              <div style="max-width:480px; display:flex; flex-direction:column; gap:var(--space-3); align-items:flex-start">
+                <div style="width:72px; height:72px; border-radius:50%; display:grid; place-items:center; background:var(--color-surface); color:var(--color-text-muted); margin-bottom:var(--space-2)"><lc-icon name="search" size="30"></lc-icon></div>
+                <div style="font-family:var(--font-display); font-size:var(--text-3xl); line-height:1.1">Nothing matches “{{ queryTrim }}”</div>
+                <p style="margin:0; color:var(--color-text-muted); text-wrap:pretty">Search looks at place names, file names, cameras and tags. Check the spelling, or try a broader word like a town or year.</p>
+                <button onClick="{{ clearQuery }}" class="btn btn-secondary" style="margin-top:var(--space-2)"><lc-icon name="x" size="15"></lc-icon>Clear search</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isReview }}">
+      <div data-screen-label="Duplicate review" style="flex:1; min-height:0; display:flex; flex-direction:column">
+        <div style="flex:1; min-height:0; overflow:auto; opacity:{{ d.contentOpacity }}; pointer-events:{{ d.pe }}; transition:opacity var(--duration-base)">
+          <div style="max-width:1440px; padding:var(--space-5) var(--space-8) var(--space-8); display:flex; flex-direction:column; gap:var(--space-6)">
+            <div style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--text-sm); color:var(--color-text-muted)">
+              <span style="display:inline-flex; align-items:center; gap:6px; font-weight:600; cursor:pointer" style-hover="color:var(--color-text)"><lc-icon name="arrow-left" size="15"></lc-icon>Duplicates</span>
+              <span style="color:var(--color-text-subtle)">/</span>
+              <span style="font-variant-numeric:var(--numeric)">{{ d.position }}</span>
+              <div style="flex:1"></div>
+              <button onClick="{{ d.prev }}" title="Previous group" style="width:32px; height:32px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:var(--radius-pill); background:transparent; color:var(--color-text); cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="chevron-left" size="16"></lc-icon></button>
+              <button onClick="{{ d.next }}" title="Next group" style="width:32px; height:32px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:var(--radius-pill); background:transparent; color:var(--color-text); cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="chevron-right" size="16"></lc-icon></button>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:var(--space-2)">
+              <div style="display:flex; align-items:center; gap:var(--space-3); flex-wrap:wrap">
+                <h1 style="margin:0; font-size:var(--text-2xl)">{{ d.title }}</h1>
+                <span style="display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 12px; border-radius:var(--radius-pill); font-size:var(--text-xs); font-weight:700; background:{{ d.typeBg }}; color:{{ d.typeFg }}"><lc-icon name="{{ d.typeIcon }}" size="13"></lc-icon>{{ d.typeLabel }}</span>
+                <sc-if value="{{ d.isMergeable }}">
+                  <span style="display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 12px; border-radius:var(--radius-pill); font-size:var(--text-xs); font-weight:700; font-variant-numeric:var(--numeric); background:{{ d.conflictBg }}; color:{{ d.conflictFg }}"><lc-icon name="{{ d.conflictIcon }}" size="13"></lc-icon>{{ d.conflictLabel }}</span>
+                </sc-if>
+              </div>
+              <p style="margin:0; color:var(--color-text-muted); max-width:720px; text-wrap:pretty">{{ d.subtitle }}</p>
+            </div>
+
+            <sc-if value="{{ d.failed }}">
+              <div role="alert" style="display:flex; align-items:flex-start; gap:14px; padding:16px 16px 16px 18px; border-radius:var(--radius-md); background:var(--color-critical-subtle)">
+                <lc-icon name="alert" size="20" style="color:var(--color-critical); margin-top:1px"></lc-icon>
+                <div style="flex:1; display:flex; flex-direction:column; gap:4px">
+                  <span style="font-weight:700">Merge failed and was rolled back. No files were changed.</span>
+                  <span style="font-size:var(--text-sm); color:var(--color-text-muted); text-wrap:pretty">{{ d.failText }}</span>
+                </div>
+                <button onClick="{{ d.retry }}" class="btn btn-secondary" style="flex:none"><lc-icon name="rotate-ccw" size="15"></lc-icon>Retry</button>
+                <button onClick="{{ d.dismissFail }}" title="Dismiss" style="width:36px; height:36px; display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text-muted); cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="x" size="16"></lc-icon></button>
+              </div>
+            </sc-if>
+
+            <div style="display:grid; grid-template-columns:{{ d.copyCols }}; gap:var(--space-4)">
+              <sc-for list="{{ d.copies }}" as="c" hint-placeholder-count="3">
+                <div style="display:flex; flex-direction:column; border-radius:var(--radius-md); background:var(--color-surface); box-shadow:{{ c.ring }}; overflow:hidden">
+                  <div style="position:relative; aspect-ratio:3 / 2; background:var(--color-surface-sunken); display:grid; place-items:center">
+                    <div style="width:{{ c.thumbW }}; height:{{ c.thumbH }}; background:{{ c.bg }}; opacity:{{ c.thumbOpacity }}"></div>
+                    <span style="position:absolute; top:10px; left:10px; width:28px; height:28px; display:grid; place-items:center; border-radius:50%; background:var(--color-media-badge); color:var(--color-text-on-media); font-weight:700; font-size:var(--text-sm)">{{ c.letter }}</span>
+                    <span style="position:absolute; top:10px; right:10px; display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border-radius:var(--radius-pill); font-size:var(--text-xs); font-weight:700; background:{{ c.statusBg }}; color:{{ c.statusFg }}"><lc-icon name="{{ c.statusIcon }}" size="13" stroke="2.75"></lc-icon>{{ c.status }}</span>
+                  </div>
+                  <div style="padding:14px 16px 16px; display:flex; flex-direction:column; gap:12px; flex:1">
+                    <div style="display:flex; flex-direction:column; gap:2px; min-width:0">
+                      <span style="font-weight:700; overflow-wrap:anywhere">{{ c.name }}</span>
+                      <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-text-muted); overflow-wrap:anywhere">{{ c.path }}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:auto 1fr; column-gap:16px; row-gap:4px; font-size:var(--text-sm); font-variant-numeric:var(--numeric)">
+                      <span style="color:var(--color-text-subtle)">Resolution</span><span style="font-weight:{{ c.resWeight }}">{{ c.res }}<span style="color:var(--color-text-subtle); font-weight:400">  {{ c.mp }}</span></span>
+                      <span style="color:var(--color-text-subtle)">File size</span><span>{{ c.size }}</span>
+                      <span style="color:var(--color-text-subtle)">Format</span><span>{{ c.fmt }}</span>
+                      <span style="color:var(--color-text-subtle)">Modified</span><span>{{ c.modified }}</span>
+                    </div>
+                    <div style="flex:1"></div>
+                    <sc-if value="{{ c.isKeeper }}">
+                      <div style="display:flex; align-items:flex-start; gap:8px; padding:10px 12px; border-radius:12px; background:var(--color-accent-subtle); font-size:var(--text-sm)">
+                        <lc-icon name="circle-check" size="16" style="color:var(--color-accent-text); margin-top:1px"></lc-icon>
+                        <div style="display:flex; flex-direction:column"><span style="font-weight:700; color:var(--color-accent-text)">Keeping this copy</span><span style="color:var(--color-text-muted)">{{ c.reason }}</span></div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ c.canKeep }}">
+                      <button onClick="{{ c.onKeep }}" style="display:inline-flex; align-items:center; justify-content:center; gap:7px; height:var(--size-control); border:1px solid var(--color-border); border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)">Keep this copy instead</button>
+                    </sc-if>
+                    <sc-if value="{{ c.isSimilar }}">
+                      <button onClick="{{ c.onToggle }}" style="display:inline-flex; align-items:center; justify-content:center; gap:7px; height:var(--size-control); border:1px solid {{ c.toggleBorder }}; border-radius:var(--radius-pill); background:transparent; color:{{ c.toggleFg }}; font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="{{ c.toggleIcon }}" size="15"></lc-icon>{{ c.toggleLabel }}</button>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ d.isMergeable }}">
+              <section style="display:flex; flex-direction:column; gap:var(--space-3)">
+                <div style="display:flex; align-items:baseline; gap:var(--space-3); flex-wrap:wrap">
+                  <h2 style="margin:0; font-size:var(--text-xl)">Merged metadata</h2>
+                  <span style="color:var(--color-text-muted); font-size:var(--text-sm)">{{ d.tableNote }}</span>
+                </div>
+                <div style="border-radius:var(--radius-md); background:var(--color-surface); overflow:hidden; font-size:var(--text-sm)">
+                  <div style="display:grid; grid-template-columns:{{ d.cols }}; align-items:center; font-size:var(--text-2xs); font-weight:700; letter-spacing:var(--tracking-caps); text-transform:uppercase; color:var(--color-text-subtle)">
+                    <div style="padding:12px 16px">Field</div>
+                    <sc-for list="{{ d.copies }}" as="c" hint-placeholder-count="3">
+                      <div style="padding:12px 16px; display:flex; align-items:center; gap:8px; min-width:0"><span style="width:20px; height:20px; flex:none; display:grid; place-items:center; border-radius:50%; background:var(--color-surface-active); color:var(--color-text); letter-spacing:0">{{ c.letter }}</span><span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-transform:none; letter-spacing:0; font-weight:600; font-size:var(--text-xs)">{{ c.name }}</span></div>
+                    </sc-for>
+                    <div style="padding:12px 16px; align-self:stretch; display:flex; align-items:center; gap:8px; background:var(--color-success-subtle); color:var(--color-success)"><lc-icon name="merge" size="13"></lc-icon>Merged result</div>
+                  </div>
+                  <sc-for list="{{ d.rows }}" as="r" hint-placeholder-count="8">
+                    <div style="display:grid; grid-template-columns:{{ d.cols }}; border-top:1px solid var(--color-divider); background:{{ r.bg }}">
+                      <div style="padding:14px 16px; display:flex; flex-direction:column; gap:3px">
+                        <span style="font-weight:600">{{ r.label }}</span>
+                        <sc-if value="{{ r.conflict }}"><span style="display:inline-flex; align-items:center; gap:5px; font-size:var(--text-xs); font-weight:700; color:var(--color-warning)"><lc-icon name="alert" size="12"></lc-icon>Conflict: pick one</span></sc-if>
+                        <sc-if value="{{ r.resolved }}"><span style="display:inline-flex; align-items:center; gap:5px; font-size:var(--text-xs); font-weight:600; color:var(--color-success)"><lc-icon name="check" size="12" stroke="3"></lc-icon>Resolved</span></sc-if>
+                      </div>
+                      <sc-for list="{{ r.cells }}" as="cell" hint-placeholder-count="3">
+                        <div onClick="{{ cell.pick }}" style="margin:6px; padding:8px 10px; border-radius:12px; display:flex; align-items:flex-start; gap:8px; min-width:0; cursor:{{ cell.cursor }}; background:{{ cell.bg }}; box-shadow:{{ cell.ring }}; color:{{ cell.fg }}; font-variant-numeric:var(--numeric)" style-hover="{{ cell.hover }}">
+                          <span style="width:16px; height:16px; flex:none; margin-top:1px; display:grid; place-items:center; border-radius:50%; border:{{ cell.dotBorder }}; background:{{ cell.dotBg }}; color:var(--color-text-on-accent); opacity:{{ cell.dotOpacity }}"><sc-if value="{{ cell.picked }}"><lc-icon name="check" size="10" stroke="3.5"></lc-icon></sc-if></span>
+                          <span style="overflow-wrap:anywhere">{{ cell.text }}</span>
+                        </div>
+                      </sc-for>
+                      <div style="padding:14px 16px; display:flex; flex-direction:column; gap:4px; background:var(--color-success-subtle); min-width:0">
+                        <span style="font-weight:600; overflow-wrap:anywhere; font-variant-numeric:var(--numeric); color:{{ r.mergedFg }}">{{ r.merged }}</span>
+                        <span style="display:inline-flex; align-items:center; gap:6px; font-size:var(--text-xs); color:var(--color-text-muted)"><sc-for list="{{ r.srcLetters }}" as="L" hint-placeholder-count="1"><span style="width:18px; height:18px; display:grid; place-items:center; border-radius:50%; background:var(--color-surface-active); color:var(--color-text); font-weight:700; font-size:10px">{{ L.l }}</span></sc-for>{{ r.srcText }}</span>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="flex:none; display:flex; align-items:center; gap:var(--space-4); padding:14px var(--space-8); border-top:1px solid var(--color-divider); background:var(--color-surface); min-height:72px">
+          <sc-if value="{{ d.running }}">
+            <lc-icon name="loader" size="18" style="color:var(--color-accent); animation:sb-spin 1s linear infinite"></lc-icon>
+            <div style="display:flex; flex-direction:column; line-height:1.35; min-width:280px">
+              <span style="font-weight:700">Merging…</span>
+              <span style="font-size:var(--text-sm); color:var(--color-text-muted); font-variant-numeric:var(--numeric)">{{ d.stepText }}</span>
+            </div>
+            <div style="flex:1; max-width:420px; height:6px; border-radius:var(--radius-pill); background:var(--color-surface-active); overflow:hidden"><div style="height:100%; width:{{ d.stepPct }}%; background:var(--color-accent); transition:width var(--duration-slow) var(--ease-standard)"></div></div>
+            <div style="flex:1"></div>
+            <span style="font-size:var(--text-xs); color:var(--color-text-subtle)">Safe to leave this screen. Changes roll back if any step fails.</span>
+          </sc-if>
+          <sc-if value="{{ d.idleMerge }}">
+            <lc-icon name="{{ d.footIcon }}" size="18" style="color:{{ d.footIconColor }}"></lc-icon>
+            <div style="flex:1; display:flex; flex-direction:column; line-height:1.4; font-size:var(--text-sm); min-width:0">
+              <span style="font-weight:700">{{ d.footTitle }}</span>
+              <span style="color:var(--color-text-muted); text-wrap:pretty">{{ d.footText }}</span>
+            </div>
+            <button onClick="{{ d.notDup }}" class="btn btn-secondary">Not duplicates</button>
+            <button onClick="{{ d.merge }}" disabled="{{ d.mergeDisabled }}" class="btn btn-primary"><lc-icon name="merge" size="16"></lc-icon>{{ d.mergeLabel }}</button>
+          </sc-if>
+          <sc-if value="{{ d.idleSimilar }}">
+            <lc-icon name="layers" size="18" style="color:var(--color-success)"></lc-icon>
+            <div style="flex:1; display:flex; flex-direction:column; line-height:1.4; font-size:var(--text-sm)">
+              <span style="font-weight:700">Nothing merges in a similar group</span>
+              <span style="color:var(--color-text-muted)">{{ d.simText }}</span>
+            </div>
+            <button onClick="{{ d.keepAll }}" class="btn btn-secondary">Keep all</button>
+            <button onClick="{{ d.trashSimilar }}" disabled="{{ d.simDisabled }}" style="display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 18px; border:1px solid var(--color-critical); border-radius:var(--radius-pill); background:transparent; color:var(--color-critical); font:inherit; font-weight:700; cursor:pointer; opacity:{{ d.simOpacity }}" style-hover="background:var(--color-critical-subtle)"><lc-icon name="trash" size="15"></lc-icon>{{ d.simLabel }}</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ v.open }}">
+    <div data-theme="dark" data-screen-label="Viewer" style="position:fixed; inset:0; z-index:var(--z-viewer); background:var(--color-surface-sunken); color:var(--color-text); display:grid; grid-template-columns:minmax(0,1fr) {{ v.infoW }}; grid-template-rows:56px minmax(0,1fr) var(--size-filmstrip)">
+      <div style="grid-column:1; grid-row:1; display:flex; align-items:center; gap:6px; padding:0 12px 0 10px">
+        <button onClick="{{ v.close }}" style="display:inline-flex; align-items:center; gap:8px; height:var(--size-control); padding:0 14px 0 10px; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="arrow-left" size="17"></lc-icon>Timeline</button>
+        <div style="display:flex; flex-direction:column; line-height:1.25; margin-left:6px; min-width:0">
+          <span style="font-weight:700; font-size:var(--text-sm); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ v.name }}</span>
+          <span style="font-size:var(--text-xs); color:var(--color-text-subtle); font-variant-numeric:var(--numeric)">{{ v.position }}</span>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex; align-items:center; gap:2px; padding:3px; border-radius:var(--radius-pill); background:var(--color-surface-hover)">
+          <button onClick="{{ v.zoomOut }}" title="Zoom out (−)" style="width:30px; height:30px; display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text); cursor:pointer" style-hover="background:var(--color-surface-active)"><lc-icon name="zoom-out" size="16"></lc-icon></button>
+          <button onClick="{{ v.zoomFit }}" title="Fit to screen" style="min-width:72px; height:30px; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-xs); font-weight:700; font-variant-numeric:var(--numeric); cursor:pointer" style-hover="background:var(--color-surface-active)">{{ v.zoomLabel }}</button>
+          <button onClick="{{ v.zoomIn }}" title="Zoom in (+)" style="width:30px; height:30px; display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text); cursor:pointer" style-hover="background:var(--color-surface-active)"><lc-icon name="zoom-in" size="16"></lc-icon></button>
+        </div>
+        <div style="width:8px"></div>
+        <button onClick="{{ v.toggleFav }}" title="Favourite (F)" style="width:var(--size-control); height:var(--size-control); display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:{{ v.favColor }}; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="heart" size="17" fill="{{ v.favFill }}"></lc-icon></button>
+        <sc-if value="{{ v.canDownload }}">
+          <button title="Download the original file" style="display:inline-flex; align-items:center; gap:7px; height:var(--size-control); padding:0 14px; border:1px solid var(--color-border); border-radius:var(--radius-pill); background:transparent; color:var(--color-text); font:inherit; font-size:var(--text-sm); font-weight:600; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="download" size="15"></lc-icon>Download original<span style="font-size:var(--text-2xs); color:var(--color-text-subtle); font-weight:700">{{ v.ext }}</span></button>
+        </sc-if>
+        <button onClick="{{ v.trash }}" title="Move to Trash (Del)" style="width:var(--size-control); height:var(--size-control); display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text); cursor:pointer" style-hover="background:var(--color-critical-subtle); color:var(--color-critical)"><lc-icon name="trash" size="17"></lc-icon></button>
+        <button onClick="{{ v.toggleInfo }}" title="Info (I)" style="width:var(--size-control); height:var(--size-control); display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:{{ v.infoBtnBg }}; color:{{ v.infoBtnFg }}; cursor:pointer" style-hover="background:var(--color-surface-active)"><lc-icon name="panel" size="17"></lc-icon></button>
+      </div>
+
+      <div data-stage="1" ref="{{ setStageEl }}" style="grid-column:1; grid-row:2; position:relative; overflow:hidden; display:grid; place-items:center">
+        <div onDoubleClick="{{ v.dbl }}" style="width:{{ v.imgW }}px; height:{{ v.imgH }}px; background:{{ v.bg }}; transform:scale({{ v.zoom }}); transition:transform var(--duration-base) var(--ease-standard); cursor:{{ v.cursor }}"></div>
+        <sc-if value="{{ v.showPlay }}">
+          <button onClick="{{ v.togglePlay }}" title="Play (Space)" style="position:absolute; width:72px; height:72px; display:grid; place-items:center; border:0; border-radius:50%; background:var(--color-media-badge); color:var(--color-text-on-media); cursor:pointer; padding-left:4px" style-hover="background:var(--color-scrim)"><lc-icon name="play" size="28" fill="currentColor" stroke="0"></lc-icon></button>
+        </sc-if>
+        <sc-if value="{{ v.isVideo }}">
+          <div style="position:absolute; bottom:18px; left:50%; transform:translateX(-50%); width:min(640px, calc(100% - 200px)); display:flex; align-items:center; gap:12px; height:44px; padding:0 14px 0 6px; border-radius:var(--radius-pill); background:var(--color-media-badge); color:var(--color-text-on-media); backdrop-filter:blur(10px); font-size:var(--text-xs); font-variant-numeric:var(--numeric)">
+            <button onClick="{{ v.togglePlay }}" style="width:34px; height:34px; display:grid; place-items:center; border:0; border-radius:50%; background:transparent; color:inherit; cursor:pointer" style-hover="background:rgb(255 255 255 / 0.12)"><lc-icon name="{{ v.playIcon }}" size="15" fill="currentColor" stroke="0"></lc-icon></button>
+            <span style="min-width:34px">{{ v.timeNow }}</span>
+            <div style="flex:1; height:4px; border-radius:var(--radius-pill); background:rgb(255 255 255 / 0.22); overflow:hidden"><div style="height:100%; width:{{ v.playPct }}%; background:var(--color-accent)"></div></div>
+            <span>{{ v.timeTotal }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ v.isRaw }}">
+          <div style="position:absolute; left:16px; bottom:16px; display:flex; align-items:center; gap:6px; height:26px; padding:0 10px; border-radius:var(--radius-pill); background:var(--color-media-badge); color:var(--color-text-muted); font-size:var(--text-2xs); font-weight:600">{{ v.rawNote }}</div>
+        </sc-if>
+        <sc-if value="{{ v.hasPrev }}">
+          <button onClick="{{ v.prev }}" title="Previous (←)" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); width:44px; height:44px; display:grid; place-items:center; border:0; border-radius:50%; background:var(--color-media-badge); color:var(--color-text-on-media); cursor:pointer" style-hover="background:var(--color-surface-raised)"><lc-icon name="chevron-left" size="22"></lc-icon></button>
+        </sc-if>
+        <sc-if value="{{ v.hasNext }}">
+          <button onClick="{{ v.next }}" title="Next (→)" style="position:absolute; right:16px; top:50%; transform:translateY(-50%); width:44px; height:44px; display:grid; place-items:center; border:0; border-radius:50%; background:var(--color-media-badge); color:var(--color-text-on-media); cursor:pointer" style-hover="background:var(--color-surface-raised)"><lc-icon name="chevron-right" size="22"></lc-icon></button>
+        </sc-if>
+      </div>
+
+      <div style="grid-column:1; grid-row:3; display:flex; align-items:center; justify-content:center; gap:4px; padding:0 16px; overflow:hidden">
+        <sc-for list="{{ v.strip }}" as="s" hint-placeholder-count="12">
+          <div onClick="{{ s.onClick }}" style="flex:none; width:{{ s.w }}px; height:56px; border-radius:var(--radius-xs); background:{{ s.bg }}; opacity:{{ s.opacity }}; outline:{{ s.outline }}; outline-offset:2px; cursor:pointer" style-hover="opacity:1"></div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ v.infoOpen }}">
+        <aside style="grid-column:2; grid-row:1 / 4; overflow-y:auto; background:var(--color-surface); border-left:1px solid var(--color-divider); padding:var(--space-4) var(--space-5) var(--space-6); display:flex; flex-direction:column; gap:var(--space-5)">
+          <div style="display:flex; align-items:center; justify-content:space-between">
+            <span style="font-size:var(--text-2xs); font-weight:700; letter-spacing:var(--tracking-caps); text-transform:uppercase; color:var(--color-text-subtle)">Info</span>
+            <button onClick="{{ v.toggleInfo }}" title="Hide info" style="width:30px; height:30px; display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text-muted); cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="x" size="15"></lc-icon></button>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:6px">
+            <sc-if value="{{ v.ed.titleOff }}">
+              <div onClick="{{ v.ed.startTitle }}" style="display:flex; align-items:center; gap:8px; padding:4px 8px; margin:-4px -8px; border-radius:10px; cursor:text" style-hover="background:var(--color-surface-hover)">
+                <span style="flex:1; font-size:var(--text-lg); font-weight:700; color:{{ v.titleColor }}">{{ v.title }}</span><lc-icon name="pencil" size="13" style="color:var(--color-text-subtle)"></lc-icon>
+              </div>
+            </sc-if>
+            <sc-if value="{{ v.ed.titleOn }}">
+              <input class="input" value="{{ editValue }}" onChange="{{ onEditValue }}" onKeyDown="{{ onEditKey }}" onBlur="{{ saveEdit }}" autoFocus="{{ true }}" placeholder="Add a title" style="font-size:var(--text-lg); font-weight:700; border-radius:10px; border-color:var(--color-accent)">
+            </sc-if>
+            <sc-if value="{{ v.ed.descOff }}">
+              <div onClick="{{ v.ed.startDesc }}" style="display:flex; align-items:flex-start; gap:8px; padding:4px 8px; margin:-4px -8px; border-radius:10px; cursor:text" style-hover="background:var(--color-surface-hover)">
+                <span style="flex:1; font-size:var(--text-sm); color:{{ v.descColor }}; text-wrap:pretty">{{ v.desc }}</span><lc-icon name="pencil" size="13" style="color:var(--color-text-subtle); margin-top:3px"></lc-icon>
+              </div>
+            </sc-if>
+            <sc-if value="{{ v.ed.descOn }}">
+              <textarea class="input" value="{{ editValue }}" onChange="{{ onEditValue }}" onKeyDown="{{ onEditKey }}" onBlur="{{ saveEdit }}" autoFocus="{{ true }}" placeholder="Add a description" style="min-height:84px; font-size:var(--text-sm); border-radius:12px; border-color:var(--color-accent)"></textarea>
+            </sc-if>
+            <sc-if value="{{ v.ed.any }}">
+              <span style="font-size:var(--text-2xs); color:var(--color-text-subtle)">Enter to save · Esc to cancel</span>
+            </sc-if>
+            <div style="display:flex; align-items:center; gap:2px; margin-top:4px; margin-left:-6px">
+              <sc-for list="{{ v.stars }}" as="st" hint-placeholder-count="5">
+                <button onClick="{{ st.onClick }}" style="width:28px; height:28px; display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:{{ st.color }}; cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="star" size="16" fill="{{ st.fill }}"></lc-icon></button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:14px">
+            <div onClick="{{ v.ed.startDate }}" style="display:flex; gap:12px; padding:4px 8px; margin:-4px -8px; border-radius:10px; cursor:text" style-hover="background:var(--color-surface-hover)">
+              <lc-icon name="calendar" size="17" style="color:var(--color-text-subtle); margin-top:2px"></lc-icon>
+              <sc-if value="{{ v.ed.dateOff }}">
+                <div style="flex:1; display:flex; flex-direction:column; line-height:1.35; font-variant-numeric:var(--numeric)"><span style="font-weight:600">{{ v.dateMain }}</span><span style="font-size:var(--text-xs); color:var(--color-text-muted)">{{ v.dateSub }}</span></div>
+                <lc-icon name="pencil" size="13" style="color:var(--color-text-subtle); margin-top:3px"></lc-icon>
+              </sc-if>
+              <sc-if value="{{ v.ed.dateOn }}">
+                <div style="flex:1; display:flex; flex-direction:column; gap:4px">
+                  <input class="input" value="{{ editValue }}" onChange="{{ onEditValue }}" onKeyDown="{{ onEditKey }}" onBlur="{{ saveEdit }}" autoFocus="{{ true }}" style="font-family:var(--font-mono); font-size:var(--text-sm); border-radius:10px; border-color:var(--color-accent); min-height:32px">
+                  <span style="font-size:var(--text-2xs); color:{{ v.dateHintColor }}">{{ v.dateHint }}</span>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display:flex; gap:12px">
+              <lc-icon name="camera" size="17" style="color:var(--color-text-subtle); margin-top:2px"></lc-icon>
+              <div style="display:flex; flex-direction:column; line-height:1.35"><span style="font-weight:600">{{ v.camera }}</span><span style="font-size:var(--text-xs); color:var(--color-text-muted)">{{ v.lens }}</span></div>
+            </div>
+            <div style="display:flex; gap:12px">
+              <lc-icon name="aperture" size="17" style="color:var(--color-text-subtle); margin-top:2px"></lc-icon>
+              <div style="display:flex; flex-wrap:wrap; column-gap:14px; font-weight:600; font-variant-numeric:var(--numeric)">
+                <sc-for list="{{ v.exposure }}" as="e" hint-placeholder-count="4"><span>{{ e.v }}</span></sc-for>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px">
+              <lc-icon name="image" size="17" style="color:var(--color-text-subtle); margin-top:2px"></lc-icon>
+              <div style="display:flex; flex-direction:column; line-height:1.35; font-variant-numeric:var(--numeric)"><span style="font-weight:600">{{ v.dims }}</span><span style="font-size:var(--text-xs); color:var(--color-text-muted)">{{ v.dimsSub }}</span></div>
+            </div>
+            <div style="display:flex; gap:12px">
+              <lc-icon name="file" size="17" style="color:var(--color-text-subtle); margin-top:2px"></lc-icon>
+              <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; line-height:1.35; font-variant-numeric:var(--numeric)">
+                <span style="font-weight:600">{{ v.fileLine }}</span>
+                <sc-if value="{{ v.hasPair }}"><span style="font-size:var(--text-xs); color:var(--color-text-muted)">{{ v.pairLine }}</span></sc-if>
+                <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-text-muted); overflow-wrap:anywhere; margin-top:2px">{{ v.path }}</span>
+                <span style="display:inline-flex; align-items:center; gap:5px; font-size:var(--text-xs); font-weight:600; color:var(--color-accent-text); cursor:pointer; margin-top:2px"><lc-icon name="folder-open" size="13"></lc-icon>Show in Explorer</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <span style="font-size:var(--text-2xs); font-weight:700; letter-spacing:var(--tracking-caps); text-transform:uppercase; color:var(--color-text-subtle)">Location</span>
+            <div style="position:relative; height:140px; border-radius:var(--radius-md); overflow:hidden; background-color:var(--color-surface-raised); background-image:radial-gradient(ellipse 60% 70% at {{ v.mapX }}% 60%, rgb(174 191 146 / 0.16), transparent 70%), linear-gradient(var(--color-divider) 1px, transparent 1px), linear-gradient(90deg, var(--color-divider) 1px, transparent 1px); background-size:auto, 28px 28px, 28px 28px">
+              <sc-if value="{{ v.hasGps }}">
+                <div style="position:absolute; left:50%; top:50%; transform:translate(-50%, -100%); color:var(--color-accent)"><lc-icon name="pin" size="28" fill="var(--color-surface-raised)" stroke="2.5"></lc-icon></div>
+              </sc-if>
+              <sc-if value="{{ v.noGps }}">
+                <div style="position:absolute; inset:0; display:grid; place-items:center; color:var(--color-text-subtle); font-size:var(--text-sm)">No location in this file</div>
+              </sc-if>
+              <span style="position:absolute; right:8px; bottom:6px; font-size:9.5px; color:var(--color-text-subtle)">© OpenStreetMap</span>
+            </div>
+            <div onClick="{{ v.ed.startPlace }}" style="display:flex; gap:12px; padding:4px 8px; margin:-4px -8px; border-radius:10px; cursor:text" style-hover="background:var(--color-surface-hover)">
+              <lc-icon name="pin" size="17" style="color:var(--color-text-subtle); margin-top:2px"></lc-icon>
+              <sc-if value="{{ v.ed.placeOff }}">
+                <div style="flex:1; display:flex; flex-direction:column; line-height:1.35; font-variant-numeric:var(--numeric)"><span style="font-weight:600; color:{{ v.placeColor }}">{{ v.place }}</span><span style="font-size:var(--text-xs); color:var(--color-text-muted)">{{ v.gps }}</span></div>
+                <lc-icon name="pencil" size="13" style="color:var(--color-text-subtle); margin-top:3px"></lc-icon>
+              </sc-if>
+              <sc-if value="{{ v.ed.placeOn }}">
+                <input class="input" value="{{ editValue }}" onChange="{{ onEditValue }}" onKeyDown="{{ onEditKey }}" onBlur="{{ saveEdit }}" autoFocus="{{ true }}" placeholder="Search for a place" style="flex:1; font-size:var(--text-sm); border-radius:10px; border-color:var(--color-accent); min-height:32px">
+              </sc-if>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <span style="font-size:var(--text-2xs); font-weight:700; letter-spacing:var(--tracking-caps); text-transform:uppercase; color:var(--color-text-subtle)">Tags</span>
+            <div style="display:flex; flex-wrap:wrap; gap:6px">
+              <sc-for list="{{ v.tags }}" as="tg" hint-placeholder-count="2"><span style="display:inline-flex; align-items:center; height:26px; padding:0 11px; border-radius:var(--radius-pill); background:var(--color-surface-active); font-size:var(--text-xs); font-weight:600">{{ tg.name }}</span></sc-for>
+              <span style="display:inline-flex; align-items:center; gap:4px; height:26px; padding:0 11px; border-radius:var(--radius-pill); border:1px dashed var(--color-border-strong); color:var(--color-text-muted); font-size:var(--text-xs); font-weight:600; cursor:pointer"><lc-icon name="plus" size="12"></lc-icon>Tag</span>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <span style="font-size:var(--text-2xs); font-weight:700; letter-spacing:var(--tracking-caps); text-transform:uppercase; color:var(--color-text-subtle)">Albums</span>
+            <div style="display:flex; flex-wrap:wrap; gap:6px">
+              <sc-for list="{{ v.albums }}" as="al" hint-placeholder-count="1"><span style="display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border-radius:var(--radius-pill); background:var(--color-accent-subtle); color:var(--color-accent-text); font-size:var(--text-xs); font-weight:600"><lc-icon name="album" size="12"></lc-icon>{{ al.name }}</span></sc-for>
+              <sc-if value="{{ v.noAlbums }}"><span style="font-size:var(--text-sm); color:var(--color-text-subtle)">Not in any album</span></sc-if>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px; padding-top:var(--space-3); border-top:1px solid var(--color-divider); font-size:var(--text-xs); color:var(--color-text-subtle)">
+            <lc-icon name="lock" size="13" style="margin-top:2px"></lc-icon>
+            <span style="text-wrap:pretty">Edits are written into the file's metadata (XMP). Each one can be undone from Activity.</span>
+          </div>
+        </aside>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasToast }}">
+    <div role="status" style="position:fixed; left:50%; bottom:var(--space-6); transform:translateX(-50%); z-index:var(--z-toast); display:flex; align-items:center; gap:12px; padding:8px 8px 8px 16px; border-radius:var(--radius-pill); background:var(--color-surface-raised); color:var(--color-text); box-shadow:var(--shadow-lg); min-width:380px; max-width:680px">
+      <lc-icon name="circle-check" size="18" style="color:var(--color-success)"></lc-icon>
+      <div style="flex:1; min-width:0; font-size:var(--text-sm); display:flex; gap:8px; align-items:baseline; flex-wrap:wrap"><span style="font-weight:700">{{ toast.msg }}</span><span style="color:var(--color-text-muted)">{{ toast.detail }}</span></div>
+      <button onClick="{{ undoToast }}" style="display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 14px; border:0; border-radius:var(--radius-pill); background:var(--color-accent-subtle); color:var(--color-accent-text); font:inherit; font-size:var(--text-sm); font-weight:700; cursor:pointer" style-hover="background:var(--color-surface-active)"><lc-icon name="undo" size="15"></lc-icon>Undo</button>
+      <button onClick="{{ closeToast }}" title="Dismiss" style="width:32px; height:32px; display:grid; place-items:center; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--color-text-muted); cursor:pointer" style-hover="background:var(--color-surface-hover)"><lc-icon name="x" size="15"></lc-icon></button>
+    </div>
+  </sc-if>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;,&quot;section&quot;:&quot;View&quot;},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;signin&quot;,&quot;timeline&quot;,&quot;viewer&quot;,&quot;review&quot;],&quot;default&quot;:&quot;timeline&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;View&quot;},&quot;libraryState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;firstScan&quot;,&quot;empty&quot;,&quot;noResults&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;States&quot;},&quot;scanStatus&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;idle&quot;,&quot;scanning&quot;,&quot;errors&quot;],&quot;default&quot;:&quot;idle&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;States&quot;},&quot;mergeOutcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;success&quot;,&quot;fail&quot;],&quot;default&quot;:&quot;success&quot;,&quot;tsType&quot;:&quot;'success'|'fail'&quot;,&quot;section&quot;:&quot;States&quot;}}">
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const pad=(n,l=2)=>String(n).padStart(l,'0');
+const nf=n=>n.toLocaleString('en-AU');
+const mb=b=>b>=1e9?(b/1e9).toFixed(1)+' GB':(b/1e6).toFixed(1)+' MB';
+const dur=s=>Math.floor(s/60)+':'+pad(Math.floor(s%60));
+function rand(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const pick=(r,a)=>a[Math.floor(r()*a.length)];
+const SCENES=[
+ {tag:'sunset',sky:['oklch(0.80 0.08 70)','oklch(0.64 0.13 38)'],mid:'oklch(0.42 0.06 30)',g:['oklch(0.30 0.04 35)','oklch(0.19 0.03 30)'],sun:'oklch(0.95 0.07 90)',glow:'oklch(0.9 0.12 75 / 0.55)'},
+ {tag:'mountains',sky:['oklch(0.88 0.035 235)','oklch(0.72 0.08 240)'],mid:'oklch(0.6 0.035 250)',g:['oklch(0.5 0.06 150)','oklch(0.35 0.05 150)']},
+ {tag:'coast',sky:['oklch(0.91 0.025 220)','oklch(0.8 0.05 215)'],mid:'oklch(0.56 0.08 225)',g:['oklch(0.5 0.08 220)','oklch(0.33 0.07 232)'],sun:'oklch(0.98 0.02 95)',glow:'oklch(0.97 0.03 90 / 0.4)'},
+ {tag:'desert',sky:['oklch(0.9 0.04 85)','oklch(0.82 0.06 70)'],mid:'oklch(0.66 0.1 48)',g:['oklch(0.7 0.09 65)','oklch(0.54 0.1 50)'],sun:'oklch(0.99 0.03 95)',glow:'oklch(0.97 0.06 90 / 0.5)'},
+ {tag:'fog',sky:['oklch(0.86 0.008 100)','oklch(0.77 0.012 100)'],mid:'oklch(0.67 0.015 130)',g:['oklch(0.57 0.02 130)','oklch(0.44 0.02 130)']},
+ {tag:'night',sky:['oklch(0.33 0.06 270)','oklch(0.22 0.05 265)'],mid:'oklch(0.21 0.03 260)',g:['oklch(0.15 0.02 260)','oklch(0.1 0.01 260)'],sun:'oklch(0.94 0.03 95)',glow:'oklch(0.7 0.06 260 / 0.35)'},
+ {tag:'forest',sky:['oklch(0.89 0.03 180)','oklch(0.78 0.05 170)'],mid:'oklch(0.46 0.06 155)',g:['oklch(0.36 0.06 150)','oklch(0.23 0.04 150)']},
+ {tag:'fields',sky:['oklch(0.86 0.05 230)','oklch(0.75 0.07 235)'],mid:'oklch(0.56 0.1 60)',g:['oklch(0.64 0.12 78)','oklch(0.47 0.1 60)'],sun:'oklch(0.98 0.03 95)',glow:'oklch(0.98 0.04 95 / 0.35)'}
+];
+const OBJ_BG=[['oklch(0.87 0.025 80)','oklch(0.77 0.035 70)'],['oklch(0.82 0.03 200)','oklch(0.7 0.03 210)'],['oklch(0.35 0.02 60)','oklch(0.25 0.02 50)'],['oklch(0.9 0.03 30)','oklch(0.8 0.05 35)']];
+const OBJ_FG=['oklch(0.62 0.13 45)','oklch(0.56 0.08 150)','oklch(0.76 0.12 88)','oklch(0.46 0.07 250)','oklch(0.92 0.015 90)','oklch(0.3 0.03 40)'];
+function landscape(r,sc){
+  const hz=48+r()*24,L=[];
+  if(sc.sun&&r()<0.75){const sx=(12+r()*76).toFixed(1),sy=Math.max(10,hz-6-r()*30).toFixed(1);L.push(`radial-gradient(circle at ${sx}% ${sy}%, ${sc.sun} 0 3.2%, transparent 3.6%)`,`radial-gradient(circle at ${sx}% ${sy}%, ${sc.glow} 0, transparent 38%)`);}
+  L.push(`linear-gradient(${(180+(r()-0.5)*10).toFixed(1)}deg, transparent ${hz.toFixed(1)}%, ${sc.g[0]} ${hz.toFixed(1)}%, ${sc.g[1]})`);
+  if(r()<0.7){const m=hz-3-r()*9;L.push(`linear-gradient(${(180+(r()-0.5)*34).toFixed(1)}deg, transparent ${m.toFixed(1)}%, ${sc.mid} ${m.toFixed(1)}%)`);}
+  L.push(`linear-gradient(${sc.sky[0]}, ${sc.sky[1]} ${hz.toFixed(1)}%)`);
+  return L.join(', ');
+}
+function still(r){
+  const b=pick(r,OBJ_BG),f=pick(r,OBJ_FG),x=30+r()*40,y=40+r()*16,s=11+r()*10,tb=60+r()*14;
+  return `radial-gradient(circle at ${x.toFixed(1)}% ${y.toFixed(1)}%, ${f} 0 ${s.toFixed(1)}%, transparent ${(s+0.5).toFixed(1)}%), radial-gradient(ellipse 30% 6% at ${x.toFixed(1)}% ${Math.min(94,y+s*1.25).toFixed(1)}%, rgb(0 0 0 / 0.25), transparent), linear-gradient(transparent ${tb.toFixed(1)}%, rgb(0 0 0 / 0.08) ${tb.toFixed(1)}%), linear-gradient(160deg, ${b[0]}, ${b[1]})`;
+}
+const PLACES=[
+ {n:'Point Addis, Victoria',gps:[-38.392,144.252],sc:[2,0]},
+ {n:'Grampians, Victoria',gps:[-37.15,142.45],sc:[1,7]},
+ {n:'Lake Tekapo, New Zealand',gps:[-44.004,170.477],sc:[1,5]},
+ {n:'Hobart, Tasmania',gps:[-42.882,147.327],sc:[4,2]},
+ {n:'Kangaroo Valley, NSW',gps:[-34.737,150.53],sc:[6,4]},
+ {n:'Margaret River, WA',gps:[-33.955,115.075],sc:[2,3]},
+ {n:'Flinders Ranges, SA',gps:[-31.5,138.6],sc:[3,0]},
+ {n:'Home',gps:null,sc:[-1]}
+];
+const CAMS=[
+ {name:'Fujifilm X-T4',lenses:[['XF 23mm F2 R WR',23],['XF 16-80mm F4 R OIS WR',35],['XF 56mm F1.2 R',56]]},
+ {name:'Google Pixel 8',lenses:[['Main camera',6.9]]},
+ {name:'Apple iPhone 13 Pro',lenses:[['Main camera',5.7],['Ultra wide camera',1.57]]}
+];
+const SS=['1/30','1/60','1/125','1/250','1/500','1/1000','1/2000'];
+function buildLibrary(){
+  const r=rand(20261108),out=[];const d=new Date(2026,10,7);let seq=4100,iseq=200;
+  while(out.length<2200){const room=2200-out.length;
+    const n=Math.min(room,r()<0.12?12+Math.floor(r()*18):2+Math.floor(r()*9));
+    const pl=pick(r,PLACES);const scI=r()<0.75?pl.sc[0]:pl.sc[pl.sc.length-1];
+    let t=new Date(d.getFullYear(),d.getMonth(),d.getDate(),19,Math.floor(r()*50),Math.floor(r()*60));
+    for(let i=0;i<n;i++){
+      t=new Date(t.getTime()-(3+r()*26)*60000);
+      const ci=r()<0.45?0:(r()<0.55?1:2),cam=CAMS[ci],lens=pick(r,cam.lenses),portrait=r()<0.28;
+      let kind='jpg',w,h,ext,name,pair=null,size,pairSize=0,len=0;
+      const stamp=`${t.getFullYear()}${pad(t.getMonth()+1)}${pad(t.getDate())}_${pad(t.getHours())}${pad(t.getMinutes())}${pad(t.getSeconds())}`;
+      if(ci===0){w=6240;h=4160;const base='DSCF'+pad(seq++%10000,4);const k=r();
+        if(k<0.35){kind='pair';ext='RAF';name=base+'.RAF';pair=base+'.JPG';size=(28+r()*6)*1e6;pairSize=(9+r()*5)*1e6;}
+        else if(k<0.55){kind='raw';ext='RAF';name=base+'.RAF';size=(28+r()*6)*1e6;}
+        else{ext='JPG';name=base+'.JPG';size=(9+r()*5)*1e6;}}
+      else if(ci===1){if(r()<0.3){kind='video';w=1920;h=1080;ext='MP4';name='PXL_'+stamp+'.mp4';len=3+Math.floor(r()*r()*150);size=len*1.9e6;}else{w=4080;h=3072;ext='JPG';name='PXL_'+stamp+'.jpg';size=(2.5+r()*3.5)*1e6;}}
+      else{if(r()<0.25){kind='video';w=1920;h=1080;ext='MOV';name='IMG_'+pad(iseq++%10000,4)+'.MOV';len=3+Math.floor(r()*r()*120);size=len*2.1e6;}else{kind='heic';w=4032;h=3024;ext='HEIC';name='IMG_'+pad(iseq++%10000,4)+'.HEIC';size=(1.8+r()*2.7)*1e6;}}
+      if(portrait){const x=w;w=h;h=x;}
+      const sc=scI<0?null:SCENES[(scI+(r()<0.2?1:0))%SCENES.length];
+      const bg=sc?landscape(r,sc):still(r);
+      const tags=sc?[sc.tag]:['still life'];if(r()<0.3)tags.push(pick(r,['family','walk','golden hour','wide','detail','weekend']));
+      const Y=t.getFullYear(),M=pad(t.getMonth()+1),D=pad(t.getDate());
+      const folder=`D:\\Photos\\${Y}\\${Y}-${M}-${D}${pl.gps?' '+pl.n.split(',')[0]:''}\\`;
+      out.push({id:'p'+out.length,t,ar:w/h,kind,ext,name,pair,w,h,len,size,pairSize,cam:cam.name,lens:lens[0],fl:lens[1],
+        f:ci===0?pick(r,[1.4,2,2.8,4,5.6,8,11]):(ci===1?1.7:1.5),ss:pick(r,SS),iso:pick(r,ci===0?[160,200,400,800,1600,3200]:[50,100,200,400,800]),
+        place:pl.n,gps:pl.gps?[pl.gps[0]+(r()-0.5)*0.02,pl.gps[1]+(r()-0.5)*0.02]:null,bg,fav:r()<0.06,rating:r()<0.2?3+Math.floor(r()*3):0,tags,
+        albums:pl.n.startsWith('Point')&&Y===2024?['Coast 2024']:(pl.n.startsWith('Hobart')?['Tasmania']:[]),folder});
+    }
+    d.setDate(d.getDate()-(1+Math.floor(r()*r()*14)));
+  }
+  return out;
+}
+const GA=landscape(rand(41),SCENES[0]),GB=landscape(rand(77),SCENES[3]);
+const GROUPS=[
+ {id:'g1',type:'visual',title:'3 copies of DSCF4821',reason:'Highest resolution',keeper:0,
+  copies:[
+   {name:'DSCF4821.JPG',path:'D:\\Photos\\2024\\2024-06-14 Point Addis\\',w:6240,h:4160,size:12.4e6,fmt:'JPEG',modified:'14 Jun 2024, 18:42',bg:GA},
+   {name:'IMG_20240614_184207.jpg',path:'D:\\Photos\\Phone backup\\2024-06\\',w:3120,h:2080,size:2.1e6,fmt:'JPEG',modified:'15 Jun 2024, 09:03',bg:GA},
+   {name:'DSCF4821-edit.heic',path:'D:\\Photos\\Exports\\Print\\',w:4032,h:2688,size:3.2e6,fmt:'HEIC',modified:'2 Jul 2024, 21:17',bg:GA}],
+  meta:{date:['2024-06-14 18:42:07','2024-06-14 18:42:07','2024-06-14 18:42:07'],gps:[null,'−38.3920°, 144.2520°',null],camera:['Fujifilm X-T4','Fujifilm X-T4',null],lens:['XF 23mm F2 R WR',null,null],keywords:[['coast'],['coast','sunset'],['coast','cliffs']],rating:[3,null,5],title:[null,'Last light, Point Addis',null],description:['From the cliff path, looking west.',null,'Edited for print.']}},
+ {id:'g2',type:'exact',title:'2 copies of IMG_0412',reason:'Inside the dated library folder',keeper:0,
+  copies:[
+   {name:'IMG_0412.HEIC',path:'D:\\Photos\\2025\\2025-03-02 Hobart\\',w:4032,h:3024,size:2.84e6,fmt:'HEIC',modified:'2 Mar 2025, 11:26',bg:landscape(rand(9),SCENES[4])},
+   {name:'IMG_0412 (1).HEIC',path:'D:\\Photos\\Downloads\\',w:4032,h:3024,size:2.84e6,fmt:'HEIC',modified:'9 Mar 2025, 20:41',bg:landscape(rand(9),SCENES[4])}],
+  meta:{date:['2025-03-02 11:26:51','2025-03-02 11:26:51'],gps:['−42.8821°, 147.3272°','−42.8821°, 147.3272°'],camera:['Apple iPhone 13 Pro','Apple iPhone 13 Pro'],lens:['Main camera','Main camera'],keywords:[['fog','harbour'],[]],rating:[4,null],title:[null,null],description:[null,null]}},
+ {id:'g3',type:'similar',title:'4 similar shots',
+  copies:[0,1,2,3].map(i=>({name:'DSCF'+(7710+i)+'.RAF',path:'D:\\Photos\\2025\\2025-09-20 Flinders Ranges\\',w:6240,h:4160,size:(30.8+i*0.3)*1e6,fmt:'Fujifilm RAF',modified:'20 Sep 2025, 07:12:0'+(4+i*1.5|0),bg:landscape(rand(300+i),SCENES[3])}))}
+];
+const FIELDS=[['date','Capture date'],['gps','GPS'],['camera','Camera'],['lens','Lens'],['keywords','Keywords'],['rating','Rating'],['title','Title'],['description','Description']];
+const ALBUMS=[['Coast 2024',214],['Tasmania',88],['Still life',41],['To print',12]];
+const FOLDERS=['D:\\Photos\\Archive','D:\\Photos\\To sort','D:\\Photos\\2026'];
+const TAGS=['coast','sunset','mountains','family','to edit'];
+const LETTERS='ABCDEF';
+const EDIT_LABEL={title:'Title',desc:'Description',date:'Capture date',place:'Location'};
+
+class Component extends DCLogic {
+  lib = buildLibrary();
+  byId = Object.fromEntries(this.lib.map(it=>[it.id,it]));
+  state = Object.assign({
+    theme:'dark',screen:'timeline',viewerId:null,selected:{},anchor:null,hoverId:null,hoverDay:null,shift:false,
+    st:0,vw:1200,vh:800,query:'',trashed:{},trashVer:0,favs:{},ratings:{},edits:{},extraAlbums:{},extraTags:{},moved:{},
+    toast:null,popover:null,tagDraft:'',libMode:'normal',scanShown:0,scan:{status:'idle',done:0,total:2200,last:'2 min ago',errors:0},scanSlow:false,
+    zoom:1,infoOpen:true,playing:false,vt:0,stageW:1000,stageH:700,editing:null,
+    gi:0,keeper:{},choices:{},simTrash:{},merge:null,failed:null,dupCount:128,mergeOutcome:'success',
+    scrubHover:null,pw:'',pwError:false
+  }, this.fromProps(this.props||{}));
+
+  fromProps(p){
+    const o={};
+    if(p.theme) o.theme=p.theme;
+    if(p.mergeOutcome) o.mergeOutcome=p.mergeOutcome;
+    const scr=p.screen||'timeline';
+    o.screen=scr==='viewer'?'timeline':scr;
+    o.viewerId=scr==='viewer'?(this.lib.find(it=>it.kind==='pair')||this.lib[0]).id:null;
+    const ls=p.libraryState||'normal';
+    o.libMode=ls==='noResults'?'normal':ls;o.query=ls==='noResults'?'Antarctica':'';
+    const ss=p.scanStatus||'idle';
+    if(ls==='firstScan'){o.scan={status:'scanning',done:80,total:2200,last:'',errors:0};o.scanShown=80;}
+    else if(ls==='empty'){o.scan={status:'none',done:0,total:0,last:'',errors:0};}
+    else if(ss==='scanning'){o.scan={status:'scanning',done:740,total:2200,last:'',errors:0};o.scanSlow=true;}
+    else if(ss==='errors'){o.scan={status:'errors',done:2200,total:2200,last:'Today 09:12',errors:12};}
+    else o.scan={status:'idle',done:2200,total:2200,last:'2 min ago',errors:0};
+    return o;
+  }
+  componentDidMount(){this.boot();}
+  boot(){
+    if(this._booted)return;this._booted=true;
+    this.onKeyDown=e=>this.keyDown(e);this.onKeyUp=e=>{if(e.key==='Shift')this.setState({shift:false});};
+    this.onWinMove=e=>{if(this.dragging)this.scrubTo(e.clientY);};
+    this.onWinUp=()=>{this.dragging=false;};
+    this.onWinDown=e=>{if(this.state.popover&&!e.target.closest('[data-pop]'))this.setState({popover:null});};
+    window.addEventListener('keydown',this.onKeyDown);window.addEventListener('keyup',this.onKeyUp);
+    window.addEventListener('mousemove',this.onWinMove);window.addEventListener('mouseup',this.onWinUp);window.addEventListener('mousedown',this.onWinDown);
+    this.timer=setInterval(()=>this.tick(),250);
+    this.ensureEls();
+  }
+  ensureEls(){
+    const sc=document.querySelector('[data-tl-scroll]');
+    if(sc!==this.scrollEl){
+      if(this.ro){this.ro.disconnect();this.ro=null;}
+      this.scrollEl=sc;
+      if(sc){const upd=()=>{const w=sc.clientWidth,h=sc.clientHeight;if(w&&(w!==this.state.vw||h!==this.state.vh))this.setState({vw:w,vh:h});};
+        this.ro=new ResizeObserver(upd);this.ro.observe(sc);upd();
+        if(sc.scrollTop!==this.state.st)this.setState({st:sc.scrollTop});}
+    }
+    const stg=document.querySelector('[data-stage]');
+    if(stg!==this.stageEl){
+      if(this.sro){this.sro.disconnect();this.sro=null;}
+      this.stageEl=stg;
+      if(stg){const upd=()=>{const w=stg.clientWidth,h=stg.clientHeight;if(w&&(w!==this.state.stageW||h!==this.state.stageH))this.setState({stageW:w,stageH:h});};
+        this.sro=new ResizeObserver(upd);this.sro.observe(stg);upd();}
+    }
+    this.scrubEl=document.querySelector('[data-scrub]');
+  }
+  componentWillUnmount(){
+    window.removeEventListener('keydown',this.onKeyDown);window.removeEventListener('keyup',this.onKeyUp);
+    window.removeEventListener('mousemove',this.onWinMove);window.removeEventListener('mouseup',this.onWinUp);window.removeEventListener('mousedown',this.onWinDown);
+    clearInterval(this.timer);clearTimeout(this.tt);(this.mt||[]).forEach(clearTimeout);
+    if(this.ro)this.ro.disconnect();if(this.sro)this.sro.disconnect();
+  }
+  componentDidUpdate(){this.ensureEls();}
+  syncProps(){
+    const p=this.props||{},k=[p.theme,p.screen,p.libraryState,p.scanStatus,p.mergeOutcome].join('|');
+    if(this._pk===undefined){this._pk=k;return;}
+    if(k!==this._pk){this._pk=k;setTimeout(()=>this.setState(Object.assign(this.fromProps(p),{selected:{},editing:null,merge:null,failed:null})),0);}
+  }
+  tick(){
+    this.ensureEls();
+    const s=this.state,patch={};
+    if(s.scan.status==='scanning'){
+      const step=s.libMode==='firstScan'?9:(s.scanSlow?2:40);const done=Math.min(s.scan.total,s.scan.done+step);
+      patch.scan=Object.assign({},s.scan,{done});if(s.libMode==='firstScan')patch.scanShown=done;
+      if(done>=s.scan.total){patch.scan={status:'idle',done,total:s.scan.total,last:'Just now',errors:0};if(s.libMode==='firstScan')patch.libMode='normal';}
+    }
+    if(s.playing){const it=this.byId[s.viewerId];const vt=s.vt+0.25;if(!it||vt>=it.len){patch.playing=false;patch.vt=it?it.len:0;}else patch.vt=vt;}
+    if(Object.keys(patch).length)this.setState(patch);
+  }
+  keyDown(e){
+    const s=this.state,tag=(e.target&&e.target.tagName)||'';
+    if(e.key==='Shift'&&!s.shift)this.setState({shift:true});
+    if(tag==='INPUT'||tag==='TEXTAREA')return;
+    if(s.viewerId){
+      if(e.key==='Escape')this.setState({viewerId:null});
+      else if(e.key==='ArrowRight')this.step(1);else if(e.key==='ArrowLeft')this.step(-1);
+      else if(e.key==='i'||e.key==='I')this.setState({infoOpen:!s.infoOpen});
+      else if(e.key==='+'||e.key==='=')this.zoomIn();else if(e.key==='-')this.zoomOut();
+      else if(e.key==='f'||e.key==='F')this.toggleFav(this.byId[s.viewerId]);
+      else if(e.key===' '){e.preventDefault();this.setState({playing:!s.playing});}
+      else if(e.key==='Delete')this.trashIds([s.viewerId]);
+      return;
+    }
+    if(e.key==='Escape'){this.setState({selected:{},popover:null});}
+    else if(e.key==='Delete'&&Object.keys(s.selected).length)this.trashSel();
+    else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();const i=document.querySelector('input[placeholder^="Search"]');if(i)i.focus();}
+  }
+  toast(msg,detail,undo){
+    clearTimeout(this.tt);const id=Date.now();
+    this.setState({toast:{id,msg,detail:detail||'',undo}});
+    this.tt=setTimeout(()=>this.setState(s=>s.toast&&s.toast.id===id?{toast:null}:null),8000);
+  }
+  getItems(){
+    const s=this.state,key=[s.libMode,s.scanShown,s.query,s.trashVer].join('|');
+    if(this._ik===key)return this._items;
+    let list=s.libMode==='empty'?[]:this.lib;
+    if(s.libMode==='firstScan')list=list.slice(0,s.scanShown);
+    list=list.filter(it=>!s.trashed[it.id]);
+    const q=s.query.trim().toLowerCase();
+    if(q)list=list.filter(it=>(it.place+' '+it.name+' '+it.cam+' '+it.tags.join(' ')).toLowerCase().includes(q));
+    list.forEach((it,i)=>{it.fi=i;});
+    this._ik=key;this._items=list;this._lk=null;return list;
+  }
+  getLayout(items){
+    const s=this.state,W=s.vw,key=this._ik+'|'+W;
+    if(this._lk===key)return this._layout;
+    const padL=24,padR=72,gap=4,target=210,usable=Math.max(320,W-padL-padR);
+    const blocks=[],months=[];let y=6,cm=null,cd=null,day=[];
+    const mc={};items.forEach(it=>{const k=it.t.getFullYear()*12+it.t.getMonth();mc[k]=(mc[k]||0)+1;});
+    const flush=()=>{
+      if(!day.length)return;const d0=day[0].t;
+      blocks.push({t:'d',y,h:40,ids:day.map(i=>i.id),key:d0.toDateString(),label:`${DAYS[d0.getDay()]} ${d0.getDate()} ${MONTHS[d0.getMonth()]}`,place:day[0].place==='Home'?'':day[0].place,count:day.length});y+=40;
+      let row=[],sum=0;
+      const push=h=>{let x=padL;blocks.push({t:'r',y,h,tiles:row.map(it=>{const w=it.ar*h,o={x,w,it};x+=w+gap;return o;})});y+=h+gap;row=[];sum=0;};
+      for(const it of day){row.push(it);sum+=it.ar;if(sum*target+(row.length-1)*gap>=usable)push((usable-(row.length-1)*gap)/sum);}
+      if(row.length)push(Math.min(target,(usable-(row.length-1)*gap)/sum));
+      y+=14;day=[];
+    };
+    for(const it of items){
+      const mk=it.t.getFullYear()*12+it.t.getMonth();
+      if(mk!==cm){flush();const b={t:'m',y,h:64,mk,label:`${MONTHS[it.t.getMonth()]} ${it.t.getFullYear()}`,short:`${MONTHS[it.t.getMonth()].slice(0,3)} ${it.t.getFullYear()}`,year:it.t.getFullYear(),count:nf(mc[mk])};blocks.push(b);months.push(b);y+=64;cm=mk;cd=null;}
+      const dk=it.t.toDateString();if(dk!==cd){flush();cd=dk;}
+      day.push(it);
+    }
+    flush();
+    const tailY=y+8;y+=s.libMode==='firstScan'?140:60;
+    this._layout={blocks,months,total:y,tailY};this._lk=key;return this._layout;
+  }
+  setScrollEl=()=>{};
+  setStageEl=()=>{};
+  setScrubEl=()=>{};
+  onScroll=e=>{const st=e.currentTarget.scrollTop;if(this.raf)return;this.raf=requestAnimationFrame(()=>{this.raf=null;this.setState({st});});};
+  scrubFrac(clientY){if(!this.scrubEl)return 0;const r=this.scrubEl.getBoundingClientRect();return Math.min(1,Math.max(0,(clientY-r.top-18)/(r.height-36)));}
+  scrubTo(clientY){const L=this._layout;if(!L||!this.scrollEl)return;const f=this.scrubFrac(clientY);this.scrollEl.scrollTop=f*Math.max(0,L.total-this.state.vh);this.setState({scrubHover:f});}
+  scrubDown=e=>{e.preventDefault();this.dragging=true;this.scrubTo(e.clientY);};
+  scrubMove=e=>{if(!this.dragging)this.setState({scrubHover:this.scrubFrac(e.clientY)});};
+  scrubLeave=()=>{if(!this.dragging)this.setState({scrubHover:null});};
+  monthAt(y){const ms=(this._layout||{}).months||[];let m=ms[0];for(const b of ms){if(b.y<=y)m=b;else break;}return m;}
+
+  selIds(){return Object.keys(this.state.selected);}
+  toggleSel(it,e){
+    const s=this.state;
+    if(e&&e.shiftKey&&s.anchor&&this.byId[s.anchor]&&this.byId[s.anchor].fi!=null)return this.selectRange(it);
+    const sel=Object.assign({},s.selected);if(sel[it.id])delete sel[it.id];else sel[it.id]=true;
+    this.setState({selected:sel,anchor:it.id});
+  }
+  selectRange(it){
+    const s=this.state,items=this.getItems(),a=this.byId[s.anchor].fi,b=it.fi,sel=Object.assign({},s.selected);
+    for(let i=Math.min(a,b);i<=Math.max(a,b);i++)sel[items[i].id]=true;
+    this.setState({selected:sel,anchor:it.id});
+  }
+  tileClick(it,e){
+    const s=this.state;
+    if(e.shiftKey&&s.anchor)return this.selectRange(it);
+    if(Object.keys(s.selected).length||e.ctrlKey||e.metaKey)return this.toggleSel(it,e);
+    this.setState({viewerId:it.id,zoom:1,playing:false,vt:0,editing:null});
+  }
+  trashIds(ids){
+    const s=this.state,tr=Object.assign({},s.trashed);ids.forEach(id=>tr[id]=true);
+    const patch={trashed:tr,trashVer:s.trashVer+1,selected:{},popover:null};
+    if(s.viewerId&&ids.includes(s.viewerId)){const items=this.getItems(),i=items.findIndex(x=>x.id===s.viewerId),nx=items[i+1]||items[i-1];patch.viewerId=nx&&!ids.includes(nx.id)?nx.id:null;}
+    this.setState(patch);
+    const n=ids.length;
+    this.toast(n===1?`Moved ${this.byId[ids[0]].name} to Trash`:`Moved ${nf(n)} items to Trash`,'Kept for 30 days',()=>this.setState(st=>{const t=Object.assign({},st.trashed);ids.forEach(id=>delete t[id]);return{trashed:t,trashVer:st.trashVer+1};}));
+  }
+  trashSel=()=>this.trashIds(this.selIds());
+  toggleFav(it){
+    if(!it)return;const s=this.state,cur=s.favs[it.id]??it.fav;
+    this.setState({favs:Object.assign({},s.favs,{[it.id]:!cur})});
+    this.toast(cur?'Removed from Favourites':'Added to Favourites',it.name,()=>this.setState(st=>({favs:Object.assign({},st.favs,{[it.id]:cur})})));
+  }
+  zoomIn=()=>{const it=this.byId[this.state.viewerId];if(!it)return;const max=Math.max(1,it.w*2/this.fitW(it));this.setState(s=>({zoom:Math.min(max,s.zoom*2)}));};
+  zoomOut=()=>this.setState(s=>({zoom:Math.max(1,s.zoom/2)}));
+  fitW(it){const s=this.state,sw=Math.max(200,s.stageW-176),sh=Math.max(200,s.stageH-48);return Math.min(sw,sh*it.ar);}
+  step(d){const items=this.getItems(),i=items.findIndex(x=>x.id===this.state.viewerId),n=items[i+d];if(n)this.setState({viewerId:n.id,zoom:1,playing:false,vt:0,editing:null});}
+  startEdit(field){
+    const s=this.state,it=this.byId[s.viewerId],ed=s.edits[it.id]||{};if(s.editing&&s.editing.field===field)return;
+    const t=it.t;const val=field==='title'?(ed.title||''):field==='desc'?(ed.desc||''):field==='date'?(ed.date||`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`):(ed.place??it.place);
+    this.setState({editing:{id:it.id,field,value:val,orig:val,error:false}});
+  }
+  saveEdit=()=>{
+    const s=this.state,e=s.editing;if(!e)return;
+    if(e.value===e.orig){this.setState({editing:null});return;}
+    if(e.field==='date'&&!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(e.value.trim())){this.setState({editing:Object.assign({},e,{error:true})});return;}
+    const prev=(s.edits[e.id]||{})[e.field];
+    this.setState({editing:null,edits:Object.assign({},s.edits,{[e.id]:Object.assign({},s.edits[e.id],{[e.field]:e.value.trim()})})});
+    this.toast(`${EDIT_LABEL[e.field]} saved`,'Written to '+this.byId[e.id].name,()=>this.setState(st=>({edits:Object.assign({},st.edits,{[e.id]:Object.assign({},st.edits[e.id],{[e.field]:prev})})})));
+  };
+  onEditKey=e=>{
+    if(e.key==='Escape'){e.stopPropagation();this.setState({editing:null});}
+    else if(e.key==='Enter'&&!(e.shiftKey&&e.target.tagName==='TEXTAREA')){e.preventDefault();this.saveEdit();}
+  };
+  groupState(){
+    const s=this.state,g=GROUPS[s.gi];const keeper=s.keeper[g.id]??g.keeper;return{g,keeper};
+  }
+  computeRows(g,keeper){
+    const ch=this.state.choices[g.id]||{},n=g.copies.length;
+    const fmt=(f,v)=>v==null||(Array.isArray(v)&&!v.length)?null:f==='keywords'?v.join(', '):f==='rating'?'★'.repeat(v)+'☆'.repeat(5-v):v;
+    return FIELDS.map(([f,label])=>{
+      const vals=g.meta[f].map(v=>fmt(f,v)),present=vals.map((v,i)=>v!=null?i:-1).filter(i=>i>=0),distinct=[...new Set(present.map(i=>vals[i]))];
+      const isConflict=f!=='keywords'&&distinct.length>1,choice=ch[f];
+      let src=null,mode='single';
+      if(choice!=null)src=choice;
+      else if(f==='keywords'&&distinct.length>1)mode='union';
+      else if(distinct.length===1)src=present.includes(keeper)?keeper:present[0];
+      else if(!distinct.length)mode='none';
+      else mode='unresolved';
+      let merged,srcLetters=[],srcText;
+      if(mode==='union'){const u=[...new Set(present.flatMap(i=>g.meta[f][i]))];merged=u.join(', ');srcLetters=present.map(i=>({l:LETTERS[i]}));srcText='combined';}
+      else if(mode==='none'){merged='—';srcText='No copy has a value';}
+      else if(mode==='unresolved'){merged='Choose a value';srcText='Needs your choice';}
+      else{merged=vals[src];srcLetters=[{l:LETTERS[src]}];srcText=choice!=null?(isConflict?'your choice':'chosen by you'):(present.length===n&&distinct.length===1?'all copies agree':'only copy with a value');if(choice==null&&present.length===n&&distinct.length===1)srcLetters=[];}
+      const cells=vals.map((v,i)=>{
+        const picked=mode==='union'?present.includes(i):(src===i&&mode==='single'),empty=v==null;
+        return{text:empty?'—':v,picked,cursor:empty?'default':'pointer',
+          bg:picked?'var(--color-accent-subtle)':'transparent',ring:picked?'inset 0 0 0 1.5px var(--color-accent)':'none',
+          fg:empty?'var(--color-text-subtle)':'var(--color-text)',hover:empty||picked?'':'background:var(--color-surface-hover)',
+          dotBorder:picked?'0':'1.5px solid var(--color-border-strong)',dotBg:picked?'var(--color-accent)':'transparent',dotOpacity:empty?0:1,
+          pick:empty?undefined:()=>this.setState(st=>({choices:Object.assign({},st.choices,{[g.id]:Object.assign({},st.choices[g.id],{[f]:i})})}))};
+      });
+      return{label,cells,merged,srcLetters,srcText,conflict:mode==='unresolved',resolved:isConflict&&mode!=='unresolved',
+        bg:mode==='unresolved'?'var(--color-warning-subtle)':'transparent',mergedFg:mode==='unresolved'?'var(--color-warning)':(mode==='none'?'var(--color-text-subtle)':'var(--color-text)')};
+    });
+  }
+  runMerge(forceOk){
+    const s=this.state,{g,keeper}=this.groupState(),n=g.copies.length,prevGi=s.gi,fail=s.mergeOutcome==='fail'&&!forceOk;
+    (this.mt||[]).forEach(clearTimeout);
+    this.setState({merge:{gid:g.id,step:0},failed:null});
+    const at=(ms,fn)=>this.mt.push(setTimeout(fn,ms));this.mt=[];
+    at(800,()=>fail?this.setState({merge:null,failed:g.id}):this.setState({merge:{gid:g.id,step:1}}));
+    if(fail)return;
+    at(1500,()=>this.setState({merge:{gid:g.id,step:2}}));
+    at(2300,()=>{
+      this.setState(st=>({merge:null,dupCount:st.dupCount-1,gi:(st.gi+1)%GROUPS.length}));
+      this.toast(`Merged ${n} copies into ${g.copies[keeper].name}`,`${n-1} moved to Trash`,()=>this.setState(st=>({dupCount:st.dupCount+1,gi:prevGi})));
+    });
+  }
+
+  renderVals(){
+    if(!this._booted)setTimeout(()=>this.boot(),0);
+    this.syncProps();
+    if(!this._rafPending){this._rafPending=true;requestAnimationFrame(()=>{this._rafPending=false;this.ensureEls();});}
+    const s=this.state,items=this.getItems(),L=this.getLayout(items);
+    const selIds=Object.keys(s.selected),selCount=selIds.length,selMode=selCount>0;
+    const isTimeline=s.screen==='timeline',isReview=s.screen==='review';
+
+    // timeline window
+    const top=s.st-500,bot=s.st+s.vh+500,heads=[],tiles=[];
+    const anchor=s.anchor&&this.byId[s.anchor],hov=s.hoverId&&this.byId[s.hoverId];
+    const rangeOn=s.shift&&anchor&&hov&&anchor.fi!=null&&!s.trashed[anchor.id];
+    const ra=rangeOn?Math.min(anchor.fi,hov.fi):-1,rb=rangeOn?Math.max(anchor.fi,hov.fi):-1;
+    if(isTimeline)for(const b of L.blocks){
+      if(b.y+b.h<top)continue;if(b.y>bot)break;
+      if(b.t==='m')heads.push({isMonth:true,y:b.y,label:b.label,count:b.count});
+      else if(b.t==='d'){const all=b.ids.every(id=>s.selected[id]);const show=selMode||s.hoverDay===b.key;
+        heads.push({isDay:true,y:b.y,label:b.label,place:b.place,count:b.count,showCheck:show,all,checkBorder:all?'var(--color-accent)':'var(--color-border-strong)',checkBg:all?'var(--color-accent)':'transparent',
+          onEnter:()=>this.setState({hoverDay:b.key}),onLeave:()=>this.setState(st=>st.hoverDay===b.key?{hoverDay:null}:null),
+          onCheck:()=>this.setState(st=>{const sel=Object.assign({},st.selected);b.ids.forEach(id=>{if(all)delete sel[id];else sel[id]=true;});return{selected:sel,anchor:b.ids[b.ids.length-1]};})});}
+      else for(const t of b.tiles){
+        const it=t.it,sel=!!s.selected[it.id],h=s.hoverId===it.id,inR=rangeOn&&it.fi>=ra&&it.fi<=rb&&!sel;
+        const fav=s.favs[it.id]??it.fav,small=b.h<120;
+        const badge=it.kind==='video'?dur(it.len):it.kind==='raw'?'RAW':it.kind==='pair'?'RAW+JPG':it.kind==='heic'?'HEIC':'';
+        const ins=sel?(small?6:12):0;
+        tiles.push({x:t.x.toFixed(2),y:b.y,w:t.w.toFixed(2),h:b.h.toFixed(2),bg:it.bg,inset:ins,radius:sel?'var(--radius-sm)':'var(--radius-tile)',
+          cellBg:sel||inR?'var(--color-accent-subtle)':'var(--color-placeholder)',
+          ring:inR?'inset 0 0 0 2px var(--color-accent)':(h&&!sel?'inset 0 0 0 2px rgb(255 255 255 / 0.55)':'none'),
+          scrim:h||selMode?1:0,showCheck:h||selMode,sel,checkBorder:sel?'var(--color-accent)':'rgb(255 255 255 / 0.92)',checkBg:sel?'var(--color-accent)':'rgb(0 0 0 / 0.2)',
+          hasBadge:!!badge,badge,isVideo:it.kind==='video',badgeTop:6+ins,fav,favLeft:8+ins,
+          onClick:e=>this.tileClick(it,e),onCheck:e=>{e.stopPropagation();this.toggleSel(it,e);},
+          onEnter:()=>this.setState({hoverId:it.id}),onLeave:()=>this.setState(st=>st.hoverId===it.id?{hoverId:null}:null)});
+      }
+    }
+    const curM=this.monthAt(s.st+1);let curD=null;
+    if(isTimeline)for(const b of L.blocks){if(b.y>s.st+50)break;if(b.t==='d')curD=b;if(b.t==='m')curD=null;}
+    const maxSt=Math.max(1,L.total-s.vh);
+    const scrubYears=[],seenY={};
+    L.months.forEach(m=>{if(!seenY[m.year]){seenY[m.year]=1;scrubYears.push({label:String(m.year),top:(Math.min(1,m.y/maxSt)*100).toFixed(2)});}});
+    const hoverM=s.scrubHover!=null?this.monthAt(s.scrubHover*maxSt+1):null;
+
+    const empty=s.libMode==='empty',noRes=!empty&&items.length===0&&s.query.trim()!=='';
+    const scanning=s.scan.status==='scanning';
+    const totalSize=this.lib.reduce((a,it)=>a+it.size+it.pairSize,0);
+
+    // viewer
+    let v={open:false};
+    if(s.viewerId&&isTimeline){
+      const idx=items.findIndex(x=>x.id===s.viewerId),it=items[idx];
+      if(it){
+        const ed=s.edits[it.id]||{},E=s.editing&&s.editing.id===it.id?s.editing.field:null;
+        const fw=this.fitW(it),fh=fw/it.ar,pct=Math.round(fw*s.zoom/it.w*100);
+        let dt=it.t;if(ed.date){const p=ed.date.split(/[- :]/).map(Number);dt=new Date(p[0],p[1]-1,p[2],p[3],p[4],p[5]||0);}
+        const fav=s.favs[it.id]??it.fav,rating=s.ratings[it.id]??it.rating,place=ed.place??it.place;
+        const strip=[];for(let i=Math.max(0,idx-12);i<Math.min(items.length,idx+13);i++){const x=items[i];strip.push({bg:x.bg,w:Math.round(Math.max(38,Math.min(100,56*x.ar))),opacity:i===idx?1:0.55,outline:i===idx?'2px solid var(--color-accent)':'none',onClick:()=>this.setState({viewerId:x.id,zoom:1,playing:false,vt:0,editing:null})});}
+        const albums=[...it.albums,...(s.extraAlbums[it.id]||[])],tags=[...it.tags,...(s.extraTags[it.id]||[])];
+        const isRaw=it.kind==='raw'||it.kind==='pair',isVideo=it.kind==='video';
+        v={open:true,infoOpen:s.infoOpen,infoW:s.infoOpen?'var(--size-info-panel)':'0px',name:it.name,
+          position:`${nf(idx+1)} of ${nf(items.length)}`,close:()=>this.setState({viewerId:null,editing:null,playing:false}),
+          zoomIn:this.zoomIn,zoomOut:this.zoomOut,zoomFit:()=>this.setState({zoom:1}),zoomLabel:s.zoom===1?`Fit · ${pct}%`:`${pct}%`,zoom:s.zoom,
+          dbl:()=>this.setState(st=>({zoom:st.zoom>1?1:Math.max(1,Math.min(it.w/fw,it.w*2/fw))})),cursor:s.zoom>1?'zoom-out':'zoom-in',
+          imgW:Math.round(fw),imgH:Math.round(fh),bg:it.bg,
+          favColor:fav?'var(--color-accent)':'var(--color-text)',favFill:fav?'currentColor':'none',toggleFav:()=>this.toggleFav(it),
+          canDownload:isRaw||it.kind==='heic',ext:it.ext,trash:()=>this.trashIds([it.id]),
+          toggleInfo:()=>this.setState(st=>({infoOpen:!st.infoOpen})),infoBtnBg:s.infoOpen?'var(--color-surface-active)':'transparent',infoBtnFg:s.infoOpen?'var(--color-text)':'var(--color-text-muted)',
+          isVideo,showPlay:isVideo&&!s.playing,togglePlay:()=>this.setState(st=>({playing:!st.playing,vt:st.vt>=it.len?0:st.vt})),playIcon:s.playing?'pause':'play',
+          timeNow:dur(s.vt),timeTotal:dur(it.len),playPct:it.len?(s.vt/it.len*100).toFixed(1):0,
+          isRaw,rawNote:it.kind==='pair'?'Showing paired JPG · RAF original kept alongside':'Showing embedded preview from RAF',
+          hasPrev:idx>0,hasNext:idx<items.length-1,prev:()=>this.step(-1),next:()=>this.step(1),strip,
+          title:ed.title||'Add a title',titleColor:ed.title?'var(--color-text)':'var(--color-text-subtle)',
+          desc:ed.desc||'Add a description',descColor:ed.desc?'var(--color-text-muted)':'var(--color-text-subtle)',
+          ed:{titleOn:E==='title',titleOff:E!=='title',descOn:E==='desc',descOff:E!=='desc',dateOn:E==='date',dateOff:E!=='date',placeOn:E==='place',placeOff:E!=='place',any:!!E,
+            startTitle:()=>this.startEdit('title'),startDesc:()=>this.startEdit('desc'),startDate:()=>this.startEdit('date'),startPlace:()=>this.startEdit('place')},
+          dateHint:s.editing&&s.editing.error?'Use YYYY-MM-DD HH:MM:SS':'YYYY-MM-DD HH:MM:SS · local time',dateHintColor:s.editing&&s.editing.error?'var(--color-critical)':'var(--color-text-subtle)',
+          stars:[1,2,3,4,5].map(n=>({fill:n<=rating?'currentColor':'none',color:n<=rating?'var(--color-accent)':'var(--color-text-subtle)',onClick:()=>{const prev=rating,nv=n===rating?0:n;this.setState(st=>({ratings:Object.assign({},st.ratings,{[it.id]:nv})}));this.toast(nv?`Rated ${nv} star${nv>1?'s':''}`:'Rating cleared',it.name,()=>this.setState(st=>({ratings:Object.assign({},st.ratings,{[it.id]:prev})})));}})),
+          dateMain:`${DAYS[dt.getDay()]} ${dt.getDate()} ${MONTHS[dt.getMonth()]} ${dt.getFullYear()}`,dateSub:`${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())} · AEST (UTC+10:00)${ed.date?' · edited':''}`,
+          camera:it.cam,lens:`${it.lens} · ${it.fl} mm`,
+          exposure:isVideo?[{v:'30 fps'},{v:dur(it.len)},{v:'H.264'}]:[{v:'ƒ/'+it.f},{v:it.ss+' s'},{v:'ISO '+it.iso},{v:it.fl+' mm'}],
+          dims:`${it.w} × ${it.h}`,dimsSub:isVideo?'Full HD':`${(it.w*it.h/1e6).toFixed(1)} megapixels`,
+          fileLine:`${mb(it.size)} · ${it.ext}`,hasPair:!!it.pair,pairLine:it.pair?`Paired with ${it.pair} · ${mb(it.pairSize)}`:'',
+          path:(s.moved[it.id]?s.moved[it.id]+'\\':it.folder)+it.name,
+          hasGps:!!it.gps&&place!=='',noGps:!it.gps||place==='',mapX:30+(Math.abs(it.gps?it.gps[1]:0)*7%40),
+          place:place||'Add a location',placeColor:place&&place!=='Home'?'var(--color-text)':'var(--color-text-subtle)',
+          gps:it.gps?`${it.gps[0].toFixed(4)}°, ${it.gps[1].toFixed(4)}°`:'No GPS in file',
+          tags:tags.map(n=>({name:n})),albums:albums.map(n=>({name:n})),noAlbums:!albums.length};
+        if(place==='Home'){v.place='Home';v.placeColor='var(--color-text)';}
+      }
+    }
+
+    // duplicate review
+    const {g,keeper}=this.groupState(),n=g.copies.length,isSim=g.type==='similar';
+    const simT=s.simTrash[g.id]||{},simN=Object.keys(simT).length;
+    const maxRes=Math.max(...g.copies.map(c=>c.w*c.h));
+    const copies=g.copies.map((c,i)=>{
+      const isK=!isSim&&i===keeper,toTrash=isSim?!!simT[i]:!isK,ar=c.w/c.h;
+      return{letter:LETTERS[i],name:c.name,path:c.path,res:`${c.w} × ${c.h}`,mp:`${(c.w*c.h/1e6).toFixed(1)} MP`,resWeight:c.w*c.h===maxRes&&!isSim?700:400,
+        size:mb(c.size),fmt:c.fmt,modified:c.modified,bg:c.bg,thumbW:ar>=1.5?'100%':(ar/1.5*100).toFixed(1)+'%',thumbH:ar>=1.5?(1.5/ar*100).toFixed(1)+'%':'100%',thumbOpacity:toTrash?0.55:1,
+        ring:isK?'0 0 0 2px var(--color-accent)':(isSim&&toTrash?'0 0 0 2px var(--color-critical)':'none'),
+        status:isK?'Keep':(toTrash?'To Trash':'Keep'),statusIcon:toTrash?'trash':'check',
+        statusBg:isK?'var(--color-accent)':(toTrash?'var(--color-media-badge)':'var(--color-success)'),statusFg:isK?'var(--color-text-on-accent)':(toTrash?'var(--color-text-on-media)':'var(--color-surface-sunken)'),
+        isKeeper:isK,canKeep:!isSim&&!isK,isSimilar:isSim,
+        reason:(s.keeper[g.id]!=null&&s.keeper[g.id]!==g.keeper)?'Chosen by you. Merged metadata is written here.':`${g.reason}. Merged metadata is written here.`,
+        onKeep:()=>this.setState(st=>({keeper:Object.assign({},st.keeper,{[g.id]:i})})),
+        toggleLabel:toTrash?'Keep instead':'Move to Trash',toggleIcon:toTrash?'undo':'trash',toggleFg:toTrash?'var(--color-text)':'var(--color-critical)',toggleBorder:toTrash?'var(--color-border)':'var(--color-critical-subtle)',
+        onToggle:()=>this.setState(st=>{const m=Object.assign({},st.simTrash[g.id]);if(m[i])delete m[i];else m[i]=true;return{simTrash:Object.assign({},st.simTrash,{[g.id]:m})};})};
+    });
+    const rows=isSim?[]:this.computeRows(g,keeper),conflicts=rows.filter(r=>r.conflict).length,hadConflicts=rows.filter(r=>r.conflict||r.resolved).length;
+    const running=s.merge&&s.merge.gid===g.id,others=copies.filter((c,i)=>i!==keeper).map(c=>c.letter).join(' and ');
+    const steps=[`Writing merged metadata to ${g.copies[keeper]?g.copies[keeper].name:''}`,'Verifying the written file',`Moving ${n-1} other cop${n-1>1?'ies':'y'} to Trash`];
+    const prevGi=s.gi;
+    const d={
+      position:`Group ${s.gi+1} of ${nf(s.dupCount)}`,prev:()=>this.setState(st=>({gi:(st.gi+GROUPS.length-1)%GROUPS.length,failed:null})),next:()=>this.setState(st=>({gi:(st.gi+1)%GROUPS.length,failed:null})),
+      title:g.title,
+      typeLabel:g.type==='visual'?'Visual match':g.type==='exact'?'Exact duplicate':'Similar · burst',typeIcon:isSim?'layers':'copy',
+      typeBg:isSim?'var(--color-success-subtle)':'var(--color-surface-active)',typeFg:isSim?'var(--color-success)':'var(--color-text)',
+      subtitle:g.type==='visual'?'The same picture at different sizes and formats, matched by image content. One copy is kept and the others go to Trash.':g.type==='exact'?'Pixel-identical files in two folders. One copy is kept and the other goes to Trash.':'Four frames from one burst, taken within two seconds. These are separate photos, not copies, so nothing merges. Keep them all or trash the ones you don\u2019t need.',
+      isMergeable:!isSim,conflictLabel:conflicts?`${conflicts} conflict${conflicts>1?'s':''} to resolve`:(hadConflicts?'Conflicts resolved':'No conflicts'),
+      conflictIcon:conflicts?'alert':'check',conflictBg:conflicts?'var(--color-warning-subtle)':'var(--color-success-subtle)',conflictFg:conflicts?'var(--color-warning)':'var(--color-success)',
+      copyCols:`repeat(${n}, minmax(0, 1fr))`,copies,rows,cols:`150px repeat(${n}, minmax(0,1fr)) minmax(0,1.15fr)`,
+      tableNote:`Each value comes from the copy marked with a check. Click any value to use it instead. The result is written into ${LETTERS[keeper]}.`,
+      failed:s.failed===g.id,failText:`Shoebox couldn\u2019t write metadata to ${g.copies[keeper]?g.copies[keeper].name:''} because the file is read-only. The keeper was restored from its backup and every copy is still in its original folder. Clear the read-only flag in Explorer, then retry.`,
+      retry:()=>this.runMerge(true),dismissFail:()=>this.setState({failed:null}),
+      running,idleMerge:!running&&!isSim,idleSimilar:!running&&isSim,contentOpacity:running?0.5:1,pe:running?'none':'auto',
+      stepText:running?`Step ${s.merge.step+1} of 3 · ${steps[s.merge.step]}`:'',stepPct:running?((s.merge.step+1)/3*100).toFixed(0):0,
+      footIcon:conflicts?'alert':'info',footIconColor:conflicts?'var(--color-warning)':'var(--color-text-muted)',
+      footTitle:conflicts?`Resolve ${conflicts} conflict${conflicts>1?'s':''} to merge`:`Keeps ${LETTERS[keeper]} · ${others} go${n-1>1?'':'es'} to Trash`,
+      footText:conflicts?'Pick a value in each highlighted row. Nothing changes on disk until you merge.':`Merged metadata is written into ${g.copies[keeper].name}. Trashed copies stay restorable for 30 days, and Undo is available right after.`,
+      mergeDisabled:conflicts>0,mergeLabel:`Merge ${n} copies`,merge:()=>this.runMerge(false),
+      notDup:()=>{this.setState(st=>({dupCount:st.dupCount-1,gi:(st.gi+1)%GROUPS.length}));this.toast('Marked as not duplicates','This group won\u2019t be suggested again',()=>this.setState(st=>({dupCount:st.dupCount+1,gi:prevGi})));},
+      simText:simN?`${simN} of ${n} shots marked for Trash. They stay restorable for 30 days.`:'All shots are kept. Mark any you no longer need.',
+      simLabel:simN?`Move ${simN} to Trash`:'Move to Trash',simDisabled:!simN,simOpacity:simN?1:0.45,
+      keepAll:()=>{this.setState(st=>({dupCount:st.dupCount-1,gi:(st.gi+1)%GROUPS.length}));this.toast(`Kept all ${n} shots`,'Group dismissed',()=>this.setState(st=>({dupCount:st.dupCount+1,gi:prevGi})));},
+      trashSimilar:()=>{this.setState(st=>({dupCount:st.dupCount-1,gi:(st.gi+1)%GROUPS.length,simTrash:Object.assign({},st.simTrash,{[g.id]:{}})}));this.toast(`Moved ${simN} shot${simN>1?'s':''} to Trash`,'Kept for 30 days',()=>this.setState(st=>({dupCount:st.dupCount+1,gi:prevGi,simTrash:Object.assign({},st.simTrash,{[g.id]:simT})})));}
+    };
+
+    const selSize=selIds.reduce((a,id)=>a+this.byId[id].size+this.byId[id].pairSize,0);
+    const pop=p=>()=>this.setState(st=>({popover:st.popover===p?null:p,tagDraft:''}));
+    const applyTag=tag=>{if(!tag)return;const ids=selIds;this.setState(st=>{const m=Object.assign({},st.extraTags);ids.forEach(id=>m[id]=[...(m[id]||[]),tag]);return{extraTags:m,popover:null};});this.toast(`Tagged ${nf(ids.length)} item${ids.length>1?'s':''} \u201c${tag}\u201d`,'',()=>this.setState(st=>{const m=Object.assign({},st.extraTags);ids.forEach(id=>m[id]=(m[id]||[]).filter(x=>x!==tag));return{extraTags:m};}));};
+    const rateSel=nr=>{const ids=selIds,prev=Object.fromEntries(ids.map(id=>[id,s.ratings[id]]));this.setState(st=>{const m=Object.assign({},st.ratings);ids.forEach(id=>m[id]=nr);return{ratings:m,popover:null};});this.toast(nr?`Rated ${nf(ids.length)} item${ids.length>1?'s':''} ${'★'.repeat(nr)}`:`Cleared rating on ${nf(ids.length)} item${ids.length>1?'s':''}`,'',()=>this.setState(st=>({ratings:Object.assign({},st.ratings,prev)})));};
+    const sc=s.scan;
+
+    return {
+      theme:s.theme,themeIcon:s.theme==='dark'?'sun':'moon',toggleTheme:()=>this.setState(st=>({theme:st.theme==='dark'?'light':'dark'})),
+      isSignin:s.screen==='signin',isShell:s.screen!=='signin',pw:s.pw,pwError:s.pwError,
+      onPw:e=>this.setState({pw:e.target.value,pwError:false}),
+      signIn:e=>{e.preventDefault();if(!s.pw)this.setState({pwError:true});else this.setState({screen:'timeline',pw:''});},
+      nav:{tlFg:isTimeline?'var(--color-accent-text)':'var(--color-text-muted)',tlBg:isTimeline?'var(--color-accent-subtle)':'transparent',tlHover:isTimeline?'var(--color-accent-subtle)':'var(--color-surface-hover)',
+        dupFg:isReview?'var(--color-accent-text)':'var(--color-text-muted)',dupBg:isReview?'var(--color-accent-subtle)':'transparent',dupHover:isReview?'var(--color-accent-subtle)':'var(--color-surface-hover)'},
+      goTimeline:()=>this.setState({screen:'timeline'}),goReview:()=>this.setState({screen:'review',selected:{}}),
+      dupCount:nf(s.dupCount),trashCount:nf(Object.keys(s.trashed).length+312),
+      libSummary:empty?'Not set up':`${nf(this.lib.length)} items · ${mb(totalSize)}`,
+      noSelection:!selMode,hasSelection:selMode&&isTimeline,
+      query:s.query,queryTrim:s.query.trim(),onQuery:e=>{this.setState({query:e.target.value,st:0});if(this.scrollEl)this.scrollEl.scrollTop=0;},clearQuery:()=>this.setState({query:''}),
+      scan:{idle:sc.status==='idle',running:scanning,errors:sc.status==='errors',none:sc.status==='none',
+        label:s.libMode==='firstScan'?'First scan':'Scanning',count:`${nf(sc.done)} / ${nf(sc.total)}`,pct:sc.total?(sc.done/sc.total*100).toFixed(1):0,
+        last:sc.last,errorLabel:`${sc.errors} files couldn\u2019t be read`,busy:scanning||sc.status==='none',btnOpacity:scanning||sc.status==='none'?0.45:1},
+      rescan:()=>{if(scanning)return;this.setState({scan:{status:'scanning',done:0,total:this.lib.length,last:'',errors:0},scanSlow:false});},
+      firstScan:{show:s.libMode==='firstScan'&&isTimeline,text:`${nf(sc.done)} of ${nf(sc.total)} files read from D:\\Photos. You can browse while it runs.`,pct:sc.total?(sc.done/sc.total*100).toFixed(1):0,pctLabel:sc.total?Math.floor(sc.done/sc.total*100)+'%':''},
+      isTimeline,isReview,setScrollEl:this.setScrollEl,setStageEl:this.setStageEl,setScrubEl:this.setScrubEl,onScroll:this.onScroll,
+      totalH:Math.ceil(L.total),heads,tiles,tail:{show:s.libMode==='firstScan',y:L.tailY},
+      sticky:{show:isTimeline&&s.st>30&&!!curM,month:curM?curM.label:'',day:curD?`${curD.label}${curD.place?' · '+curD.place:''}`:''},
+      scrub:{show:items.length>0,years:scrubYears,months:L.months.map(m=>({top:(Math.min(1,m.y/maxSt)*100).toFixed(2)})),thumb:(Math.min(1,s.st/maxSt)*100).toFixed(2),
+        hovering:s.scrubHover!=null&&!!hoverM,hover:s.scrubHover!=null?(s.scrubHover*100).toFixed(2):0,hoverLabel:hoverM?hoverM.label:''},
+      scrubDown:this.scrubDown,scrubMove:this.scrubMove,scrubLeave:this.scrubLeave,
+      emptyLib:empty&&isTimeline,noResults:noRes&&isTimeline,
+      selCount:nf(selCount),selSize:selCount?'· '+mb(selSize):'',clearSel:()=>this.setState({selected:{},popover:null}),
+      pop:{album:s.popover==='album',tag:s.popover==='tag',rate:s.popover==='rate',move:s.popover==='move',openAlbum:pop('album'),openTag:pop('tag'),openRate:pop('rate'),openMove:pop('move')},
+      albums:ALBUMS.map(([name,count])=>({name,count:nf(count),onPick:()=>{const ids=selIds;this.setState(st=>{const m=Object.assign({},st.extraAlbums);ids.forEach(id=>m[id]=[...new Set([...(m[id]||[]),name])]);return{extraAlbums:m,popover:null};});this.toast(`Added ${nf(ids.length)} item${ids.length>1?'s':''} to ${name}`,'',()=>this.setState(st=>{const m=Object.assign({},st.extraAlbums);ids.forEach(id=>m[id]=(m[id]||[]).filter(x=>x!==name));return{extraAlbums:m};}));}})),
+      folders:FOLDERS.map(path=>({path,onPick:()=>{const ids=selIds,prev=Object.fromEntries(ids.map(id=>[id,s.moved[id]]));this.setState(st=>{const m=Object.assign({},st.moved);ids.forEach(id=>m[id]=path);return{moved:m,popover:null,selected:{}};});this.toast(`Moved ${nf(ids.length)} file${ids.length>1?'s':''} to ${path}`,'',()=>this.setState(st=>({moved:Object.assign({},st.moved,prev)})));}})),
+      tagDraft:s.tagDraft,onTagDraft:e=>this.setState({tagDraft:e.target.value}),onTagKey:e=>{if(e.key==='Enter')applyTag(s.tagDraft.trim());},
+      tagSuggestions:TAGS.map(name=>({name,onPick:()=>applyTag(name)})),
+      rateOptions:[1,2,3,4,5].map(nr=>({title:`${nr} star${nr>1?'s':''}`,onPick:()=>rateSel(nr)})),rateClear:()=>rateSel(0),
+      favSel:()=>{const ids=selIds,prev=Object.fromEntries(ids.map(id=>[id,s.favs[id]])),allFav=ids.every(id=>s.favs[id]??this.byId[id].fav);this.setState(st=>{const m=Object.assign({},st.favs);ids.forEach(id=>m[id]=!allFav);return{favs:m};});this.toast(allFav?`Removed ${nf(ids.length)} from Favourites`:`Added ${nf(ids.length)} to Favourites`,'',()=>this.setState(st=>({favs:Object.assign({},st.favs,prev)})));},
+      trashSel:this.trashSel,
+      v,d,editValue:s.editing?s.editing.value:'',onEditValue:e=>this.setState({editing:Object.assign({},s.editing,{value:e.target.value,error:false})}),onEditKey:this.onEditKey,saveEdit:this.saveEdit,
+      hasToast:!!s.toast,toast:s.toast||{msg:'',detail:''},
+      undoToast:()=>{const t=s.toast;if(t&&t.undo)t.undo();clearTimeout(this.tt);this.setState({toast:null});},closeToast:()=>this.setState({toast:null})
+    };
+  }
+}
+</script>
+</body>
+</html>

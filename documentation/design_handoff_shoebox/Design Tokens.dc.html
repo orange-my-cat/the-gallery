@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-93eaa0c0-d23c-427f-bae2-b040c3e8a898/styles.css">
+<link rel="stylesheet" href="tokens.css">
+<script src="_ds/organic-93eaa0c0-d23c-427f-bae2-b040c3e8a898/_ds_bundle.js"></script>
+<script src="icons.js"></script>
+<style>body{margin:0;background:var(--color-bg)} a{color:var(--color-accent-text)} a:hover{color:var(--color-accent-hover)}</style>
+</helmet>
+<div data-theme="dark" style="min-height:100vh; background:var(--color-bg); color:var(--color-text); font-family:var(--font-ui); font-size:var(--text-md); padding:var(--space-12) var(--space-10); display:flex; flex-direction:column; gap:var(--space-12)">
+  <header style="display:flex; align-items:center; gap:var(--space-4); max-width:1100px">
+    <lc-icon name="logo" size="52"></lc-icon>
+    <div style="display:flex; flex-direction:column; gap:4px">
+      <h1 style="margin:0; font-size:var(--text-3xl)">Shoebox · design tokens</h1>
+      <span style="color:var(--color-text-muted)">Source: <span style="font-family:var(--font-mono); font-size:var(--text-sm); color:var(--color-text)">tokens.css</span>, loaded after Organic's styles.css. Dark is the default theme.</span>
+    </div>
+  </header>
+
+  <section style="display:flex; flex-direction:column; gap:var(--space-4)">
+    <h2 style="margin:0; font-size:var(--text-xl)">Colour</h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(440px, 1fr)); gap:var(--space-4)">
+      <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+        <div data-theme="{{ th.id }}" style="background:var(--color-bg); color:var(--color-text); border-radius:var(--radius-lg); padding:var(--space-6); box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:var(--space-4)">
+          <div style="display:flex; align-items:center; justify-content:space-between"><span style="font-family:var(--font-display); font-size:var(--text-lg)">{{ th.label }}</span><span style="font-size:var(--text-xs); color:var(--color-text-subtle)">{{ th.note }}</span></div>
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="6">
+            <div style="display:flex; flex-direction:column; gap:8px">
+              <span style="font-size:var(--text-2xs); font-weight:700; letter-spacing:var(--tracking-caps); text-transform:uppercase; color:var(--color-text-subtle)">{{ g.name }}</span>
+              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(124px, 1fr)); gap:8px">
+                <sc-for list="{{ g.tokens }}" as="t" hint-placeholder-count="4">
+                  <div style="display:flex; flex-direction:column; gap:6px">
+                    <div style="height:40px; border-radius:12px; background:var({{ t }}); box-shadow:inset 0 0 0 1px var(--color-divider)"></div>
+                    <span style="font-family:var(--font-mono); font-size:10.5px; color:var(--color-text-muted); overflow-wrap:anywhere">{{ t }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+    <p style="margin:0; max-width:760px; color:var(--color-text-muted); text-wrap:pretty">Accent is reserved for selection and primary actions. Success (Organic's sage) marks the kept copy and merged results. Warning is only for conflicts that need a decision; critical only for destructive actions and failures. The viewer stage uses the sunken surface in both themes.</p>
+  </section>
+
+  <section style="display:flex; flex-direction:column; gap:var(--space-4)">
+    <h2 style="margin:0; font-size:var(--text-xl)">Type</h2>
+    <div style="display:flex; flex-direction:column; border-radius:var(--radius-lg); background:var(--color-surface); padding:var(--space-4) var(--space-6)">
+      <sc-for list="{{ type }}" as="t" hint-placeholder-count="8">
+        <div style="display:grid; grid-template-columns:160px 90px minmax(0,1fr); align-items:baseline; gap:var(--space-4); padding:12px 0; border-bottom:1px solid var(--color-divider)">
+          <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-text-muted)">{{ t.token }}</span>
+          <span style="font-size:var(--text-xs); color:var(--color-text-subtle); font-variant-numeric:var(--numeric)">{{ t.size }}</span>
+          <span style="font-family:{{ t.family }}; font-size:var({{ t.token }}); font-weight:{{ t.weight }}; font-variant-numeric:var(--numeric); line-height:1.2">{{ t.sample }}</span>
+        </div>
+      </sc-for>
+      <div style="display:grid; grid-template-columns:160px 90px minmax(0,1fr); align-items:baseline; gap:var(--space-4); padding:12px 0">
+        <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-text-muted)">--font-mono</span>
+        <span style="font-size:var(--text-xs); color:var(--color-text-subtle)">12px</span>
+        <span style="font-family:var(--font-mono); font-size:var(--text-xs)">D:\Photos\2024\2024-06-14 Point Addis\DSCF4821.RAF</span>
+      </div>
+    </div>
+    <p style="margin:0; max-width:760px; color:var(--color-text-muted); text-wrap:pretty">Caprasimo (--font-display) appears only in the wordmark, screen titles, month headers and empty states. All UI text is Figtree. Dates, sizes, counts and exposure use font-variant-numeric: var(--numeric).</p>
+  </section>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:var(--space-6)">
+    <section style="display:flex; flex-direction:column; gap:var(--space-4)">
+      <h2 style="margin:0; font-size:var(--text-xl)">Spacing</h2>
+      <div style="display:flex; flex-direction:column; gap:10px; border-radius:var(--radius-lg); background:var(--color-surface); padding:var(--space-6)">
+        <sc-for list="{{ space }}" as="s" hint-placeholder-count="10">
+          <div style="display:grid; grid-template-columns:110px 56px 1fr; align-items:center; gap:12px">
+            <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-text-muted)">{{ s.token }}</span>
+            <span style="font-size:var(--text-xs); color:var(--color-text-subtle); font-variant-numeric:var(--numeric)">{{ s.v }}</span>
+            <div style="height:10px; width:var({{ s.token }}); min-width:2px; border-radius:3px; background:var(--color-accent)"></div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+    <section style="display:flex; flex-direction:column; gap:var(--space-4)">
+      <h2 style="margin:0; font-size:var(--text-xl)">Radii &amp; elevation</h2>
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--space-4); border-radius:var(--radius-lg); background:var(--color-surface); padding:var(--space-6)">
+        <sc-for list="{{ radii }}" as="r" hint-placeholder-count="6">
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div style="height:64px; border-radius:var({{ r.token }}); background:var(--color-surface-raised); box-shadow:inset 0 0 0 1.5px var(--color-border-strong)"></div>
+            <span style="font-family:var(--font-mono); font-size:10.5px; color:var(--color-text-muted)">{{ r.token }} · {{ r.v }}</span>
+          </div>
+        </sc-for>
+        <sc-for list="{{ shadows }}" as="sh" hint-placeholder-count="3">
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:var(--space-3)">
+            <div style="height:64px; border-radius:var(--radius-md); background:var(--color-surface-raised); box-shadow:var({{ sh.token }})"></div>
+            <span style="font-family:var(--font-mono); font-size:10.5px; color:var(--color-text-muted)">{{ sh.token }} · {{ sh.use }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:var(--space-6)">
+    <section style="display:flex; flex-direction:column; gap:var(--space-4)">
+      <h2 style="margin:0; font-size:var(--text-xl)">Motion</h2>
+      <div style="border-radius:var(--radius-lg); background:var(--color-surface); padding:var(--space-4) var(--space-6)">
+        <sc-for list="{{ motion }}" as="m" hint-placeholder-count="8">
+          <div style="display:grid; grid-template-columns:170px minmax(0,1fr); gap:12px; padding:8px 0; border-bottom:1px solid var(--color-divider); font-size:var(--text-sm)">
+            <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-text-muted)">{{ m.token }}</span>
+            <span style="font-variant-numeric:var(--numeric)">{{ m.v }}<span style="color:var(--color-text-subtle)">  {{ m.use }}</span></span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+    <section style="display:flex; flex-direction:column; gap:var(--space-4)">
+      <h2 style="margin:0; font-size:var(--text-xl)">Z-layers &amp; sizes</h2>
+      <div style="border-radius:var(--radius-lg); background:var(--color-surface); padding:var(--space-4) var(--space-6)">
+        <sc-for list="{{ layers }}" as="m" hint-placeholder-count="10">
+          <div style="display:grid; grid-template-columns:170px minmax(0,1fr); gap:12px; padding:8px 0; border-bottom:1px solid var(--color-divider); font-size:var(--text-sm)">
+            <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-text-muted)">{{ m.token }}</span>
+            <span style="font-variant-numeric:var(--numeric)">{{ m.v }}<span style="color:var(--color-text-subtle)">  {{ m.use }}</span></span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      themes: [
+        { id: 'dark', label: 'Dark', note: 'default' },
+        { id: 'light', label: 'Light', note: 'data-theme="light"' }
+      ],
+      groups: [
+        { name: 'Surfaces', tokens: ['--color-bg', '--color-surface', '--color-surface-raised', '--color-surface-sunken', '--color-surface-hover', '--color-placeholder'] },
+        { name: 'Text', tokens: ['--color-text', '--color-text-muted', '--color-text-subtle', '--color-text-on-accent'] },
+        { name: 'Lines', tokens: ['--color-divider', '--color-border', '--color-border-strong'] },
+        { name: 'Accent · selection & primary', tokens: ['--color-accent', '--color-accent-hover', '--color-accent-pressed', '--color-accent-subtle', '--color-accent-text'] },
+        { name: 'Status', tokens: ['--color-success', '--color-success-subtle', '--color-warning', '--color-warning-subtle', '--color-critical', '--color-critical-subtle'] },
+        { name: 'On media', tokens: ['--color-media-badge', '--color-scrim'] }
+      ],
+      type: [
+        { token: '--text-3xl', size: '32px', family: 'var(--font-display)', weight: 400, sample: 'No library folder yet' },
+        { token: '--text-2xl', size: '25px', family: 'var(--font-display)', weight: 400, sample: 'June 2024' },
+        { token: '--text-xl', size: '20px', family: 'var(--font-display)', weight: 400, sample: 'Merged metadata' },
+        { token: '--text-lg', size: '16px', family: 'var(--font-ui)', weight: 700, sample: 'Last light, Point Addis' },
+        { token: '--text-md', size: '14px', family: 'var(--font-ui)', weight: 400, sample: 'Saturday 14 June 2024 · 18:42:07' },
+        { token: '--text-sm', size: '13px', family: 'var(--font-ui)', weight: 600, sample: 'ƒ/2.8   1/250 s   ISO 200   23 mm' },
+        { token: '--text-xs', size: '12px', family: 'var(--font-ui)', weight: 400, sample: '6240 × 4160 · 26.0 MP · 31.2 MB' },
+        { token: '--text-2xs', size: '11px', family: 'var(--font-ui)', weight: 700, sample: 'RAW+JPG   HEIC   0:42' }
+      ],
+      space: [['--space-half', '2.2px'], ['--space-1', '4.4px'], ['--space-2', '8.8px'], ['--space-3', '13.2px'], ['--space-4', '17.6px'], ['--space-5', '22px'], ['--space-6', '26.4px'], ['--space-8', '35.2px'], ['--space-10', '44px'], ['--space-12', '52.8px']].map(([token, v]) => ({ token, v })),
+      radii: [['--radius-xs', '4px'], ['--radius-tile', '6px'], ['--radius-sm', '8px'], ['--radius-md', '16px'], ['--radius-lg', '28px'], ['--radius-pill', '999px']].map(([token, v]) => ({ token, v })),
+      shadows: [{ token: '--shadow-sm', use: 'cards' }, { token: '--shadow-md', use: 'popovers' }, { token: '--shadow-lg', use: 'toasts, dialogs' }],
+      motion: [
+        ['--duration-instant', '80ms', 'hover tints'], ['--duration-fast', '140ms', 'tile select inset'], ['--duration-base', '200ms', 'zoom, panels'], ['--duration-slow', '320ms', 'drawers, progress'],
+        ['--duration-toast', '8000ms', 'toast lifetime before auto-dismiss'], ['--ease-standard', 'cubic-bezier(.2,0,0,1)', 'default'], ['--ease-enter', 'cubic-bezier(0,0,.2,1)', 'entering'], ['--ease-exit', 'cubic-bezier(.4,0,1,1)', 'leaving']
+      ].map(([token, v, use]) => ({ token, v, use })),
+      layers: [
+        ['--z-sticky', '10', 'month/day header'], ['--z-scrubber', '15', 'timeline scrubber'], ['--z-topbar', '20', 'top & selection bar'], ['--z-drawer', '30', 'map drawer, filters'], ['--z-popover', '40', 'menus'],
+        ['--z-viewer', '50', 'full-screen viewer'], ['--z-dialog', '60', 'confirmations'], ['--z-toast', '70', 'undo toasts'], ['--z-tooltip', '80', 'tooltips'],
+        ['--size-sidebar', '232px', ''], ['--size-topbar', '56px', ''], ['--size-info-panel', '360px', ''], ['--size-row-target', '210px', 'justified row target'], ['--gap-grid', '4px', 'tile gap']
+      ].map(([token, v, use]) => ({ token, v, use }))
+    };
+  }
+}
+</script>
+</body>
+</html>
