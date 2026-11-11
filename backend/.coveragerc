@@ -1,0 +1,20 @@
+[run]
+branch = False
+source = .
+omit =
+    */migrations/*
+    */tests/*
+    */test_*.py
+    config/settings/*
+    config/wsgi.py
+    config/asgi.py
+    manage.py
+    conftest.py
+
+[report]
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    if TYPE_CHECKING:
+    raise NotImplementedError

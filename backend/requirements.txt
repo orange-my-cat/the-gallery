@@ -1,0 +1,25 @@
+# Runtime dependencies - ranged input.
+#
+# The pin lives in `requirements.lock.txt`, generated from the built image with
+# `pip freeze`; the Dockerfile installs from the lock when it exists and falls
+# back to this file only until the first lock is written. See financial-hub's
+# README, "Pinning dependencies", for the procedure this repository follows.
+#
+# Python 3.14, as financial-hub. Every media library below, and the Phase 2
+# ones (onnxruntime, scikit-learn), was confirmed on 2026-11-08 to publish
+# cp314 wheels for both win_amd64 and manylinux x86_64 - so web and worker
+# share one interpreter and one image. imagehash joins with duplicates (1c).
+
+Django>=5.2,<5.3
+djangorestframework>=3.15,<4
+psycopg[binary]>=3.2,<4
+gunicorn>=23,<24
+whitenoise>=6.7,<7
+python-dotenv>=1.0,<2
+
+# Phase 1a - indexing. ExifTool and ffmpeg themselves are system binaries:
+# Debian packages in the image, EXIFTOOL_PATH / FFMPEG_PATH on Windows.
+PyExifTool>=0.5.6,<0.6
+Pillow>=11,<14
+pillow-heif>=1.0,<2
+rawpy>=0.24,<0.30

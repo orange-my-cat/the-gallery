@@ -1,0 +1,10 @@
+# Development and test dependencies. Not installed into the production image.
+-r requirements.txt
+
+pytest>=8,<9
+pytest-django>=4.8,<5
+pytest-cov>=5,<7
+
+# Property-based testing. Its real work arrives with the merge rules, the path
+# validator and the perceptual index (HLD, "Property tests with Hypothesis").
+hypothesis>=6,<7
