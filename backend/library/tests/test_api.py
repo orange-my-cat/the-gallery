@@ -94,7 +94,7 @@ def test_assets_newest_first_in_the_frontend_shape(signed_in, library, tags):
     assert first["folder"].endswith(("2024\\", "2024/"))
     assert first["thumbReady"] is True
     media = MediaFile.objects.get(rel_path="2024/new.jpg")
-    assert first["thumbUrl"] == f"/media/thumb/{media.pk}/400?v={media.sha256[:16]}"
+    assert first["thumbUrl"] == f"/media/thumb/{media.pk}/400?v={media.sha256[:16]}.2"
     assert first["videoUrl"] is None
     assert first["liveUrl"] is None
 

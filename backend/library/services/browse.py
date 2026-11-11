@@ -44,6 +44,16 @@ DEFAULT_PAGE = 500
 MAX_PAGE = 2000
 # Used for layout when a file states no dimensions.
 FALLBACK_SIZE = (1600, 1200)
+# Media is served immutable for a year, keyed by `?v=`, and Nginx keeps that
+# header on an error too - so a thumbnail the browser was once refused stays
+# broken under the same URL. Bump this to make every browser fetch afresh.
+# 2: the 403s while cache files were written 0600 (fixed 2026-11-11).
+MEDIA_EPOCH = 2
+
+
+def media_version(sha256: str) -> str:
+    """The `?v=` of a media URL: the content, and the epoch it was served in."""
+    return f"{sha256[:16]}.{MEDIA_EPOCH}"
 
 
 class BadCursor(BusinessRuleError):
@@ -161,7 +171,7 @@ def present_asset(asset: Asset, *, trashed: bool = False) -> dict[str, Any] | No
     named = raw if kind == "pair" and raw is not None else primary
     captured, offset = local_capture(asset)
     width, height = primary.width or FALLBACK_SIZE[0], primary.height or FALLBACK_SIZE[1]
-    version = primary.sha256[:16]
+    version = media_version(primary.sha256)
     approx = None
     if asset.capture_source == CaptureSource.FOLDER:
         found = folder_date(named.rel_path)
@@ -355,7 +365,7 @@ def folder_listing(path: str = "") -> dict[str, Any]:
         cover = child["cover"][1:] if child["cover"] else child["fallback"]
         cover_url = None
         if cover is not None and cache_path(cover[1], "small").exists():
-            cover_url = f"/media/thumb/{cover[0]}/400?v={cover[1][:16]}"
+            cover_url = f"/media/thumb/{cover[0]}/400?v={media_version(cover[1])}"
         folders.append(
             {
                 "path": f"{prefix}{name}",
@@ -428,7 +438,7 @@ def albums_listing() -> list[dict[str, Any]]:
                 "id": str(album.pk),
                 "name": album.name,
                 "count": n,
-                "coverUrl": f"/media/thumb/{cover.pk}/400?v={cover.sha256[:16]}" if ready and cover else None,
+                "coverUrl": f"/media/thumb/{cover.pk}/400?v={media_version(cover.sha256)}" if ready and cover else None,
             }
         )
     return out
