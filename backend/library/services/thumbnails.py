@@ -211,12 +211,20 @@ def render(image: Image.Image, size: str) -> bytes:
     return out.getvalue()
 
 
+# Readable by everyone. In production Nginx (central-station, a separate
+# container and user) sends these files itself via X-Accel-Redirect, so a file
+# only its owner can read is a 403 in the browser. mkstemp creates 0600, and
+# os.replace keeps the mode, so it is set explicitly.
+CACHE_FILE_MODE = 0o644
+
+
 def _write_atomic(target: Path, data: bytes) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=target.parent, suffix=".part")
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(data)
+        os.chmod(tmp, CACHE_FILE_MODE)
         os.replace(tmp, target)
     except BaseException:
         Path(tmp).unlink(missing_ok=True)

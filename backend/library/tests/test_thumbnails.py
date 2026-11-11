@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import io
+import os
+import stat
 
 import pytest
 from PIL import Image
@@ -108,6 +110,15 @@ def test_existing_thumbnail_is_not_redone(library, monkeypatch):
     first = make_thumbnail(media, "small")
     monkeypatch.setattr(thumbnails, "open_image", lambda *a: pytest.fail("re-rendered"))
     assert make_thumbnail(media, "small") == first
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permissions")
+def test_thumbnails_are_readable_by_the_web_server(library):
+    # Nginx runs as another user in another container and reads the cache
+    # directly; mkstemp's 0600 made every thumbnail a 403.
+    media = _media(library, "a.jpg", jpeg_bytes())
+    out = make_thumbnail(media, "small")
+    assert stat.S_IMODE(out.stat().st_mode) == 0o644
 
 
 def test_a_vanished_file_is_skipped(library):
