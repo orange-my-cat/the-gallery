@@ -1,0 +1,180 @@
+/* Shoebox — design tokens.
+   Builds on the Organic system (styles.css): same fonts, ramps and radii,
+   retuned for a photo tool where images carry the colour. Dark is the default.
+   Load order: Organic styles.css, then this file. Theme-dependent values live
+   in the theme blocks; never compose them into :root-level tokens. */
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces — warm near-neutrals */
+  --color-bg: #151311;              /* app canvas, behind the grid */
+  --color-surface: #1c1916;         /* sidebar, panels, table bodies */
+  --color-surface-raised: #262220;  /* popovers, dialogs, toasts */
+  --color-surface-sunken: #0d0c0b;  /* viewer stage, thumbnail wells */
+  --color-surface-hover: rgb(241 234 222 / 0.06);
+  --color-surface-active: rgb(241 234 222 / 0.10);
+  --color-placeholder: #2a2622;     /* tile before its thumbnail loads */
+
+  /* Text */
+  --color-text: #f1eade;
+  --color-text-muted: #b5ac9f;
+  --color-text-subtle: #8c8377;
+  --color-text-on-accent: #1a110a;
+  --color-text-on-media: #ffffff;
+
+  /* Lines */
+  --color-divider: rgb(241 234 222 / 0.08);
+  --color-border: rgb(241 234 222 / 0.15);
+  --color-border-strong: rgb(241 234 222 / 0.28);
+
+  /* Accent — selection and primary actions only (Organic accent-500/400) */
+  --color-accent: #d67f48;
+  --color-accent-hover: #e48f59;
+  --color-accent-pressed: #f6a06b;
+  --color-accent-subtle: rgb(214 127 72 / 0.16);
+  --color-accent-text: #f6a06b;
+
+  /* Success — kept copy, merged result, completed operations (Organic sage) */
+  --color-success: #aebf92;
+  --color-success-subtle: rgb(174 191 146 / 0.12);
+
+  /* Warning — conflicts that need a decision */
+  --color-warning: #e6b85c;
+  --color-warning-subtle: rgb(230 184 92 / 0.12);
+
+  /* Critical — destructive actions and failures */
+  --color-critical: #ee6b78;
+  --color-critical-subtle: rgb(238 107 120 / 0.13);
+  --color-text-on-critical: #1c0a0c;
+
+  /* Media overlays (badges and scrims sit on photos in both themes) */
+  --color-scrim: rgb(10 9 8 / 0.64);
+  --color-media-badge: rgb(12 11 10 / 0.6);
+
+  /* Elevation — hairline edge + ambient dark on the dark ground */
+  --shadow-sm: 0 0 0 1px rgb(255 255 255 / 0.04), 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 0 0 1px rgb(255 255 255 / 0.06), 0 6px 18px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 0 0 1px rgb(255 255 255 / 0.07), 0 18px 48px rgb(0 0 0 / 0.55);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: #f9f4ed;              /* Organic neutral-100 */
+  --color-surface: #f0e8db;
+  --color-surface-raised: #fffbf6;
+  --color-surface-sunken: #161412;  /* viewer stays dark in both themes */
+  --color-surface-hover: rgb(32 30 29 / 0.05);
+  --color-surface-active: rgb(32 30 29 / 0.09);
+  --color-placeholder: #e6ddcf;
+
+  --color-text: #201e1d;
+  --color-text-muted: #5e574c;
+  --color-text-subtle: #7d7467;
+  --color-text-on-accent: #fffaf4;
+  --color-text-on-media: #ffffff;
+
+  --color-divider: rgb(32 30 29 / 0.09);
+  --color-border: rgb(32 30 29 / 0.16);
+  --color-border-strong: rgb(32 30 29 / 0.30);
+
+  --color-accent: #c67139;
+  --color-accent-hover: #b2622d;
+  --color-accent-pressed: #8c491a;
+  --color-accent-subtle: rgb(198 113 57 / 0.14);
+  --color-accent-text: #8c491a;
+
+  --color-success: #56633f;
+  --color-success-subtle: rgb(122 138 94 / 0.16);
+
+  --color-warning: #8a5d06;
+  --color-warning-subtle: rgb(214 160 40 / 0.17);
+
+  --color-critical: #b4303f;
+  --color-critical-subtle: rgb(180 48 63 / 0.10);
+  --color-text-on-critical: #ffffff;
+
+  --color-scrim: rgb(32 30 29 / 0.5);
+  --color-media-badge: rgb(12 11 10 / 0.6);
+
+  --shadow-sm: 0 1px 2px rgb(46 43 37 / 0.14);
+  --shadow-md: 0 3px 10px rgb(46 43 37 / 0.16);
+  --shadow-lg: 0 12px 32px rgb(46 43 37 / 0.22);
+}
+
+:root {
+  /* Type — Caprasimo for screen titles, empty states and the wordmark only */
+  --font-display: var(--font-heading);
+  --font-ui: var(--font-body);
+  --font-mono: "Cascadia Mono", Consolas, ui-monospace, monospace; /* file paths */
+  --numeric: tabular-nums; /* font-variant-numeric for dates, sizes, exposure */
+
+  --text-2xs: 11px;  /* badges, captions */
+  --text-xs: 12px;   /* metadata labels, paths */
+  --text-sm: 13px;   /* toolbar, table cells */
+  --text-md: 14px;   /* body, inputs */
+  --text-lg: 16px;   /* panel titles */
+  --text-xl: 20px;   /* section titles (display) */
+  --text-2xl: 25px;  /* month headers, screen titles (display) */
+  --text-3xl: 32px;  /* sign-in, empty states (display) */
+
+  --weight-regular: 400;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-tight: 1.2;
+  --leading-normal: 1.45;
+  --tracking-caps: 0.08em;
+
+  /* Spacing — Organic's 1.10x scale, extended */
+  --space-0: 0;
+  --space-half: 2.2px;
+  /* --space-1 4.4 · -2 8.8 · -3 13.2 · -4 17.6 · -6 26.4 · -8 35.2 come from Organic */
+  --space-5: 22px;
+  --space-10: 44px;
+  --space-12: 52.8px;
+
+  /* Layout sizes */
+  --size-sidebar: 232px;
+  --size-topbar: 56px;
+  --size-info-panel: 360px;
+  --size-scrubber: 56px;
+  --size-filmstrip: 84px;
+  --size-control: 34px;
+  --size-control-lg: 40px;
+  --size-row-target: 210px; /* justified grid target row height */
+  --gap-grid: 4px;
+
+  /* Radii — --radius-sm 8 · -md 16 · -lg 28 come from Organic */
+  --radius-xs: 4px;   /* tile badges */
+  --radius-tile: 6px; /* grid tiles: tight so dense grids stay calm */
+  --radius-pill: 999px;
+
+  /* Borders */
+  --border-width: 1px;
+  --border-width-strong: 2px; /* selection ring, keeper outline, focus */
+
+  /* Motion */
+  --duration-instant: 80ms;
+  --duration-fast: 140ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --duration-toast: 8000ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Z-layers */
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 10;
+  --z-scrubber: 15;
+  --z-topbar: 20;
+  --z-drawer: 30;
+  --z-popover: 40;
+  --z-viewer: 50;
+  --z-dialog: 60;
+  --z-toast: 70;
+  --z-tooltip: 80;
+}
