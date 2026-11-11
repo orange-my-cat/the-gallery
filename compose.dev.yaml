@@ -1,0 +1,57 @@
+name: gallery-dev
+
+# The development worker, in the production image - so ExifTool and ffmpeg
+# never have to be installed on Windows.
+#
+#     docker compose -f compose.dev.yaml up -d --build
+#     docker compose -f compose.dev.yaml logs -f
+#     docker compose -f compose.dev.yaml down
+#
+# Django (port 8001) and Vite (5173) keep running natively for hot reload. All
+# three share one picture of the world:
+#
+#   database   data-center-test, reached from the container as
+#              host.docker.internal:5433. `config.settings.dev` still refuses
+#              5432 and `data-center`, here as on the host.
+#   library    LIBRARY_ROOT from .env (the sample copy, D:/Photos-dev), mounted
+#              at /library. Paths in the database are relative to the root, so
+#              they mean the same file on both sides.
+#   cache      the repository's .cache/, mounted at /cache, so the thumbnails
+#              the worker writes are the ones native Django serves.
+#
+# Rebuild after changing backend code: `up -d --build`.
+
+services:
+  gallery-worker-dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: gallery:dev
+    container_name: gallery-worker-dev
+    restart: "no"
+    # Four processes: plenty for a sample library, and each holds a database
+    # connection on the instance financial-hub's tests also use.
+    command: ["worker", "--processes", "4"]
+    env_file: .env
+    environment:
+      # Overrides for inside the container; everything else comes from .env.
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      POSTGRES_HOST: host.docker.internal
+      POSTGRES_PORT: "5433"
+      LIBRARY_ROOT: /library
+      CACHE_ROOT: /cache
+      EXIFTOOL_PATH: ""
+      FFMPEG_PATH: ""
+      FFPROBE_PATH: ""
+    volumes:
+      - type: bind
+        source: ${LIBRARY_ROOT:?LIBRARY_ROOT must be set in .env}
+        target: /library
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./.cache
+        target: /cache
+    # The image's HEALTHCHECK polls Gunicorn, which a worker does not run.
+    healthcheck:
+      disable: true
