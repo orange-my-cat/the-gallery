@@ -1,0 +1,50 @@
+# Secrets and data - never committed. .env.example is the committed template.
+.env
+.env.*
+!.env.example
+
+# Database dumps. They live in the nominated Windows folder, never here.
+*.dump
+*.sql.gz
+
+# Thumbnail and preview cache (development CACHE_ROOT default).
+.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Django collected static - rebuilt by the image, never committed
+backend/staticfiles/
+
+# The built React bundle, when copied here by hand for the Django dev server.
+backend/frontend_dist/
+
+# Node / Vite
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# Personal Claude Code overrides (permissions); never shared
+.claude/settings.local.json
+
+# Editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Browser-check screenshots - regenerated on every run
+scripts/screenshots/

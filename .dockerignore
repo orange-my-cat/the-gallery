@@ -1,0 +1,35 @@
+# The build context is the repository root. Keep it small and keep secrets out.
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+documentation/
+
+# The development thumbnail cache.
+.cache/
+
+**/__pycache__/
+**/*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.hypothesis/
+**/.hypothesis/
+.coverage
+**/.coverage
+**/htmlcov/
+htmlcov/
+coverage.xml
+
+**/node_modules/
+frontend/dist/
+frontend/.vite/
+
+backend/staticfiles/
+backend/frontend_dist/
+
+*.dump
+.vscode/
+.idea/
