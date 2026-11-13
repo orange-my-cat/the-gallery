@@ -9,7 +9,7 @@
  * playback is simulated, as in the prototype.
  */
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
@@ -18,6 +18,9 @@ import { api, type AssetPatch } from '@/lib/api'
 import { bytes, count, DAYS, duration, MONTHS, parseLocal, plural, timeLabel } from '@/lib/format'
 import { useAssets, useChange } from '@/lib/queries'
 import type { Asset } from '@/lib/types'
+
+// Leaflet loads with the first item that has a position.
+const MiniMap = lazy(() => import('@/components/MiniMap').then((m) => ({ default: m.MiniMap })))
 
 type Field = 'title' | 'desc' | 'date' | 'place'
 const FIELD_LABEL: Record<Field, string> = { title: 'Title', desc: 'Description', date: 'Capture date', place: 'Location' }
@@ -45,7 +48,7 @@ export function Viewer() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   // The same list the timeline shows, so next and previous stay within a folder or search.
-  const items = useAssets(params.get('q') ?? '', params.get('folder') ?? '', params.get('album') ?? '').data ?? []
+  const items = useAssets(params.get('q') ?? '', params.get('folder') ?? '', params.get('album') ?? '', params.get('area') ?? '').data ?? []
   const [infoOpen, setInfoOpen] = useState(true)
 
   const index = items.findIndex((a) => a.id === id)
@@ -330,6 +333,7 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
       field === 'title' ? asset.title
       : field === 'desc' ? asset.description
       : field === 'date' ? asset.capturedAt.replace('T', ' ')
+      : asset.placeFromGps ? '' // the town nearest its GPS: the owner names it afresh
       : asset.place
     setEditing({ field, value, orig: value, error: false })
   }
@@ -396,8 +400,6 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
   // ── Derived display ────────────────────────────────────────────────────────
   const strip = items.slice(Math.max(0, index - 12), Math.min(items.length, index + 13))
   const place = asset.place
-  const hasGps = !!asset.gps && place !== ''
-  const mapX = 30 + ((Math.abs(asset.gps?.[1] ?? 0) * 7) % 40)
   const zone = asset.captureOffset === '+10:00' ? 'AEST ' : ''
   // Only what the file states: real files often lack some of these.
   const exposure = isVideo
@@ -710,31 +712,26 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
 
           <div className="info-section">
             <span className="caps">Location</span>
-            <div
-              className="mini-map"
-              style={{
-                backgroundImage: `radial-gradient(ellipse 60% 70% at ${mapX}% 60%, rgb(174 191 146 / 0.16), transparent 70%), linear-gradient(var(--color-divider) 1px, transparent 1px), linear-gradient(90deg, var(--color-divider) 1px, transparent 1px)`,
-              }}
-            >
-              {hasGps ? (
-                <div className="pin">
-                  <Icon name="pin" size={28} fill="var(--color-surface-raised)" stroke={2.5} />
-                </div>
-              ) : (
+            {asset.gps ? (
+              <Suspense fallback={<div className="mini-map" />}>
+                <MiniMap lat={asset.gps[0]} lon={asset.gps[1]} />
+              </Suspense>
+            ) : (
+              <div className="mini-map">
                 <div className="none">No location in this file</div>
-              )}
-              <span className="credit">© OpenStreetMap</span>
-            </div>
+              </div>
+            )}
             <div className="editable row" onClick={() => startEdit('place')}>
               <Icon name="pin" size={17} style={{ color: 'var(--color-text-subtle)', marginTop: 2 }} />
               {editing?.field === 'place' ? (
-                <input {...editInput({ flex: 1, fontSize: 'var(--text-sm)', minHeight: 32 }, 'Search for a place')} />
+                <input {...editInput({ flex: 1, fontSize: 'var(--text-sm)', minHeight: 32 }, asset.placeFromGps ? place : 'Name this place')} />
               ) : (
                 <>
                   <div className="grow num" style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.35 }}>
                     <span style={{ fontWeight: 600, color: place ? 'var(--color-text)' : 'var(--color-text-subtle)' }}>{place || 'Add a location'}</span>
                     <span className="muted" style={{ fontSize: 'var(--text-xs)' }}>
                       {asset.gps ? `${asset.gps[0].toFixed(4)}°, ${asset.gps[1].toFixed(4)}°` : 'No GPS in file'}
+                      {asset.placeFromGps ? ' · nearest town' : ''}
                     </span>
                   </div>
                   <Icon name="pencil" size={13} className="pencil" />

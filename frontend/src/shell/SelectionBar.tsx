@@ -14,7 +14,7 @@ type Pop = 'album' | 'tag' | 'rate' | 'move' | null
 export function SelectionBar() {
   const [params] = useSearchParams()
   const albumId = params.get('album') ?? ''
-  const assets = useAssets(params.get('q') ?? '', params.get('folder') ?? '', albumId).data
+  const assets = useAssets(params.get('q') ?? '', params.get('folder') ?? '', albumId, params.get('area') ?? '').data
   const { ids } = useSelection()
   const [pop, setPop] = useState<Pop>(null)
   const [tagDraft, setTagDraft] = useState('')

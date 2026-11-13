@@ -17,6 +17,7 @@ import type {
   AppSettings,
   Asset,
   AssetPage,
+  MapPoints,
   DuplicateQueue,
   FolderBrowse,
   FolderListing,
@@ -140,11 +141,12 @@ function toAsset({ thumbUrl, previewUrl, thumbReady, ...rest }: AssetDto): Asset
 }
 
 const live = {
-  async assetsPage(query: string, folder: string, album: string, cursor: string | null): Promise<AssetPage> {
+  async assetsPage(query: string, folder: string, album: string, area: string, cursor: string | null): Promise<AssetPage> {
     const params = new URLSearchParams({ limit: '1000' })
     if (query.trim()) params.set('q', query.trim())
     if (folder) params.set('folder', folder)
     if (album) params.set('album', album)
+    if (area) params.set('area', area)
     if (cursor) params.set('cursor', cursor)
     const page = await http.get<{ results: AssetDto[]; next: string | null }>(`/assets?${params}`)
     return { results: page.results.map(toAsset), next: page.next }
@@ -183,8 +185,9 @@ export const api = {
 
   // ── Phase 1a ───────────────────────────────────────────────────────────────
   library: (): Promise<LibraryInfo> => (demo ? mock.library() : http.get<LibraryInfo>('/library')),
-  assetsPage: (query: string, folder: string, album: string, cursor: string | null): Promise<AssetPage> =>
-    demo ? mock.assets(query).then((results) => ({ results, next: null })) : live.assetsPage(query, folder, album, cursor),
+  /** `area` is a box on the map, "south,west,north,east" (MAP-01). */
+  assetsPage: (query: string, folder: string, album: string, area: string, cursor: string | null): Promise<AssetPage> =>
+    demo ? mock.assets(query).then((results) => ({ results, next: null })) : live.assetsPage(query, folder, album, area, cursor),
   /** One level of the folder tree (BRW-03). The design's sample library has no folder view. */
   folderListing: (path: string): Promise<FolderListing> =>
     demo
@@ -254,6 +257,10 @@ export const api = {
     http.post<OperationRef>('/operations', { kind: 'restore', ids }),
   purge: (ids: readonly string[]): Promise<OperationRef> => http.post<OperationRef>('/operations', { kind: 'purge', ids }),
   emptyTrash: (): Promise<OperationRef> => http.post<OperationRef>('/trash/empty'),
+
+  // ── Phase 1d: the map ──────────────────────────────────────────────────────
+  mapPoints: (): Promise<MapPoints> =>
+    demo ? Promise.resolve({ points: [], count: 0, placesLoaded: false }) : http.get<MapPoints>('/map/points'),
 
   // ── Phase 1c: duplicates ───────────────────────────────────────────────────
   duplicates: (): Promise<DuplicateQueue> => (demo ? mock.duplicates() : Promise.resolve({ total: 0, groups: [] })),

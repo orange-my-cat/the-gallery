@@ -27,6 +27,8 @@ export interface Asset {
   readonly shutter: string
   readonly iso: number
   readonly place: string
+  /** The place is the town nearest its GPS (MET-03), not one the file names. */
+  readonly placeFromGps?: boolean
   readonly gps: readonly [number, number] | null
   readonly folder: string
   readonly title: string
@@ -208,6 +210,18 @@ export interface TrashListing {
 }
 
 export type DuplicateKind = 'visual' | 'exact' | 'similar'
+/** Every geotagged item, for the map (MAP-01): [id, lat, lon, thumbnail URL]. */
+export type MapPoint = readonly [string, number, number, string | null]
+
+export interface MapPoints {
+  readonly points: readonly MapPoint[]
+  readonly count: number
+  readonly placesLoaded: boolean
+}
+
+/** A box on the map: south, west, north, east, in degrees. */
+export type Area = readonly [number, number, number, number]
+
 
 export interface DuplicateCopy {
   readonly name: string

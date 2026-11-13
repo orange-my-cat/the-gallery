@@ -21,7 +21,8 @@ import type { Operation, ScanStatus, SettingsPatch } from './types'
 export const keys = {
   session: ['session'] as const,
   library: ['library'] as const,
-  assets: (q: string, folder: string, album: string) => ['assets', q, folder, album] as const,
+  assets: (q: string, folder: string, album: string, area: string) => ['assets', q, folder, album, area] as const,
+  mapPoints: ['map-points'] as const,
   trashListing: ['trash-listing'] as const,
   operations: ['operations'] as const,
   allAssets: ['assets'] as const,
@@ -69,16 +70,19 @@ export const useAlbums = () => useQuery({ queryKey: keys.albums, queryFn: api.al
 export const useFolders = () => useQuery({ queryKey: keys.folders, queryFn: api.folders, staleTime: Infinity })
 export const useTagSuggestions = () => useQuery({ queryKey: keys.tags, queryFn: api.tagSuggestions, staleTime: Infinity })
 export const useDuplicates = () => useQuery({ queryKey: keys.duplicates, queryFn: api.duplicates })
+/** Every geotagged point, fetched once and kept until something changes the library. */
+export const useMapPoints = () => useQuery({ queryKey: keys.mapPoints, queryFn: api.mapPoints, staleTime: Infinity })
+
 
 /**
  * The whole timeline for a search, newest first. Fetched a page at a time by
  * cursor and gathered into one list, because the justified layout needs every
  * item's shape. The first page renders straight away; the rest follow.
  */
-export function useAssets(query: string, folder = '', album = '') {
+export function useAssets(query: string, folder = '', album = '', area = '') {
   const result = useInfiniteQuery({
-    queryKey: keys.assets(query, folder, album),
-    queryFn: ({ pageParam }) => api.assetsPage(query, folder, album, pageParam),
+    queryKey: keys.assets(query, folder, album, area),
+    queryFn: ({ pageParam }) => api.assetsPage(query, folder, album, area, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.next,
     placeholderData: keepPreviousData,
@@ -201,6 +205,7 @@ export function invalidateLibrary(client: QueryClient) {
     client.invalidateQueries({ queryKey: keys.operations }),
     client.invalidateQueries({ queryKey: keys.library }),
     client.invalidateQueries({ queryKey: keys.duplicates }),
+    client.invalidateQueries({ queryKey: keys.mapPoints }),
   ])
 }
 

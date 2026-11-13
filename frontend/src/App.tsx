@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 import { demo } from './lib/api'
@@ -13,6 +14,9 @@ import { Settings } from './screens/Settings'
 import { SignIn } from './screens/SignIn'
 import { Timeline } from './screens/Timeline'
 import { Viewer } from './screens/Viewer'
+
+// Leaflet is only needed on the map: loaded when it is first opened.
+const MapView = lazy(() => import('./screens/MapView').then((m) => ({ default: m.MapView })))
 
 export function App() {
   const session = useSession()
@@ -34,7 +38,14 @@ export function App() {
         />
         <Route path="/folders" element={<Folders />} />
         <Route path="/albums" element={demo ? <NotBuilt icon="album" title="Albums" phase="1b" /> : <Albums />} />
-        <Route path="/map" element={<NotBuilt icon="map" title="Map" phase="1d" />} />
+        <Route
+          path="/map"
+          element={
+            <Suspense fallback={<div className="map-screen" />}>
+              <MapView />
+            </Suspense>
+          }
+        />
         <Route path="/trash" element={demo ? <NotBuilt icon="trash" title="Trash" phase="1b" /> : <Trash />} />
         <Route path="/people" element={<NotBuilt icon="users" title="People" phase="2" />} />
         <Route path="/settings" element={<Settings />} />

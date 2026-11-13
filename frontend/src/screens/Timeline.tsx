@@ -28,7 +28,9 @@ export function Timeline() {
   const albumId = params.get('album') ?? ''
   const navigate = useNavigate()
   const viewerOpen = useMatch('/photo/:id') !== null
-  const assets = useAssets(query, folder, albumId)
+  // `?area=` narrows it to a box on the map: a cluster's items (MAP-01).
+  const area = params.get('area') ?? ''
+  const assets = useAssets(query, folder, albumId, area)
   const parent = folder.includes('/') ? folder.slice(0, folder.lastIndexOf('/')) : ''
   const folderCard = useFolderListing(parent).data?.folders.find((f) => f.path === folder)
   const album = useAlbums().data?.find((a) => a.id === albumId)
@@ -336,6 +338,33 @@ export function Timeline() {
             onClick={() => {
               const next = new URLSearchParams(params)
               next.delete('album')
+              setParams(next)
+            }}
+          >
+            <Icon name="x" size={16} />
+          </button>
+        </div>
+      )}
+      {area && (
+        <div className="folder-bar">
+          <button type="button" className="pill-btn back" onClick={() => navigate('/map')}>
+            <Icon name="arrow-left" size={16} />
+            Map
+          </button>
+          <div className="lines">
+            <span className="display">Taken here</span>
+            <span className="muted num">
+              {assets.data ? `${count(assets.data.length)} ${assets.data.length === 1 ? 'item' : 'items'} in this area of the map` : ''}
+            </span>
+          </div>
+          <div className="grow" />
+          <button
+            type="button"
+            className="icon-btn"
+            title="Show the whole timeline"
+            onClick={() => {
+              const next = new URLSearchParams(params)
+              next.delete('area')
               setParams(next)
             }}
           >
