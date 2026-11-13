@@ -96,8 +96,62 @@ await page.goto(`${BASE}/?q=${encodeURIComponent(process.env.SEARCH ?? 'harbour'
 await page.waitForLoadState('networkidle')
 await shot(page, '05-search')
 
+// Duplicates (1c): the queue and a group to merge.
 await page.goto(`${BASE}/duplicates`)
-await shot(page, '06-duplicates-not-built')
+await page.locator('.folders-head').waitFor()
+await page.waitForLoadState('networkidle')
+await shot(page, '06-duplicates')
+const queue = await page.evaluate(async () => (await (await fetch('/api/duplicates')).json()))
+console.log(`  duplicate groups: ${queue.total} (${JSON.stringify(queue.counts)})`)
+const mergeable = queue.groups.find((g) => g.kind === 'pixels') ?? queue.groups.find((g) => g.kind === 'exact')
+if (mergeable) {
+  await page.goto(`${BASE}/duplicates/${mergeable.id}`)
+  await page.locator('.copy-card').first().waitFor()
+  await page.waitForLoadState('networkidle')
+  await shot(page, '17-duplicate-review')
+  // Use another copy's value in the first row that has one, as the owner would.
+  const cell = page.locator('.mcell:not(.empty):not(.picked)').first()
+  if (await cell.count()) {
+    await cell.click()
+    await page.waitForLoadState('networkidle')
+    await page.locator('.mrow').last().scrollIntoViewIfNeeded()
+    await shot(page, '18-duplicate-choice')
+  }
+}
+
+// The map (1d): clusters, a cluster's items, that area in the timeline, and
+// the viewer's mini map.
+// OpenStreetMap's tile policy: a web page's tile requests must carry a Referer.
+const tileReferer = new Promise((resolve) => {
+  page.on('request', (r) => {
+    if (r.url().includes('tile.openstreetmap.org')) resolve(r.headers()['referer'] ?? '(none)')
+  })
+})
+await page.goto(`${BASE}/map`)
+await page.locator('.map-canvas.leaflet-container').waitFor()
+console.log(`  OSM tile Referer: ${await Promise.race([tileReferer, new Promise((r) => setTimeout(() => r('(no tile requested)'), 8000))])}`)
+await page.waitForLoadState('networkidle')
+await page.waitForTimeout(1200) // tiles
+await shot(page, '20-map')
+const clusters = page.locator('.map-tile')
+if (await clusters.count()) {
+  await clusters.first().click()
+  await page.locator('.map-panel .cell').first().waitFor()
+  await page.waitForTimeout(600)
+  await shot(page, '21-map-cluster')
+  await page.locator('.map-panel .btn-primary').click()
+  await page.locator('.folder-bar').waitFor()
+  await page.waitForLoadState('networkidle')
+  await shot(page, '22-map-area-timeline')
+  const placed = await page.evaluate(async () => (await (await fetch('/api/map/points')).json()).points[0][0])
+  await page.goto(`${BASE}/photo/${placed}`)
+  await page.locator('.mini-map.leaflet-container').waitFor()
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(1000)
+  await shot(page, '23-viewer-mini-map')
+} else {
+  console.log('  (no geotagged items: the map is empty)')
+}
 
 await page.goto(`${BASE}/albums`)
 await page.locator('.folders-head').waitFor()
@@ -156,9 +210,6 @@ await context.close()
   await p.goto(`${BASE}/?mock=normal`)
   await p.locator('.timeline').waitFor()
   await shot(p, '07-demo-timeline')
-  await p.goto(`${BASE}/duplicates`)
-  await p.locator('.review').waitFor()
-  await shot(p, '08-demo-duplicates')
   await demo.close()
 }
 
