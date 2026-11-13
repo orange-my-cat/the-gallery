@@ -40,6 +40,8 @@ HANDLERS: dict[str, str] = {
     "thumb_large": "library.services.thumbnails.thumb_large_job",
     "operation": "fileops.services.ops.operation_job",
     "operation_undo": "fileops.services.ops.operation_undo_job",
+    "load_places": "places.services.geocode.load_job",
+    "geocode": "places.services.geocode.geocode_job",
 }
 
 # HLD, "Jobs by priority". The walk goes first so the queue fills; reconcile
@@ -53,6 +55,8 @@ PRIORITY: dict[str, int] = {
     "scan_reconcile": 1,
     "thumb_small": 2,
     "thumb_large": 3,
+    "load_places": 5,
+    "geocode": 5,
 }
 
 # Called on every turn of the loop (rate-limited): the worker is also the
@@ -60,6 +64,8 @@ PRIORITY: dict[str, int] = {
 SCHEDULERS = (
     "library.services.scan.schedule_due",
     "fileops.services.ops.purge_due",
+    # Place names: load GeoNames once, then name what has a position.
+    "places.services.geocode.schedule_due",
 )
 SCHEDULE_EVERY = timedelta(seconds=30)
 

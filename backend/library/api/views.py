@@ -21,12 +21,26 @@ class AssetPageQuery(serializers.Serializer):
     folder = serializers.CharField(required=False, allow_blank=True, default="", max_length=1024)
     album = serializers.IntegerField(required=False, min_value=1, default=None, allow_null=True)
     favourites = serializers.BooleanField(required=False, default=False)
+    # MAP-01: "south,west,north,east" in degrees - a map cluster's items.
+    area = serializers.CharField(required=False, allow_blank=True, default="", max_length=100)
+
+    def validate_area(self, value: str):
+        if not value:
+            return None
+        try:
+            south, west, north, east = (float(v) for v in value.split(","))
+        except ValueError:
+            raise serializers.ValidationError("south,west,north,east in degrees.") from None
+        if not (-90 <= south <= north <= 90 and -180 <= west <= 180 and -180 <= east <= 180):
+            raise serializers.ValidationError("That is not a box on the map.")
+        return (south, west, north, east)
 
 
 class AssetListView(APIView):
-    """``GET /api/assets?cursor=&limit=&q=&folder=`` - the timeline, newest first, by cursor.
+    """``GET /api/assets?cursor=&limit=&q=&folder=&area=`` - the timeline, newest first, by cursor.
 
-    `folder` narrows it to one folder and everything below it (BRW-03).
+    `folder` narrows it to one folder and everything below it (BRW-03), and
+    `area` to a box on the map (MAP-01).
     """
 
     def get(self, request):
@@ -39,6 +53,7 @@ class AssetListView(APIView):
             folder=params.validated_data["folder"],
             album=params.validated_data["album"],
             favourites=params.validated_data["favourites"],
+            area=params.validated_data["area"],
         )
         return Response({"results": page.results, "next": page.next})
 

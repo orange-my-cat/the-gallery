@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "library",
     "organise",
     "fileops",
+    "places",
 ]
 
 MIDDLEWARE = [

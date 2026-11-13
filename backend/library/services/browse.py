@@ -202,7 +202,9 @@ def present_asset(asset: Asset, *, trashed: bool = False) -> dict[str, Any] | No
         "fNumber": asset.f_number or 0,
         "shutter": shutter(asset.exposure_time),
         "iso": asset.iso or 0,
-        "place": asset.place,
+        # The file's (or the owner's) place, else the town nearest its GPS.
+        "place": asset.place or (asset.geo_place.label if asset.geo_place else ""),
+        "placeFromGps": not asset.place and asset.geo_place is not None,
         "gps": [asset.lat, asset.lon] if asset.lat is not None and asset.lon is not None else None,
         "folder": display_folder(shown_path),
         "title": asset.title,
@@ -250,6 +252,9 @@ def search(qs: QuerySet[Asset], query: str) -> QuerySet[Asset]:
             | Q(title__icontains=word)
             | Q(description__icontains=word)
             | Q(place__icontains=word)
+            | Q(geo_place__name__icontains=word)
+            | Q(geo_place__region__icontains=word)
+            | Q(geo_place__country__icontains=word)
             | Q(camera_make__icontains=word)
             | Q(camera_model__icontains=word)
             | Q(lens__icontains=word)
@@ -275,7 +280,7 @@ def in_folder(qs: QuerySet[Asset], folder: str) -> QuerySet[Asset]:
 
 def with_details(qs: QuerySet[Asset]) -> QuerySet[Asset]:
     """Everything present_asset reads, in a fixed number of queries."""
-    return qs.prefetch_related(
+    return qs.select_related("geo_place").prefetch_related(
         Prefetch("files", queryset=MediaFile.objects.order_by("pk")),
         Prefetch("asset_tags", queryset=AssetTag.objects.select_related("tag")),
         Prefetch("album_items", queryset=AlbumItem.objects.select_related("album")),
@@ -290,9 +295,15 @@ def timeline_page(
     folder: str = "",
     album: int | None = None,
     favourites: bool = False,
+    area: tuple[float, float, float, float] | None = None,
 ) -> Page:
     limit = max(1, min(limit, MAX_PAGE))
     qs = search(in_folder(visible_assets(), folder), query.strip())
+    if area is not None:
+        south, west, north, east = area
+        qs = qs.filter(lat__gte=south, lat__lte=north)
+        # A box across the antimeridian wraps round.
+        qs = qs.filter(lon__gte=west, lon__lte=east) if west <= east else qs.filter(Q(lon__gte=west) | Q(lon__lte=east))
     if album is not None:
         qs = qs.filter(album_items__album_id=album)
     if favourites:

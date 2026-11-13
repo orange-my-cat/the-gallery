@@ -90,11 +90,15 @@ _ASSET_FIELDS = (
 
 
 def _apply(asset: Asset, norm: Normalised) -> None:
+    moved = (asset.lat, asset.lon) != (norm.lat, norm.lon)
     for field in _ASSET_FIELDS:
         setattr(asset, field, getattr(norm, field))
+    if moved:  # MET-03: its place is worked out again for the new position
+        asset.geo_place = None
+        asset.geocoded = False
     asset.capture_source = CaptureSource(norm.capture_source)
-    # A place name the file states wins; without one, the place stays as it is
-    # (Phase 1d fills it from GPS).
+    # A place name the file states wins; without one, the place stays as it
+    # is. (A name worked out from GPS is kept apart, in geo_place.)
     if norm.place:
         asset.place = norm.place
 

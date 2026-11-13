@@ -42,8 +42,13 @@ class Asset(models.Model):
 
     lat = models.FloatField(null=True, blank=True)
     lon = models.FloatField(null=True, blank=True)
-    # Filled by the geocode job (Phase 1d).
+    # A place name the file states (XMP Location) or the owner typed.
     place = models.CharField(max_length=255, blank=True, default="")
+    # MET-03: the nearest town to lat/lon, worked out by the worker from the
+    # GeoNames list. Shown when the file (or the owner) names no place itself.
+    geo_place = models.ForeignKey("places.Place", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    # False until the position has been looked up; cleared when it changes.
+    geocoded = models.BooleanField(default=False)
 
     title = models.CharField(max_length=500, blank=True, default="")
     description = models.TextField(blank=True, default="")
