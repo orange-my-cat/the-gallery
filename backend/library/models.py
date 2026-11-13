@@ -115,7 +115,9 @@ class MediaFile(models.Model):
     # compare equal on every scan, so no rounding through a datetime.
     mtime_ns = models.BigIntegerField()
     sha256 = models.CharField(max_length=64, db_index=True)
-    phash = models.BigIntegerField(null=True, blank=True)  # Phase 1c
+    # DUP-01: SHA-256 of the decoded pixels for a photo (the byte hash for RAW
+    # and video); "" until worked out. Equal means the same picture.
+    pixel_hash = models.CharField(max_length=64, blank=True, default="", db_index=True)
 
     width = models.PositiveIntegerField(null=True, blank=True)
     height = models.PositiveIntegerField(null=True, blank=True)

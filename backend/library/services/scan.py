@@ -242,3 +242,6 @@ def reconcile_job(job: Job) -> None:
             unseen.update(state=FileState.MISSING, missed_scans=F("missed_scans") + 1)
         _finish(scan_id, ScanState.DONE, missing=newly_missing)
     logger.info("scan %s done: %s newly missing", scan_id, newly_missing)
+    from duplicates.services.detect import request_dedupe
+
+    request_dedupe()

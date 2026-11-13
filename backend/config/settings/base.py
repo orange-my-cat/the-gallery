@@ -72,13 +72,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    # The HLD's duplicates, places and (Phase 2) people apps arrive with the
-    # features that need them.
+    # The HLD's people app (Phase 2) arrives with the feature that needs it.
     "core",
     "jobs",
     "library",
     "organise",
     "fileops",
+    "duplicates",
     "places",
 ]
 

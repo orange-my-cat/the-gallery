@@ -41,17 +41,18 @@ def test_defaults(signed_in, library):
     body = signed_in.get("/api/settings").json()
     assert body["libraryRoot"] == body["libraryPath"]
     assert body["librarySubfolder"] == ""
-    assert (body["scanIntervalMinutes"], body["trashRetentionDays"], body["phashThreshold"]) == (60, 30, 4)
+    assert (body["scanIntervalMinutes"], body["trashRetentionDays"]) == (60, 30)
+    assert "phashThreshold" not in body, "only identical copies are duplicates: no sensitivity"
     assert (body["writeBackMode"], body["autoMergeExact"], body["exclusions"]) == ("embedded", False, [])
 
 
 def test_saving_plain_settings_does_not_scan(signed_in, library):
-    status, body = put(signed_in, {"scanIntervalMinutes": 0, "trashRetentionDays": 14, "phashThreshold": 6,
+    status, body = put(signed_in, {"scanIntervalMinutes": 0, "trashRetentionDays": 14,
                                    "writeBackMode": "sidecar", "autoMergeExact": True})
     assert status == 200
     assert body["scanStarted"] is False
     row = AppSettings.load()
-    assert (row.scan_interval_minutes, row.trash_retention_days, row.phash_threshold) == (0, 14, 6)
+    assert (row.scan_interval_minutes, row.trash_retention_days) == (0, 14)
     assert (row.write_back_mode, row.auto_merge_exact) == ("sidecar", True)
     assert not ScanRun.objects.exists()
 
@@ -84,7 +85,6 @@ def test_changing_the_folder_or_exclusions_rescans(signed_in, library):
         ({"scanIntervalMinutes": 2}, "scanIntervalMinutes"),
         ({"scanIntervalMinutes": "60"}, "scanIntervalMinutes"),
         ({"trashRetentionDays": 0}, "trashRetentionDays"),
-        ({"phashThreshold": 8}, "phashThreshold"),
         ({"writeBackMode": "yolo"}, "writeBackMode"),
         ({"autoMergeExact": "yes"}, "autoMergeExact"),
     ],

@@ -61,7 +61,6 @@ def present(row: AppSettings | None = None) -> dict[str, Any]:
         "scanIntervalMinutes": row.scan_interval_minutes,
         "trashRetentionDays": row.trash_retention_days,
         "writeBackMode": row.write_back_mode,
-        "phashThreshold": row.phash_threshold,
         "autoMergeExact": row.auto_merge_exact,
     }
 
@@ -137,12 +136,6 @@ def save(data: dict[str, Any]) -> Saved:
         if data["writeBackMode"] not in WriteBackMode.values:
             raise InvalidSetting("Choose embedded or sidecar.", field="writeBackMode")
         row.write_back_mode = data["writeBackMode"]
-
-    if "phashThreshold" in data:
-        n = _int(data["phashThreshold"], "phashThreshold")
-        if not 0 <= n <= 7:
-            raise InvalidSetting("Between 0 (identical only) and 7.", field="phashThreshold")
-        row.phash_threshold = n
 
     if "autoMergeExact" in data:
         if not isinstance(data["autoMergeExact"], bool):

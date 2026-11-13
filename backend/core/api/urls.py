@@ -24,5 +24,6 @@ urlpatterns = [
     path("auth/me", MeView.as_view(), name="auth-me"),
     path("", include("library.api.urls")),
     path("", include("fileops.api.urls")),
+    path("", include("duplicates.api.urls")),
     path("", include("places.api.urls")),
 ]

@@ -7,6 +7,7 @@ that describe it; each puts the file back itself if its row update fails.
 from __future__ import annotations
 
 import os
+import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,8 @@ from organise.models import Album
 EDITABLE_FIELDS = (
     "favourite", "rating", "title", "description", "place",
     "capture_at", "capture_offset", "capture_source", "date_edited",
+    # Filled in by a duplicate merge from another copy (DUP-05).
+    "lat", "lon", "camera_make", "camera_model", "lens",
 )
 
 
@@ -50,8 +53,16 @@ def apply_asset_fields(op: Operation, s: Step) -> Step:
         if field not in EDITABLE_FIELDS:
             raise BusinessRuleError(f"{field} cannot be edited.")
         setattr(asset, field, _load(field, value))
+    _position_changed(asset, s["set"])
     asset.save()
     return {**s, "before": before}
+
+
+def _position_changed(asset: Asset, fields) -> None:
+    """A new position (a merge's) means a new place name, worked out again."""
+    if "lat" in fields or "lon" in fields:
+        asset.geo_place = None
+        asset.geocoded = False
 
 
 @reverter("asset_fields")
@@ -61,6 +72,7 @@ def revert_asset_fields(op: Operation, s: Step) -> None:
         return  # purged since; nothing left to put back
     for field, value in s["before"].items():
         setattr(asset, field, _load(field, value))
+    _position_changed(asset, s["before"])
     asset.save()
 
 
@@ -201,6 +213,96 @@ def revert_xmp(op: Operation, s: Step) -> None:
         xmp.write(path, s["before"], sidecar=s["sidecar"])
     if media is not None and media.state != FileState.TRASHED:
         index_path(media.rel_path)
+
+
+# ---------------------------------------------------------------------------
+# Files: a duplicate merge (DUP-05, HLD "Merge")
+# ---------------------------------------------------------------------------
+
+
+@step("merge_check", touches_files=True)
+def apply_merge_check(op: Operation, s: Step) -> Step:
+    """Lock and re-check: every copy is still the file the review showed."""
+    root = library_root()
+    for want in s["files"]:
+        media = MediaFile.objects.select_for_update().filter(pk=want["file"]).first()
+        if media is None or media.state != FileState.PRESENT:
+            raise BusinessRuleError("One of the copies is no longer in the library. Rescan, then review this group again.")
+        path = to_abs(media.rel_path, root)
+        try:
+            stat = path.stat()
+        except OSError:
+            raise BusinessRuleError(
+                f"{media.name} is no longer where the library last saw it. Rescan, then review this group again."
+            ) from None
+        if stat.st_size != want["size"] or stat.st_mtime_ns != want["mtime_ns"]:
+            raise BusinessRuleError(
+                f"{media.name} has changed since the library last read it. Rescan, then review this group again."
+            )
+    return s
+
+
+@reverter("merge_check")
+def revert_merge_check(op: Operation, s: Step) -> None:
+    return None  # it changed nothing
+
+
+@step("merge_write", touches_files=True)
+def apply_merge_write(op: Operation, s: Step) -> Step:
+    """Write the merged metadata into the kept file, after copying its exact
+    bytes aside (`backup`), so undo puts back precisely what was there."""
+    media = MediaFile.objects.get(pk=s["file"])
+    root = library_root()
+    target, sidecar = xmp.target_for(media, root)
+    path = to_abs(target, root)
+    assign = xmp.assignments(s["values"], embedded=not sidecar)
+    created = sidecar and not path.exists()
+    made: list[str] = []
+    backup = None
+    if not created:
+        dst = to_abs(s["backup_dir"] + "/" + target.rpartition("/")[2], root)
+        made = _make_dirs(dst.parent, root)
+        shutil.copy2(path, dst)
+        backup = to_rel(root, dst)
+    try:
+        xmp.write(path, assign, sidecar=sidecar)
+    except Exception:
+        if backup:
+            to_abs(backup, root).unlink(missing_ok=True)
+            _remove_dirs(made, root)
+        if created:
+            path.unlink(missing_ok=True)
+        raise
+    index_path(media.rel_path)
+    return {**s, "target": target, "sidecar": sidecar, "created": created, "backup": backup, "made": made}
+
+
+@reverter("merge_write")
+def revert_merge_write(op: Operation, s: Step) -> None:
+    root = library_root()
+    path = to_abs(s["target"], root)
+    if s["created"]:
+        path.unlink(missing_ok=True)
+    else:
+        backup = to_abs(s["backup"], root)
+        if not backup.is_file():
+            raise CannotUndo(f"The copy of {path.name} taken before the merge is gone, so it cannot be put back.")
+        os.replace(backup, path)
+        _remove_dirs(s["made"], root)
+        _prune_trash_dirs(backup.parent, root)
+    media = MediaFile.objects.filter(pk=s["file"]).first()
+    if media is not None and media.state != FileState.TRASHED:
+        index_path(media.rel_path)
+
+
+def drop_merge_backups(op: Operation) -> None:
+    """The kept files' pre-merge copies, once the merge can no longer be undone."""
+    root = library_root()
+    for done in op.steps:
+        if done.get("t") == "merge_write" and done.get("backup"):
+            backup = to_abs(done["backup"], root)
+            backup.unlink(missing_ok=True)
+            _prune_trash_dirs(backup.parent, root)
 
 
 # ---------------------------------------------------------------------------
@@ -355,6 +457,7 @@ def apply_purge_file(op: Operation, s: Step) -> Step:
         asset.delete()
     if trash_op is not None and not MediaFile.objects.filter(trash_operation=trash_op).exists():
         Operation.objects.filter(pk=trash_op.pk).update(undoable=False)
+        drop_merge_backups(trash_op)
     _prune_trash_dirs(path.parent, root)
     return {**s, "removed": removed}
 

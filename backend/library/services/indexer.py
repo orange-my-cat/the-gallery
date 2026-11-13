@@ -238,6 +238,8 @@ def index_path(rel: str, scan_id: int | None = None) -> str:
             outcome = "moved" if media is not None else "new"
 
         if media is not None:
+            if media.sha256 != sha:
+                media.pixel_hash = ""  # other bytes: fingerprinted again below
             for name, value in fields.items():
                 setattr(media, name, value)
             media.rel_path = rel
@@ -265,6 +267,9 @@ def index_path(rel: str, scan_id: int | None = None) -> str:
 
     if media.role != FileRole.LIVE_VIDEO:  # a Live Photo's clip is never a tile
         thumbnails.queue_missing(media, scan_id=scan_id)
+        from duplicates.services.detect import queue_fingerprint
+
+        queue_fingerprint(media, scan_id=scan_id)
     return outcome
 
 

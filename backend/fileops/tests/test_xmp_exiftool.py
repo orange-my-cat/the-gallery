@@ -94,3 +94,44 @@ def test_before_values_restore_exactly(tmp_path):
     xmp.write(path, before, sidecar=False)
     norm = metadata.normalise(metadata.read(path), file_mtime=datetime.now(UTC))
     assert (norm.title, norm.keywords) == ("First", ("a",))
+
+
+# What a duplicate merge (DUP-05) also fills in from another copy.
+MERGED = {
+    "gps": [-38.392, 144.252],
+    "camera_make": "FUJIFILM",
+    "camera_model": "X-T4",
+    "lens": "XF23mmF2 R WR",
+}
+
+
+@pytest.mark.parametrize("name,fmt", [("m.jpg", "JPEG"), ("m.heic", "HEIF")])
+def test_merged_position_and_camera_embed_and_read_back(tmp_path, name, fmt):
+    path = tmp_path / name
+    _image(path, fmt)
+    xmp.write(path, xmp.assignments(MERGED, embedded=True), sidecar=False)
+
+    norm = metadata.normalise(metadata.read(path), file_mtime=datetime.now(UTC), name=name)
+    assert (round(norm.lat, 5), round(norm.lon, 5)) == (-38.392, 144.252)
+    assert (norm.camera_make, norm.camera_model, norm.lens) == ("FUJIFILM", "X-T4", "XF23mmF2 R WR")
+
+
+def test_merged_position_and_camera_in_a_sidecar_outrank_the_raw(tmp_path):
+    raw = tmp_path / "IMG_1.CR3"
+    raw.write_bytes(b"not really a raw")
+    sidecar = tmp_path / "IMG_1.xmp"
+    xmp.write(sidecar, xmp.assignments(MERGED, embedded=False), sidecar=True)
+
+    norm = metadata.normalise(read_with_sidecars(raw), file_mtime=datetime.now(UTC), name=raw.name)
+    assert (round(norm.lat, 5), round(norm.lon, 5)) == (-38.392, 144.252)
+    assert (norm.camera_make, norm.lens) == ("FUJIFILM", "XF23mmF2 R WR")
+
+
+def test_a_southern_western_position_keeps_its_signs_in_exif(tmp_path):
+    path = tmp_path / "w.jpg"
+    _image(path, "JPEG")
+    xmp.write(path, xmp.assignments({"gps": [-33.8688, -70.6693]}, embedded=True), sidecar=False)
+    raw = metadata.read(path)
+    assert raw["EXIF:GPSLatitudeRef"] == "S" and raw["EXIF:GPSLongitudeRef"] == "W"
+    norm = metadata.normalise(raw, file_mtime=datetime.now(UTC), name="w.jpg")
+    assert (round(norm.lat, 4), round(norm.lon, 4)) == (-33.8688, -70.6693)

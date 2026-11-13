@@ -40,6 +40,8 @@ HANDLERS: dict[str, str] = {
     "thumb_large": "library.services.thumbnails.thumb_large_job",
     "operation": "fileops.services.ops.operation_job",
     "operation_undo": "fileops.services.ops.operation_undo_job",
+    "fingerprint": "duplicates.services.fingerprint.fingerprint_job",
+    "dedupe": "duplicates.services.detect.dedupe_job",
     "load_places": "places.services.geocode.load_job",
     "geocode": "places.services.geocode.geocode_job",
 }
@@ -55,8 +57,11 @@ PRIORITY: dict[str, int] = {
     "scan_reconcile": 1,
     "thumb_small": 2,
     "thumb_large": 3,
+    "fingerprint": 4,
     "load_places": 5,
     "geocode": 5,
+    # Last: it should see every hash the scan's files are getting.
+    "dedupe": 6,
 }
 
 # Called on every turn of the loop (rate-limited): the worker is also the
@@ -64,6 +69,8 @@ PRIORITY: dict[str, int] = {
 SCHEDULERS = (
     "library.services.scan.schedule_due",
     "fileops.services.ops.purge_due",
+    # Fingerprints for files indexed before duplicate detection existed.
+    "duplicates.services.detect.schedule_due",
     # Place names: load GeoNames once, then name what has a position.
     "places.services.geocode.schedule_due",
 )

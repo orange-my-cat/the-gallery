@@ -8,7 +8,7 @@
 # Python 3.14, as financial-hub. Every media library below, and the Phase 2
 # ones (onnxruntime, scikit-learn), was confirmed on 2026-11-08 to publish
 # cp314 wheels for both win_amd64 and manylinux x86_64 - so web and worker
-# share one interpreter and one image. imagehash joins with duplicates (1c).
+# share one interpreter and one image.
 
 Django>=5.2,<5.3
 djangorestframework>=3.15,<4
@@ -23,3 +23,7 @@ PyExifTool>=0.5.6,<0.6
 Pillow>=11,<14
 pillow-heif>=1.0,<2
 rawpy>=0.24,<0.30
+
+# Phase 1c - duplicates. The perceptual hash is a few lines of numpy (already
+# here for rawpy) rather than imagehash, which would bring scipy along.
+numpy>=2.1,<3

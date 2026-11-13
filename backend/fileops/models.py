@@ -28,6 +28,8 @@ class OpKind(models.TextChoices):
     PURGE = "purge"
     MOVE = "move"
     RENAME = "rename"
+    MERGE = "merge"  # duplicates merged into one copy (DUP-05)
+    DISMISS = "dismiss"  # a duplicate group marked "not duplicates"
 
 
 class OpState(models.TextChoices):

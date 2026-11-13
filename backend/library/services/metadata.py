@@ -304,12 +304,13 @@ def capture_time(
 
 
 def _gps(raw: dict[str, Any]) -> tuple[float | None, float | None]:
-    lat = _float(raw, "Composite:GPSLatitude", "XMP:GPSLatitude", "EXIF:GPSLatitude")
-    lon = _float(raw, "Composite:GPSLongitude", "XMP:GPSLongitude", "EXIF:GPSLongitude")
+    # A sidecar's position (written by a merge for a RAW or a video) wins.
+    lat = _float(raw, "Sidecar:GPSLatitude", "Composite:GPSLatitude", "XMP:GPSLatitude", "EXIF:GPSLatitude")
+    lon = _float(raw, "Sidecar:GPSLongitude", "Composite:GPSLongitude", "XMP:GPSLongitude", "EXIF:GPSLongitude")
     if lat is None or lon is None:
         return None, None
     # Only the bare EXIF value is unsigned; its hemisphere is in the Ref tag.
-    if raw.get("Composite:GPSLatitude") is None and raw.get("XMP:GPSLatitude") is None:
+    if all(raw.get(k) is None for k in ("Sidecar:GPSLatitude", "Composite:GPSLatitude", "XMP:GPSLatitude")):
         if str(raw.get("EXIF:GPSLatitudeRef", "")).upper().startswith("S"):
             lat = -abs(lat)
         if str(raw.get("EXIF:GPSLongitudeRef", "")).upper().startswith("W"):
@@ -349,7 +350,7 @@ def _dimensions(raw: dict[str, Any]) -> tuple[int | None, int | None]:
 
 
 def _lens(raw: dict[str, Any]) -> str:
-    lens = _text(raw, "EXIF:LensModel", "XMP:LensModel", "XMP:Lens", "MakerNotes:LensModel", "MakerNotes:LensType")
+    lens = _text(raw, "Sidecar:LensModel", "EXIF:LensModel", "XMP:LensModel", "XMP:Lens", "MakerNotes:LensModel", "MakerNotes:LensType")
     if lens:
         return lens
     # With -n, Composite:LensID is the maker's numeric code - useless as text.
@@ -381,8 +382,8 @@ def normalise(raw: dict[str, Any], *, file_mtime: datetime, zone: str | None = N
         width=width,
         height=height,
         mime=_text(raw, "File:MIMEType"),
-        camera_make=_text(raw, "EXIF:Make", "QuickTime:Make", "XMP:Make")[:128],
-        camera_model=_text(raw, "EXIF:Model", "QuickTime:Model", "XMP:Model")[:128],
+        camera_make=_text(raw, "Sidecar:Make", "EXIF:Make", "QuickTime:Make", "XMP:Make")[:128],
+        camera_model=_text(raw, "Sidecar:Model", "EXIF:Model", "QuickTime:Model", "XMP:Model")[:128],
         lens=_lens(raw)[:255],
         exposure_time=_float(raw, "EXIF:ExposureTime", "Composite:ShutterSpeed"),
         f_number=_float(raw, "EXIF:FNumber", "Composite:Aperture"),

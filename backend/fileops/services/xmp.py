@@ -36,11 +36,32 @@ FIELD_TAGS: dict[str, list[tuple[str, str]]] = {
     "keywords": [("XMP-dc:Subject", "XMP:Subject")],
     "place": [("XMP-iptcCore:Location", "XMP:Location")],
     "date": [("XMP-exif:DateTimeOriginal", "XMP:DateTimeOriginal")],
+    # Filled in by a duplicate merge (DUP-05), from the copy that had them.
+    "camera_make": [("XMP-tiff:Make", "XMP:Make")],
+    "camera_model": [("XMP-tiff:Model", "XMP:Model")],
+    "lens": [("XMP-exifEX:LensModel", "XMP:LensModel")],
 }
+# GPS as signed decimal degrees in XMP; EXIF keeps a hemisphere Ref instead.
+GPS_TAGS = [
+    ("XMP-exif:GPSLatitude", "XMP:GPSLatitude"),
+    ("XMP-exif:GPSLongitude", "XMP:GPSLongitude"),
+]
 # Embedded files also carry EXIF's own date, which readers prefer over XMP's.
 EMBEDDED_DATE_TAGS = [
     ("EXIF:DateTimeOriginal", "EXIF:DateTimeOriginal"),
     ("EXIF:OffsetTimeOriginal", "EXIF:OffsetTimeOriginal"),
+]
+# Likewise for the camera and position: readers take EXIF's over XMP's.
+EMBEDDED_TAGS = {
+    "camera_make": ("EXIF:Make", "EXIF:Make"),
+    "camera_model": ("EXIF:Model", "EXIF:Model"),
+    "lens": ("EXIF:LensModel", "EXIF:LensModel"),
+}
+EMBEDDED_GPS_TAGS = [
+    ("EXIF:GPSLatitude", "EXIF:GPSLatitude"),
+    ("EXIF:GPSLatitudeRef", "EXIF:GPSLatitudeRef"),
+    ("EXIF:GPSLongitude", "EXIF:GPSLongitude"),
+    ("EXIF:GPSLongitudeRef", "EXIF:GPSLongitudeRef"),
 ]
 
 _EMPTY_XMP = (
@@ -120,6 +141,19 @@ def assignments(values: dict[str, Any], *, embedded: bool) -> dict[str, Any]:
                 out["EXIF:DateTimeOriginal"] = stamp
                 out["EXIF:OffsetTimeOriginal"] = offset if stamp else None
             continue
+        if field == "gps":
+            lat, lon = value if value else (None, None)
+            known = lat is not None and lon is not None
+            out["XMP-exif:GPSLatitude"] = float(lat) if known else None
+            out["XMP-exif:GPSLongitude"] = float(lon) if known else None
+            if embedded:
+                out["EXIF:GPSLatitude"] = abs(float(lat)) if known else None
+                out["EXIF:GPSLatitudeRef"] = ("S" if lat < 0 else "N") if known else None
+                out["EXIF:GPSLongitude"] = abs(float(lon)) if known else None
+                out["EXIF:GPSLongitudeRef"] = ("W" if lon < 0 else "E") if known else None
+            continue
+        if embedded and field in EMBEDDED_TAGS:
+            out[EMBEDDED_TAGS[field][0]] = (value or "").strip() or None
         for write_tag, _ in FIELD_TAGS[field]:
             if field == "keywords":
                 out[write_tag] = list(value or []) or None
@@ -131,7 +165,7 @@ def assignments(values: dict[str, Any], *, embedded: bool) -> dict[str, Any]:
 
 
 def _read_key(write_tag: str) -> str:
-    for pairs in (*FIELD_TAGS.values(), EMBEDDED_DATE_TAGS):
+    for pairs in (*FIELD_TAGS.values(), EMBEDDED_DATE_TAGS, GPS_TAGS, EMBEDDED_GPS_TAGS, list(EMBEDDED_TAGS.values())):
         for w, r in pairs:
             if w == write_tag:
                 return r
@@ -158,6 +192,11 @@ def _same(expected: Any, got: Any) -> bool:
     if isinstance(expected, list):
         got_list = got if isinstance(got, list) else [got] if got not in (None, "") else []
         return [str(x) for x in got_list] == [str(x) for x in expected]
+    if isinstance(expected, float):
+        try:
+            return abs(float(got) - expected) < 1e-5  # about a metre
+        except (TypeError, ValueError):
+            return False
     if isinstance(expected, int):
         try:
             return int(float(got)) == expected

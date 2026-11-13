@@ -279,12 +279,10 @@ def _trash_path(op_id: int, rel: str, base: str) -> str:
     return f"{base}/{TRASH_DIR}/{op_id}/{inner}" if base else f"{TRASH_DIR}/{op_id}/{inner}"
 
 
-def trash(ids: Iterable[Any]) -> Operation:
-    assets = _assets(ids)
+def trash_plan(op: Operation, assets: Iterable[Asset]) -> list[dict]:
+    """Steps that move these assets' files, and their sidecars, into the trash."""
     root = library_root()
     base = _library_folder()
-    days = AppSettings.load().trash_retention_days
-    op = _new(OpKind.TRASH, f"Moved {_items(len(assets))} to Trash", {"retention_days": days})
     plan: list[dict] = []
     for asset in assets:
         files = _files(asset)
@@ -292,7 +290,15 @@ def trash(ids: Iterable[Any]) -> Operation:
             plan.append({"t": "move_file", "file": f.pk, "mode": "trash", "to": _trash_path(op.pk, f.rel_path, base)})
         for owner, sidecar in _sidecars(asset, files, root):
             plan.append({"t": "move_path", "owner": owner.pk, "from": sidecar, "to": _trash_path(op.pk, sidecar, base)})
-    return _queue(op, plan)
+    return plan
+
+
+def trash(ids: Iterable[Any], *, summary: str | None = None, then: list[dict] | None = None) -> Operation:
+    """Move items to the trash; `then` adds steps after (a duplicate group's)."""
+    assets = _assets(ids)
+    days = AppSettings.load().trash_retention_days
+    op = _new(OpKind.TRASH, summary or f"Moved {_items(len(assets))} to Trash", {"retention_days": days})
+    return _queue(op, trash_plan(op, assets) + list(then or []))
 
 
 def restore(ids: Iterable[Any]) -> Operation:
@@ -443,9 +449,17 @@ def operation_job(job) -> None:
     op.request = {**op.request, "worker_started": True}
     Operation.objects.filter(pk=op.pk).update(request=op.request)
     engine.run(op, op.request.get("plan", []), reversible=op.kind != OpKind.PURGE)
+    _look_for_duplicates()
 
 
 def operation_undo_job(job) -> None:
     op = Operation.objects.filter(pk=job.payload["op"]).first()
     if op is not None and op.state == OpState.UNDOING:
         engine.undo(op)
+        _look_for_duplicates()
+
+
+def _look_for_duplicates() -> None:
+    from duplicates.services.detect import request_dedupe
+
+    request_dedupe()

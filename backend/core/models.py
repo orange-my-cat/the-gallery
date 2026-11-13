@@ -7,7 +7,6 @@ the settings screen, and they travel with the database.
 
 from __future__ import annotations
 
-from django.core.validators import MaxValueValidator
 from django.db import models
 
 
@@ -33,11 +32,6 @@ class AppSettings(models.Model):
     trash_retention_days = models.PositiveIntegerField(default=30)
     write_back_mode = models.CharField(
         max_length=16, choices=WriteBackMode.choices, default=WriteBackMode.EMBEDDED
-    )
-    # DUP-02. Hamming distance between 64-bit perceptual hashes; the pigeonhole
-    # index (HLD) only holds up to 7.
-    phash_threshold = models.PositiveSmallIntegerField(
-        default=4, validators=[MaxValueValidator(7)]
     )
     # DUP-06. Off until the owner has watched a few exact merges go right.
     auto_merge_exact = models.BooleanField(default=False)
