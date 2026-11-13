@@ -7,8 +7,13 @@ The HLD's two phases (LIB-03):
    is handed to an `index_file` job. Nothing is hashed here, so a rescan of an
    unchanged 100,000-file library is a directory listing and one query.
 2. **Reconcile** - once every `index_file` job of this scan has finished, any
-   file the scan did not see is marked `missing`. Never deleted: it may come
-   back, and after two consecutive misses it simply drops out of views.
+   file the scan did not see is marked `missing` and drops out of views. Never
+   deleted: it may come back, and then its asset comes back with it.
+
+The app moves files while a scan runs (Trash, restore, move, rename), so the
+walk's view of a file can be stale by the time it is written back. A trashed
+file is never marked present again, and a file the app touched after the scan
+started is never marked missing by it.
 
 Moves (LIB-04) are recognised by `index_file` itself: a new path whose SHA-256
 matches a known file that is no longer at its old path takes over that file's
@@ -173,7 +178,11 @@ def walk_job(job: Job) -> None:
             to_index.append({"path": rel})
 
     for start in range(0, len(unchanged), _BATCH):
-        MediaFile.objects.filter(pk__in=unchanged[start : start + _BATCH]).update(
+        # `known` was read before the walk; a file sent to Trash since then
+        # must stay trashed, not be marked present inside .gallery-trash.
+        MediaFile.objects.filter(pk__in=unchanged[start : start + _BATCH]).exclude(
+            state=FileState.TRASHED
+        ).update(
             last_seen_scan_id=scan_id, state=FileState.PRESENT, missed_scans=0
         )
     # A file that failed to index has no MediaFile row, so every scan tries it
@@ -224,6 +233,11 @@ def reconcile_job(job: Job) -> None:
             )
             for prefix in unreadable:
                 unseen = unseen.exclude(rel_path__startswith=prefix + "/")
+            # Restored, moved or renamed by the app after the walk passed its
+            # new folder: not seen, but not missing either.
+            started = ScanRun.objects.filter(pk=scan_id).values_list("started_at", flat=True).first()
+            if started is not None:
+                unseen = unseen.exclude(updated_at__gte=started)
             newly_missing = unseen.filter(state=FileState.PRESENT).count()
             unseen.update(state=FileState.MISSING, missed_scans=F("missed_scans") + 1)
         _finish(scan_id, ScanState.DONE, missing=newly_missing)

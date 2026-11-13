@@ -12,6 +12,7 @@ from core.models import AppSettings
 from jobs.models import Job, JobState
 from library.models import Asset, FileRole, FileState, MediaFile, ScanRun, ScanState, ScanTrigger
 from library.services import metadata
+from library.services import scan as scan_service
 from library.services.scan import schedule_due, start_scan
 from library.services.thumbnails import cache_path
 
@@ -143,6 +144,61 @@ def test_a_removed_file_goes_missing_and_is_never_deleted(library, tags):
     scan()
     media.refresh_from_db()
     assert (media.state, media.missed_scans) == (FileState.PRESENT, 0)
+
+
+def _during_walk(monkeypatch, action) -> None:
+    """Run `action` mid-scan: after the walk read the known files and listed
+    the folders, before it writes back what it saw."""
+    real = scan_service._walk
+
+    def walk(*args, **kwargs):
+        found = list(real(*args, **kwargs))
+        action()
+        yield from found
+
+    monkeypatch.setattr(scan_service, "_walk", walk)
+
+
+def test_a_file_sent_to_trash_during_a_scan_stays_in_trash(library, tags, monkeypatch):
+    write(library / "trip" / "a.jpg", jpeg_bytes())
+    scan()
+    media = MediaFile.objects.get()
+
+    def trash():
+        # What the Trash step leaves behind, written after the walk read `known`
+        # but with the file still listed at its old path.
+        MediaFile.objects.filter(pk=media.pk).update(
+            state=FileState.TRASHED, rel_path=".gallery-trash/1/trip/a.jpg", trashed_from="trip/a.jpg"
+        )
+
+    _during_walk(monkeypatch, trash)
+    scan()
+    media.refresh_from_db()
+    assert media.state == FileState.TRASHED
+
+
+def test_a_file_restored_during_a_scan_is_not_marked_missing(library, tags, monkeypatch):
+    write(library / "trip" / "a.jpg", jpeg_bytes())
+    scan()
+    media = MediaFile.objects.get()
+    trashed = write(library / ".gallery-trash" / "1" / "trip" / "a.jpg", (library / "trip" / "a.jpg").read_bytes())
+    (library / "trip" / "a.jpg").unlink()
+    MediaFile.objects.filter(pk=media.pk).update(
+        state=FileState.TRASHED, rel_path=".gallery-trash/1/trip/a.jpg", trashed_from="trip/a.jpg"
+    )
+
+    def restore():
+        # Put back after the walk had already listed trip/ without it.
+        shutil.move(trashed, library / "trip" / "a.jpg")
+        restored = MediaFile.objects.get(pk=media.pk)
+        restored.state, restored.rel_path, restored.trashed_from = FileState.PRESENT, "trip/a.jpg", ""
+        restored.save()
+
+    _during_walk(monkeypatch, restore)
+    run = scan()
+    media.refresh_from_db()
+    assert run.missing == 0
+    assert media.state == FileState.PRESENT
 
 
 @pytest.mark.parametrize("raw_first", [True, False])

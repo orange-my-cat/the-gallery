@@ -38,8 +38,6 @@ from library.services.paths import RAW_EXTENSIONS, extension, must_choose_folder
 from library.services.thumbnails import cache_path
 from organise.models import AlbumItem, AssetTag
 
-# A file missing for this many consecutive scans no longer shows (HLD, Reconcile).
-MISSING_GRACE = 2
 DEFAULT_PAGE = 500
 MAX_PAGE = 2000
 # Used for layout when a file states no dimensions.
@@ -66,9 +64,14 @@ class BadCursor(BusinessRuleError):
 
 
 def visible_files() -> QuerySet[MediaFile]:
-    return MediaFile.objects.filter(
-        Q(state=FileState.PRESENT) | Q(state=FileState.MISSING, missed_scans__lt=MISSING_GRACE)
-    )
+    """Files that are there. A missing one drops out as soon as a scan misses it.
+
+    Its row is kept, so if it comes back the asset - favourite, albums, tags -
+    comes back with it. A folder the scan could not open is never marked
+    missing (see `scan.reconcile_job`), so an unplugged drive does not empty
+    the library.
+    """
+    return MediaFile.objects.filter(state=FileState.PRESENT)
 
 
 def visible_assets() -> QuerySet[Asset]:

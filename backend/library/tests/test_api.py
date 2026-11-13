@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from datetime import timedelta
 
 import pytest
@@ -150,18 +151,29 @@ def test_a_pair_is_named_by_its_raw(signed_in, library, tags):
     assert asset["size"] == len(b"raw bytes")
 
 
-def test_missing_files_linger_for_one_scan_then_drop_out(signed_in, library, tags):
-    scanned(library, tags, {"a.jpg": {}})
-    (library / "a.jpg").unlink()
+def test_a_deleted_folder_drops_out_after_one_scan_and_comes_back_with_its_files(signed_in, library, tags):
+    write(library / "250209 Rockingham" / "a.jpg", jpeg_bytes())
+    write(library / "keep.jpg", jpeg_bytes(color=(9, 9, 9)))
+    start_scan()
+    drain()
+    favourite = MediaFile.objects.get(rel_path="250209 Rockingham/a.jpg").asset
+    favourite.favourite = True
+    favourite.save()
+    moved_aside = library.parent / "aside.jpg"
+    shutil.move(library / "250209 Rockingham" / "a.jpg", moved_aside)
+    (library / "250209 Rockingham").rmdir()
 
     start_scan()
     drain()
-    (asset,) = signed_in.get("/api/assets").json()["results"]
-    assert asset["missing"] is True
+    names = [a["name"] for a in signed_in.get("/api/assets").json()["results"]]
+    assert names == ["keep.jpg"]
+    assert signed_in.get("/api/folders").json()["folders"] == []
 
+    write(library / "250209 Rockingham" / "a.jpg", moved_aside.read_bytes())
     start_scan()
     drain()
-    assert signed_in.get("/api/assets").json()["results"] == []
+    back = {a["name"]: a for a in signed_in.get("/api/assets").json()["results"]}
+    assert back["a.jpg"]["id"] == str(favourite.pk) and back["a.jpg"]["favourite"] is True
 
 
 # ---------------------------------------------------------------------------
