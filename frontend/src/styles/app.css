@@ -728,7 +728,8 @@ button { font: inherit; }
   background: var(--color-surface-raised); box-shadow: 0 6px 16px rgb(0 0 0 / 0.35);
   transition: transform var(--duration-fast);
 }
-.map-tile img { width: 100%; height: 100%; object-fit: cover; object-position: center; border-radius: 0; display: block; }
+/* Out-ranks Leaflet's `.leaflet-container .leaflet-marker-pane img { width: auto }`. */
+.leaflet-container .leaflet-marker-pane .map-tile img { width: 100%; height: 100%; object-fit: cover; object-position: center; border-radius: 0; display: block; }
 .map-tile:hover { transform: scale(1.08); }
 .map-tile span {
   position: absolute; top: -9px; right: -9px; min-width: 24px; height: 24px; padding: 0 7px; border-radius: var(--radius-pill);
