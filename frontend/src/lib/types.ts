@@ -1,6 +1,6 @@
 /**
  * Shapes the screens render. They follow the HLD's data model (Asset, MediaFile,
- * DuplicateGroup, Operation) as the API will serialise them, flattened to what
+ * DuplicateDetail, Operation) as the API will serialise them, flattened to what
  * the UI needs. Dates travel as local wall-clock strings, "YYYY-MM-DDTHH:mm:ss",
  * with the offset alongside, because a photo's capture time is a local fact.
  */
@@ -172,7 +172,6 @@ export interface AppSettings {
   readonly scanIntervalMinutes: number
   readonly trashRetentionDays: number
   readonly writeBackMode: WriteBackMode
-  readonly phashThreshold: number
   readonly autoMergeExact: boolean
 }
 
@@ -209,7 +208,6 @@ export interface TrashListing {
   readonly retentionDays: number
 }
 
-export type DuplicateKind = 'visual' | 'exact' | 'similar'
 /** Every geotagged item, for the map (MAP-01): [id, lat, lon, thumbnail URL]. */
 export type MapPoint = readonly [string, number, number, string | null]
 
@@ -222,8 +220,31 @@ export interface MapPoints {
 /** A box on the map: south, west, north, east, in degrees. */
 export type Area = readonly [number, number, number, number]
 
+/** Same bytes, or the same picture to the pixel with other metadata. */
+export type DuplicateKind = 'exact' | 'pixels'
+
+/** One group in the review queue (DUP-01 to DUP-03). */
+export interface DuplicateCard {
+  readonly id: string
+  readonly kind: DuplicateKind
+  readonly title: string
+  readonly count: number
+  readonly thumbs: readonly string[]
+  /** A merge (or trash) of it is under way. */
+  readonly merging: boolean
+}
+
+export interface DuplicateQueue {
+  readonly total: number
+  readonly counts: Readonly<Record<DuplicateKind, number>>
+  /** Exact groups that would merge as proposed with nothing to settle (DUP-06). */
+  readonly exactReady: number
+  readonly groups: readonly DuplicateCard[]
+}
 
 export interface DuplicateCopy {
+  readonly assetId: string
+  readonly letter: string
   readonly name: string
   readonly path: string
   readonly width: number
@@ -231,27 +252,50 @@ export interface DuplicateCopy {
   readonly size: number
   readonly format: string
   readonly modified: string
-  readonly thumb: string
+  readonly thumbUrl: string
+  readonly previewUrl: string
+  /** Why this copy cannot be the keeper, or null. */
+  readonly cannotKeep: string | null
+  readonly favourite: boolean
 }
 
-export type MergeField = 'date' | 'gps' | 'camera' | 'lens' | 'keywords' | 'rating' | 'title' | 'description'
-export type MetaValue = string | number | readonly string[] | null
+export type MergeField = 'date' | 'gps' | 'camera' | 'lens' | 'keywords' | 'rating' | 'title' | 'description' | 'place'
 
-export interface DuplicateGroup {
+/** One field of the merge preview, computed by the server's merge rules. */
+export interface MergeRow {
+  readonly field: MergeField
+  readonly label: string
+  /** Per copy, in the copies' order. */
+  readonly cells: readonly { readonly text: string | null; readonly picked: boolean }[]
+  readonly mode: 'single' | 'union' | 'none' | 'unresolved'
+  readonly merged: string | null
+  /** Letters of the copies the merged value comes from. */
+  readonly sources: readonly string[]
+  readonly sourceText: string
+  readonly conflict: boolean
+  readonly resolved: boolean
+}
+
+/** One group with its merge preview (DUP-04). */
+export interface DuplicateDetail {
   readonly id: string
   readonly kind: DuplicateKind
   readonly title: string
-  /** Why the proposed keeper was proposed (BRD, Keeper selection). */
-  readonly keeperReason: string
-  readonly proposedKeeper: number
+  readonly state: 'open' | 'merged' | 'dismissed'
+  readonly operation: { readonly id: string; readonly state: OperationState; readonly error: string | null } | null
+  readonly position: { readonly index: number | null; readonly total: number; readonly prev: string | null; readonly next: string | null }
   readonly copies: readonly DuplicateCopy[]
-  /** One value per copy for each field; empty for a similar group. */
-  readonly meta: Partial<Record<MergeField, readonly MetaValue[]>>
-}
-
-export interface DuplicateQueue {
-  readonly total: number
-  readonly groups: readonly DuplicateGroup[]
+  readonly keeper: string
+  readonly proposedKeeper: string
+  readonly keeperReason: string
+  readonly mergeable: boolean
+  readonly blocked: string | null
+  readonly rows: readonly MergeRow[]
+  readonly conflicts: number
+  readonly choices: Readonly<Partial<Record<MergeField, string>>>
+  readonly favourite: boolean
+  readonly albums: readonly string[]
+  readonly retentionDays: number
 }
 
 export type OperationState = 'pending' | 'applied' | 'undoing' | 'undone' | 'failed'

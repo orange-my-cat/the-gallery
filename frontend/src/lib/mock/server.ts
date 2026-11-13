@@ -2,19 +2,20 @@
  * Demo mode: an in-memory stand-in for the whole API, with the design's sample
  * library. It behaves like the real endpoints where the screens can tell:
  * every change returns an operation id that can be undone, a merge runs as a
- * pending operation the client polls, and scans progress over time.
+ * pending operation the client polls, and scans progress over time. Duplicate
+ * review has no demo: it runs on the real library (Phase 1c).
  *
  * Off unless asked for. Open the app with ?mock=<state> to review a state from
  * the design; it sticks for the browser tab until ?mock=off.
- *   normal · firstScan · empty · scanning · errors · mergeFail
+ *   normal · firstScan · empty · scanning · errors
  */
 
 import { count, plural } from '../format'
-import type { Asset, DuplicateQueue, LibraryInfo, Operation, ScanStatus } from '../types'
-import { buildLibrary, LIBRARY_PATH, SAMPLE_ALBUMS, SAMPLE_FOLDERS, SAMPLE_GROUPS, SAMPLE_TAGS } from './library'
+import type { Asset, LibraryInfo, Operation, ScanStatus } from '../types'
+import { buildLibrary, LIBRARY_PATH, SAMPLE_ALBUMS, SAMPLE_FOLDERS, SAMPLE_TAGS } from './library'
 
-export type Scenario = 'normal' | 'firstScan' | 'empty' | 'scanning' | 'errors' | 'mergeFail'
-const SCENARIOS: readonly Scenario[] = ['normal', 'firstScan', 'empty', 'scanning', 'errors', 'mergeFail']
+export type Scenario = 'normal' | 'firstScan' | 'empty' | 'scanning' | 'errors'
+const SCENARIOS: readonly Scenario[] = ['normal', 'firstScan', 'empty', 'scanning', 'errors']
 
 function readScenario(): Scenario | null {
   try {
@@ -69,10 +70,6 @@ function scanProgress(): ScanStatus {
 
 interface LoggedOp {
   undo: () => void
-  startedAt: number
-  fails: boolean
-  onApplied?: () => void
-  applied: boolean
   undone: boolean
 }
 const operations = new Map<string, LoggedOp>()
@@ -80,41 +77,15 @@ let opSeq = 1
 
 function record(undo: () => void): { operationId: string } {
   const id = `op${opSeq++}`
-  operations.set(id, { undo, startedAt: 0, fails: false, applied: true, undone: false })
+  operations.set(id, { undo, undone: false })
   return { operationId: id }
 }
 
-const MERGE_STEPS_MS = [800, 1500, 2300]
-
+/** Every demo change applies at once. */
 function operationState(id: string): Operation {
   const op = operations.get(id)
   if (!op) return { id, state: 'failed', step: 0, error: 'Unknown operation' }
-  if (op.undone) return { id, state: 'undone', step: 0, error: null }
-  if (!op.startedAt || op.applied) return { id, state: 'applied', step: 2, error: null }
-  const elapsed = Date.now() - op.startedAt
-  if (op.fails && elapsed >= (MERGE_STEPS_MS[0] as number)) {
-    return { id, state: 'failed', step: 0, error: 'read-only' }
-  }
-  if (elapsed >= (MERGE_STEPS_MS[2] as number)) {
-    op.applied = true
-    op.onApplied?.()
-    return { id, state: 'applied', step: 2, error: null }
-  }
-  return { id, state: 'pending', step: elapsed >= (MERGE_STEPS_MS[1] as number) ? 2 : elapsed >= (MERGE_STEPS_MS[0] as number) ? 1 : 0, error: null }
-}
-
-// ── Duplicate queue ─────────────────────────────────────────────────────────
-
-let duplicateTotal = 128
-const settledGroups = new Set<string>()
-
-function settleGroup(id: string): () => void {
-  settledGroups.add(id)
-  duplicateTotal -= 1
-  return () => {
-    settledGroups.delete(id)
-    duplicateTotal += 1
-  }
+  return { id, state: op.undone ? 'undone' : 'applied', step: 0, error: null }
 }
 
 // ── Edits ───────────────────────────────────────────────────────────────────
@@ -174,25 +145,6 @@ export const mock = {
     ids.forEach((id) => trashed.add(id))
     return delay(record(() => ids.forEach((id) => trashed.delete(id))))
   },
-
-  duplicates(): Promise<DuplicateQueue> {
-    const groups = SAMPLE_GROUPS.filter((g) => !settledGroups.has(g.id))
-    return delay({ total: duplicateTotal, groups: groups.length ? groups : SAMPLE_GROUPS })
-  },
-  /** Starts a merge as a pending operation; poll operation() for progress. */
-  merge(groupId: string, retry: boolean) {
-    const id = `op${opSeq++}`
-    const op: LoggedOp = {
-      undo: () => undefined, startedAt: Date.now(), fails: scenario === 'mergeFail' && !retry, applied: false, undone: false,
-    }
-    op.onApplied = () => {
-      op.undo = settleGroup(groupId)
-    }
-    operations.set(id, op)
-    return delay({ operationId: id })
-  },
-  dismissDuplicate: (groupId: string) => delay(record(settleGroup(groupId))),
-  trashSimilar: (groupId: string) => delay(record(settleGroup(groupId))),
 
   operation: (id: string) => delay(operationState(id), 30),
   undo(id: string) {

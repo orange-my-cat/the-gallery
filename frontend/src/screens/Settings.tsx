@@ -26,7 +26,6 @@ const INTERVALS: readonly [number, string][] = [
   [1440, 'Daily'],
 ]
 
-const SENSITIVITY = ['Identical only', 'Very strict', 'Strict', 'Careful', 'Balanced', 'Relaxed', 'Loose', 'Very loose']
 
 export function Settings() {
   const settings = useSettings().data
@@ -88,7 +87,7 @@ export function Settings() {
           </div>
         </Section>
 
-        <Section title="Trash" icon="trash" phase="1b" note="Deleted items wait in a trash folder inside the library before they are removed for good.">
+        <Section title="Trash" icon="trash" note="Deleted items wait in a trash folder inside the library before they are removed for good.">
           <NumberField
             label="Keep deleted items for"
             unit="days"
@@ -100,7 +99,7 @@ export function Settings() {
           />
         </Section>
 
-        <Section title="Metadata" icon="pencil" phase="1b" note="Where titles, ratings, tags and merged details are written, so other apps see them too.">
+        <Section title="Metadata" icon="pencil" note="Where titles, ratings, tags and merged details are written, so other apps see them too.">
           <div className="field radios">
             <Radio
               checked={settings.writeBackMode === 'embedded'}
@@ -118,25 +117,7 @@ export function Settings() {
           </div>
         </Section>
 
-        <Section title="Duplicates" icon="copy" phase="1c" note="How alike two photos must look to be offered as duplicates. Byte-identical copies always match.">
-          <div className="field">
-            <label htmlFor="phash">{`Sensitivity · ${SENSITIVITY[settings.phashThreshold] ?? settings.phashThreshold}`}</label>
-            <input
-              id="phash"
-              className="range"
-              type="range"
-              min={0}
-              max={7}
-              step={1}
-              value={settings.phashThreshold}
-              onChange={(e) => apply({ phashThreshold: Number(e.target.value) }, 'Sensitivity')}
-            />
-            <div className="range-ends subtle">
-              <span>Fewer, surer matches</span>
-              <span>More matches to review</span>
-            </div>
-            <FieldError message={errors.phashThreshold} />
-          </div>
+        <Section title="Duplicates" icon="copy" note="Only identical copies are offered as duplicates: the same bytes, or the same picture to the pixel with different details. Photos that merely look alike never are.">
           <div className="field">
             <label className="radio check">
               <input

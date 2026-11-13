@@ -6,7 +6,7 @@
  */
 
 import { pad, toLocalString } from '../format'
-import type { Asset, DuplicateGroup, MediaKind } from '../types'
+import type { Asset, MediaKind } from '../types'
 
 function rand(seed: number) {
   let a = seed
@@ -155,57 +155,6 @@ export function buildLibrary(): Asset[] {
   }
   return out
 }
-
-const GA = landscape(rand(41), SCENES[0] as Scene)
-const FOG = landscape(rand(9), SCENES[4] as Scene)
-
-/** Three sample groups covering the three kinds the review screen handles. */
-export const SAMPLE_GROUPS: DuplicateGroup[] = [
-  {
-    id: 'g1', kind: 'visual', title: '3 copies of DSCF4821', keeperReason: 'Highest resolution', proposedKeeper: 0,
-    copies: [
-      { name: 'DSCF4821.JPG', path: 'D:\\Photos\\2024\\2024-06-14 Point Addis\\', width: 6240, height: 4160, size: 12.4e6, format: 'JPEG', modified: '14 Jun 2024, 18:42', thumb: GA },
-      { name: 'IMG_20240614_184207.jpg', path: 'D:\\Photos\\Phone backup\\2024-06\\', width: 3120, height: 2080, size: 2.1e6, format: 'JPEG', modified: '15 Jun 2024, 09:03', thumb: GA },
-      { name: 'DSCF4821-edit.heic', path: 'D:\\Photos\\Exports\\Print\\', width: 4032, height: 2688, size: 3.2e6, format: 'HEIC', modified: '2 Jul 2024, 21:17', thumb: GA },
-    ],
-    meta: {
-      date: ['2024-06-14 18:42:07', '2024-06-14 18:42:07', '2024-06-14 18:42:07'],
-      gps: [null, '\u221238.3920°, 144.2520°', null],
-      camera: ['Fujifilm X-T4', 'Fujifilm X-T4', null],
-      lens: ['XF 23mm F2 R WR', null, null],
-      keywords: [['coast'], ['coast', 'sunset'], ['coast', 'cliffs']],
-      rating: [3, null, 5],
-      title: [null, 'Last light, Point Addis', null],
-      description: ['From the cliff path, looking west.', null, 'Edited for print.'],
-    },
-  },
-  {
-    id: 'g2', kind: 'exact', title: '2 copies of IMG_0412', keeperReason: 'Inside the dated library folder', proposedKeeper: 0,
-    copies: [
-      { name: 'IMG_0412.HEIC', path: 'D:\\Photos\\2025\\2025-03-02 Hobart\\', width: 4032, height: 3024, size: 2.84e6, format: 'HEIC', modified: '2 Mar 2025, 11:26', thumb: FOG },
-      { name: 'IMG_0412 (1).HEIC', path: 'D:\\Photos\\Downloads\\', width: 4032, height: 3024, size: 2.84e6, format: 'HEIC', modified: '9 Mar 2025, 20:41', thumb: FOG },
-    ],
-    meta: {
-      date: ['2025-03-02 11:26:51', '2025-03-02 11:26:51'],
-      gps: ['\u221242.8821°, 147.3272°', '\u221242.8821°, 147.3272°'],
-      camera: ['Apple iPhone 13 Pro', 'Apple iPhone 13 Pro'],
-      lens: ['Main camera', 'Main camera'],
-      keywords: [['fog', 'harbour'], []],
-      rating: [4, null],
-      title: [null, null],
-      description: [null, null],
-    },
-  },
-  {
-    id: 'g3', kind: 'similar', title: '4 similar shots', keeperReason: '', proposedKeeper: 0,
-    copies: [0, 1, 2, 3].map((i) => ({
-      name: `DSCF${7710 + i}.RAF`, path: 'D:\\Photos\\2025\\2025-09-20 Flinders Ranges\\', width: 6240, height: 4160,
-      size: (30.8 + i * 0.3) * 1e6, format: 'Fujifilm RAF', modified: `20 Sep 2025, 07:12:0${(4 + i * 1.5) | 0}`,
-      thumb: landscape(rand(300 + i), SCENES[3] as Scene),
-    })),
-    meta: {},
-  },
-]
 
 export const SAMPLE_ALBUMS: [string, number][] = [['Coast 2024', 214], ['Tasmania', 88], ['Still life', 41], ['To print', 12]]
 export const SAMPLE_FOLDERS = ['D:\\Photos\\Archive', 'D:\\Photos\\To sort', 'D:\\Photos\\2026']

@@ -36,6 +36,8 @@ export const keys = {
   folders: ['folders'] as const,
   tags: ['tag-suggestions'] as const,
   duplicates: ['duplicates'] as const,
+  duplicate: (id: string, keeper: string | null, choices: Readonly<Record<string, string>>) =>
+    ['duplicates', id, keeper, choices] as const,
   operation: (id: string) => ['operation', id] as const,
 }
 
@@ -69,10 +71,19 @@ export const useTrashCount = () => useQuery({ queryKey: keys.trash, queryFn: api
 export const useAlbums = () => useQuery({ queryKey: keys.albums, queryFn: api.albums, staleTime: Infinity })
 export const useFolders = () => useQuery({ queryKey: keys.folders, queryFn: api.folders, staleTime: Infinity })
 export const useTagSuggestions = () => useQuery({ queryKey: keys.tags, queryFn: api.tagSuggestions, staleTime: Infinity })
-export const useDuplicates = () => useQuery({ queryKey: keys.duplicates, queryFn: api.duplicates })
 /** Every geotagged point, fetched once and kept until something changes the library. */
 export const useMapPoints = () => useQuery({ queryKey: keys.mapPoints, queryFn: api.mapPoints, staleTime: Infinity })
 
+export const useDuplicates = () => useQuery({ queryKey: keys.duplicates, queryFn: () => api.duplicates() })
+
+/** One group's merge preview; the previous preview stays up while a new choice loads. */
+export const useDuplicate = (id: string, keeper: string | null, choices: Readonly<Record<string, string>>) =>
+  useQuery({
+    queryKey: keys.duplicate(id, keeper, choices),
+    queryFn: () => api.duplicate(id, keeper, choices),
+    placeholderData: keepPreviousData,
+    retry: false,
+  })
 
 /**
  * The whole timeline for a search, newest first. Fetched a page at a time by

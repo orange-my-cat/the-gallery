@@ -7,6 +7,7 @@ import { useTheme } from './lib/theme'
 import { AppShell } from './shell/AppShell'
 import { Albums } from './screens/Albums'
 import { DuplicateReview } from './screens/DuplicateReview'
+import { Duplicates } from './screens/Duplicates'
 import { Trash } from './screens/Trash'
 import { Folders } from './screens/Folders'
 import { NotBuilt } from './screens/NotBuilt'
@@ -31,11 +32,8 @@ export function App() {
         <Route path="/" element={<Timeline />}>
           <Route path="photo/:id" element={<Viewer />} />
         </Route>
-        {/* The designed review screen runs on sample data until 1c lands. */}
-        <Route
-          path="/duplicates"
-          element={demo ? <DuplicateReview /> : <NotBuilt icon="copy" title="Duplicates" phase="1c" />}
-        />
+        <Route path="/duplicates" element={<Duplicates />} />
+        <Route path="/duplicates/:id" element={<DuplicateReview />} />
         <Route path="/folders" element={<Folders />} />
         <Route path="/albums" element={demo ? <NotBuilt icon="album" title="Albums" phase="1b" /> : <Albums />} />
         <Route

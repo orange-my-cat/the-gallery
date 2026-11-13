@@ -17,7 +17,9 @@ import type {
   AppSettings,
   Asset,
   AssetPage,
+  DuplicateDetail,
   MapPoints,
+  DuplicateKind,
   DuplicateQueue,
   FolderBrowse,
   FolderListing,
@@ -166,7 +168,6 @@ const DEMO_SETTINGS: AppSettings = {
   scanIntervalMinutes: 60,
   trashRetentionDays: 30,
   writeBackMode: 'embedded',
-  phashThreshold: 4,
   autoMergeExact: false,
 }
 
@@ -263,13 +264,23 @@ export const api = {
     demo ? Promise.resolve({ points: [], count: 0, placesLoaded: false }) : http.get<MapPoints>('/map/points'),
 
   // ── Phase 1c: duplicates ───────────────────────────────────────────────────
-  duplicates: (): Promise<DuplicateQueue> => (demo ? mock.duplicates() : Promise.resolve({ total: 0, groups: [] })),
-  merge: (groupId: string, retry: boolean): Promise<OperationRef> =>
-    demo ? mock.merge(groupId, retry) : notYet('1c', 'Merging'),
-  dismissDuplicate: (groupId: string): Promise<OperationRef> =>
-    demo ? mock.dismissDuplicate(groupId) : notYet('1c', 'Duplicate review'),
-  trashSimilar: (groupId: string): Promise<OperationRef> =>
-    demo ? mock.trashSimilar(groupId) : notYet('1c', 'Duplicate review'),
+  duplicates: (kind?: DuplicateKind): Promise<DuplicateQueue> =>
+    demo
+      ? Promise.resolve({ total: 0, counts: { exact: 0, pixels: 0 }, exactReady: 0, groups: [] })
+      : http.get<DuplicateQueue>(kind ? `/duplicates?kind=${kind}` : '/duplicates'),
+  /** One group, previewed with this keeper and these choices ({field: assetId}). */
+  duplicate: (id: string, keeper: string | null, choices: Readonly<Record<string, string>>): Promise<DuplicateDetail> => {
+    const params = new URLSearchParams()
+    if (keeper) params.set('keeper', keeper)
+    const choose = Object.entries(choices).map(([field, asset]) => `${field}:${asset}`).join(',')
+    if (choose) params.set('choose', choose)
+    const query = params.toString()
+    return http.get<DuplicateDetail>(`/duplicates/${id}${query ? `?${query}` : ''}`)
+  },
+  merge: (id: string, keeper: string, choices: Readonly<Record<string, string>>): Promise<OperationRef> =>
+    http.post<OperationRef>(`/duplicates/${id}/merge`, { keeper, choices }),
+  dismissDuplicate: (id: string): Promise<OperationRef> => http.post<OperationRef>(`/duplicates/${id}/dismiss`),
+  mergeExact: (): Promise<{ started: number; operations: Operation[] }> => http.post('/duplicates/merge-exact'),
 
   operation: (id: string): Promise<Operation> => (demo ? mock.operation(id) : http.get<Operation>(`/operations/${id}`)),
   /** Starts the undo; an undo of a file change comes back `undoing` - poll operation(). */
