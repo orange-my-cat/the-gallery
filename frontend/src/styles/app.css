@@ -473,6 +473,8 @@ button { font: inherit; }
 
 .stage { grid-column: 1; grid-row: 2; position: relative; overflow: hidden; display: grid; place-items: center; }
 .stage .picture { position: relative; background-size: cover; background-position: center; transition: transform var(--duration-base) var(--ease-standard); }
+/* Follows the pointer exactly while it is dragged around zoomed in. */
+.stage .picture.dragging { transition: none; user-select: none; }
 /* A Live Photo's motion: fades in over the still, and back out when it ends. */
 .stage .live-motion {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none;

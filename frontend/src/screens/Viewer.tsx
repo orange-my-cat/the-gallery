@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { flushSync } from 'react-dom'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { Icon } from '@/components/Icon'
@@ -128,8 +129,82 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
   const fitW = Math.min(Math.max(200, stage.w - 176), Math.max(200, stage.h - 48) * ar)
   const fitH = fitW / ar
   const pct = Math.round(((fitW * zoom) / asset.width) * 100)
-  const zoomIn = () => setZoom((z) => Math.min(Math.max(1, (asset.width * 2) / fitW), z * 2))
-  const zoomOut = () => setZoom((z) => Math.max(1, z / 2))
+  const maxZoom = Math.max(1, (asset.width * 2) / fitW)
+
+  // ── Panning: a zoomed picture is dragged around, never past its own edges ──
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [dragging, setDragging] = useState(false)
+  const clampPan = (p: { x: number; y: number }, z: number) => {
+    const mx = Math.max(0, (fitW * z - stage.w) / 2)
+    const my = Math.max(0, (fitH * z - stage.h) / 2)
+    return { x: Math.max(-mx, Math.min(mx, p.x)), y: Math.max(-my, Math.min(my, p.y)) }
+  }
+  const shown = clampPan(pan, zoom) // clamped here too, so a resized window never strands it
+  // Zoom keeping the point (cx, cy), measured from the stage's centre, where it is.
+  const zoomTo = (target: number, cx = 0, cy = 0) => {
+    const z = Math.max(1, Math.min(maxZoom, target))
+    setPan(clampPan({ x: cx - ((cx - shown.x) * z) / zoom, y: cy - ((cy - shown.y) * z) / zoom }, z))
+    setZoom(z)
+  }
+  const zoomIn = () => zoomTo(zoom * 2)
+  const zoomOut = () => zoomTo(zoom / 2)
+
+  // ── Wheel zoom, around the pointer ─────────────────────────────────────────
+  // A native listener: React's wheel handlers are passive and can't stop the page scrolling.
+  const onWheel = useRef<(e: WheelEvent) => void>(() => {})
+  onWheel.current = (e: WheelEvent) => {
+    if ((e.target as HTMLElement | null)?.closest('.video-bar')) return // its volume slider has its own
+    e.preventDefault()
+    const box = stageRef.current?.getBoundingClientRect()
+    if (!box) return
+    const lines = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : e.deltaMode === WheelEvent.DOM_DELTA_PAGE ? box.height : 1
+    const step = Math.max(-100, Math.min(100, e.deltaY * lines)) // one notch is ~100 px in most browsers
+    // Rendered at once, so the next wheel event in the same frame builds on this zoom, not the last.
+    flushSync(() => zoomTo(zoom * Math.exp(-step * 0.002), e.clientX - (box.left + box.width / 2), e.clientY - (box.top + box.height / 2)))
+  }
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el) return
+    const handle = (e: WheelEvent) => onWheel.current(e)
+    el.addEventListener('wheel', handle, { passive: false })
+    return () => el.removeEventListener('wheel', handle)
+  }, [])
+
+  const drag = useRef<{ id: number; x: number; y: number; from: { x: number; y: number }; moved: boolean } | null>(null)
+  const panHandlers = {
+    onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+      if (zoom <= 1 || e.button !== 0) return
+      e.currentTarget.setPointerCapture(e.pointerId)
+      drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, from: shown, moved: false }
+      setDragging(true)
+    },
+    onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
+      const d = drag.current
+      if (!d || d.id !== e.pointerId) return
+      const dx = e.clientX - d.x
+      const dy = e.clientY - d.y
+      if (!d.moved && Math.hypot(dx, dy) < 4) return
+      d.moved = true
+      setPan(clampPan({ x: d.from.x + dx, y: d.from.y + dy }, zoom))
+    },
+    onPointerUp: () => setDragging(false),
+    onPointerCancel: () => {
+      drag.current = null
+      setDragging(false)
+    },
+    // A drag that ends over a video must not also play or pause it.
+    onClickCapture: (e: React.MouseEvent) => {
+      if (drag.current?.moved) e.stopPropagation()
+      drag.current = null
+    },
+    onDoubleClick: (e: React.MouseEvent<HTMLDivElement>) => {
+      const box = stageRef.current?.getBoundingClientRect()
+      const cx = box ? e.clientX - (box.left + box.width / 2) : 0
+      const cy = box ? e.clientY - (box.top + box.height / 2) : 0
+      if (zoom > 1) zoomTo(1)
+      else zoomTo(Math.min(asset.width / fitW, maxZoom), cx, cy)
+    },
+  }
 
   const toggleFav = useCallback(() => {
     const was = asset.favourite
@@ -360,7 +435,7 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
         <div className="grow" />
         <div className="zoom-group">
           <button type="button" title="Zoom out (−)" onClick={zoomOut}><Icon name="zoom-out" size={16} /></button>
-          <button type="button" className="zoom-label" title="Fit to screen" onClick={() => setZoom(1)}>
+          <button type="button" className="zoom-label" title="Fit to screen" onClick={() => zoomTo(1)}>
             {zoom === 1 ? `Fit · ${pct}%` : `${pct}%`}
           </button>
           <button type="button" title="Zoom in (+)" onClick={zoomIn}><Icon name="zoom-in" size={16} /></button>
@@ -392,9 +467,16 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
 
       <div className="stage" ref={stageRef} data-stage="1">
         <div
-          className="picture"
-          onDoubleClick={() => setZoom((z) => (z > 1 ? 1 : Math.max(1, Math.min(asset.width / fitW, (asset.width * 2) / fitW))))}
-          style={{ width: Math.round(fitW), height: Math.round(fitH), background: asset.preview, transform: `scale(${zoom})`, cursor: zoom > 1 ? 'zoom-out' : 'zoom-in' }}
+          className={`picture${dragging ? ' dragging' : ''}`}
+          {...panHandlers}
+          style={{
+            width: Math.round(fitW),
+            height: Math.round(fitH),
+            background: asset.preview,
+            transform: `translate(${shown.x}px, ${shown.y}px) scale(${zoom})`,
+            cursor: zoom > 1 ? (dragging ? 'grabbing' : 'grab') : 'default',
+            touchAction: zoom > 1 ? 'none' : undefined,
+          }}
         >
           {asset.videoUrl && (
             <video
