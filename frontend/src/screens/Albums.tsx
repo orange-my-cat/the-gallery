@@ -67,10 +67,7 @@ export function Albums() {
         </div>
 
         {albums && albums.length === 0 && (
-          <p className="muted">
-            No albums yet. Select photos on the timeline and choose Add to album, or make one here. Albums never move
-            or copy a file.
-          </p>
+          <p className="muted">No albums yet.</p>
         )}
 
         <div className="folder-grid">

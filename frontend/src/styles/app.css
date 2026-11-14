@@ -162,6 +162,8 @@ button { font: inherit; }
   border-radius: var(--radius-md); background: var(--color-surface-raised); box-shadow: var(--shadow-md);
   display: flex; flex-direction: column;
 }
+/* The selection bar's actions are right-aligned, so their popovers open leftwards. */
+.topbar.selecting .popover { left: auto; right: 0; }
 .popover.tags { width: 280px; padding: 10px; gap: 10px; }
 .popover .pop-scroll { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; }
 .popover .pop-item:disabled { opacity: 0.5; cursor: default; }
@@ -227,7 +229,7 @@ button { font: inherit; }
   flex: none; display: flex; align-items: center; gap: 14px; padding: 10px var(--space-6);
   background: var(--color-surface); border-bottom: 1px solid var(--color-divider);
 }
-.folder-bar .lines { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.folder-bar .lines { display: flex; flex-direction: column; gap: 6px; line-height: 1.25; min-width: 0; }
 .folder-bar .display { font-size: var(--text-xl); }
 .folder-bar .muted { font-size: var(--text-sm); }
 

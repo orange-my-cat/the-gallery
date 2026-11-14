@@ -15,6 +15,7 @@ import { api } from '@/lib/api'
 import { count, plural } from '@/lib/format'
 import { useChange, useTrashListing } from '@/lib/queries'
 import type { TrashItem } from '@/lib/types'
+import { SelectionHead, TopBarTakeover } from '@/shell/TopBarTakeover'
 
 const DAY = 86_400_000
 
@@ -39,6 +40,8 @@ export function Trash() {
       return next
     })
 
+  const clear = () => setSelected(new Set())
+
   const restore = () => {
     setSelected(new Set())
     void change(() => api.restore(ids), { msg: `Restored ${count(ids.length)} ${plural(ids.length, 'item')}`, detail: 'Back where they were' })
@@ -59,31 +62,32 @@ export function Trash() {
           <span className="display">Trash</span>
           {listing && <span className="num">{`${count(listing.count)} ${plural(listing.count, 'item')}`}</span>}
           <div className="grow" />
-          {chosen.length > 0 ? (
-            <>
-              <span className="muted">{`${count(chosen.length)} selected`}</span>
-              <button type="button" className="pill-btn" onClick={restore}>
-                <Icon name="history" size={15} />
-                Restore
-              </button>
-              <button type="button" className="pill-btn danger" onClick={() => setConfirm('selected')}>
-                <Icon name="trash" size={15} />
-                Delete for good
-              </button>
-            </>
-          ) : (
-            items.length > 0 && (
-              <button type="button" className="pill-btn danger" onClick={() => setConfirm('all')}>
-                <Icon name="trash" size={15} />
-                Empty Trash
-              </button>
-            )
+          {chosen.length === 0 && items.length > 0 && (
+            <button type="button" className="pill-btn danger" onClick={() => setConfirm('all')}>
+              <Icon name="trash" size={15} />
+              Empty Trash
+            </button>
           )}
         </div>
 
+        {chosen.length > 0 && (
+          // While the confirm dialog is open, Escape belongs to it, not the selection.
+          <TopBarTakeover onEscape={confirm ? undefined : clear}>
+            <SelectionHead n={chosen.length} onClear={clear} />
+            <button type="button" className="pill-btn ghost" onClick={restore}>
+              <Icon name="history" size={15} />
+              Restore
+            </button>
+            <button type="button" className="pill-btn ghost danger" onClick={() => setConfirm('selected')}>
+              <Icon name="trash" size={15} />
+              Delete for good
+            </button>
+          </TopBarTakeover>
+        )}
+
         {listing && (
           <p className="muted trash-note">
-            {`Deleted items wait here for ${listing.retentionDays} days, then go for good. Until then each can be restored to where it was.`}
+            {`Deleted items wait here for ${listing.retentionDays} days.`}
           </p>
         )}
 

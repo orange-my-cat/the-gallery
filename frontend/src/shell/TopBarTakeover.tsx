@@ -8,6 +8,9 @@
 import { useEffect, useLayoutEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
+import { Icon } from '@/components/Icon'
+import { count } from '@/lib/format'
+
 export const TAKEOVER_ID = 'topbar-takeover'
 
 let claims = 0
@@ -24,7 +27,7 @@ export function useTopBarTaken(): boolean {
   return useSyncExternalStore(subscribe, () => claims > 0)
 }
 
-export function TopBarTakeover({ children, onEscape }: { readonly children: ReactNode; readonly onEscape?: () => void }) {
+export function TopBarTakeover({ children, onEscape }: { readonly children: ReactNode; readonly onEscape?: (() => void) | undefined }) {
   const [target, setTarget] = useState<HTMLElement | null>(null)
 
   useLayoutEffect(() => {
@@ -47,4 +50,26 @@ export function TopBarTakeover({ children, onEscape }: { readonly children: Reac
   }, [onEscape])
 
   return target ? createPortal(<header className="topbar selecting">{children}</header>, target) : null
+}
+
+/**
+ * The left of every selection bar: how many are selected, then Clear (Esc).
+ * It ends with a spacer, so whatever follows - the actions - sits on the right.
+ */
+export function SelectionHead({ n, onClear, detail }: { readonly n: number; readonly onClear: () => void; readonly detail?: string | undefined }) {
+  return (
+    <>
+      <div className="sel-count">
+        <b>{count(n)}</b>
+        <span>selected</span>
+        {detail && <span className="muted" style={{ fontSize: 'var(--text-sm)' }}>{`· ${detail}`}</span>}
+      </div>
+      <button type="button" className="pill-btn" onClick={onClear}>
+        <Icon name="x" size={15} />
+        Clear
+        <span className="subtle" style={{ fontSize: 'var(--text-2xs)', fontWeight: 600 }}>Esc</span>
+      </button>
+      <div className="grow" />
+    </>
+  )
 }

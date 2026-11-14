@@ -55,6 +55,20 @@ await page.locator('.timeline, .empty-state').first().waitFor({ timeout: 15000 }
 await page.waitForLoadState('networkidle')
 await shot(page, '02-timeline')
 
+// Selecting: the count and Clear on the left, the actions on the right, and
+// their popovers opening leftwards so they stay on screen.
+if (await page.locator('.tl-scroll .tile').count()) {
+  await page.locator('.tl-scroll .tile').first().hover()
+  await page.locator('.tile-check').first().click()
+  await page.locator('.topbar.selecting').waitFor()
+  await page.locator('.topbar.selecting .pill-btn', { hasText: 'Move' }).click()
+  const pop = await page.locator('.topbar.selecting .popover').boundingBox()
+  await shot(page, '33-timeline-selected')
+  if (!pop || pop.x < 0 || pop.x + pop.width > 1440) problems.push('[live] the selection bar popover runs off the screen')
+  await page.keyboard.press('Escape')
+  await page.locator('.topbar.selecting').waitFor({ state: 'detached' })
+}
+
 const assets = await page.evaluate(async () => (await (await fetch('/api/assets')).json()).results)
 console.log(`  live assets: ${assets.length}`)
 
@@ -206,6 +220,13 @@ if (await firstPerson.count()) {
   const personPath = new URL(page.url()).pathname
   await page.locator('.tl-scroll .tile').first().waitFor()
   await shot(page, '25-person')
+  // Selecting their photos brings up the timeline's selection bar here too.
+  await page.locator('.tl-scroll .tile').first().hover()
+  await page.locator('.tile-check').first().click()
+  await page.locator('.topbar.selecting').waitFor()
+  await shot(page, '41-person-photos-selected')
+  await page.keyboard.press('Escape')
+  await page.locator('.topbar.selecting').waitFor({ state: 'detached' })
   await page.locator('.tl-scroll .tile').first().click()
   await page.locator('.viewer .picture, .viewer video').first().waitFor()
   const viewerPath = new URL(page.url()).pathname
@@ -245,6 +266,21 @@ await shot(page, '14-albums')
 await page.goto(`${BASE}/trash`)
 await page.locator('.folders-head').waitFor()
 await shot(page, '15-trash')
+// The same selection bar as everywhere: count and Clear left, actions right.
+// The listing is stubbed from two live items, so nothing is deleted to test it.
+if (assets.length >= 2) {
+  const now = new Date()
+  const later = new Date(now.getTime() + 30 * 86_400_000)
+  const stub = assets.slice(0, 2).map((a) => ({ ...a, trashedAt: now.toISOString(), purgeAt: later.toISOString() }))
+  await page.route('**/api/trash', (r) => r.fulfill({ json: { items: stub, count: stub.length, retentionDays: 30 } }))
+  await page.goto(`${BASE}/trash`)
+  await page.locator('.trash-item').first().click()
+  await page.locator('.topbar.selecting').waitFor()
+  await shot(page, '40-trash-selected')
+  await page.keyboard.press('Escape')
+  await page.locator('.topbar.selecting').waitFor({ state: 'detached' })
+  await page.unroute('**/api/trash')
+}
 
 await page.goto(`${BASE}/`)
 await page.locator('.activity-wrap .icon-btn').click()

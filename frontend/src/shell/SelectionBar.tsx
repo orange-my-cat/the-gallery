@@ -1,20 +1,22 @@
-/** The top bar while timeline items are selected (ORG-03). */
+/** The top bar while timeline items are selected (ORG-03), on the timeline or a person's photos. */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { Icon } from '@/components/Icon'
 import { api } from '@/lib/api'
 import { bytes, count, plural } from '@/lib/format'
-import { useAlbums, useAssets, useChange, useFolders, useTagSuggestions } from '@/lib/queries'
+import { useAlbums, useChange, useFolders, useTagSuggestions } from '@/lib/queries'
 import { selection, useSelection } from '@/lib/selection'
+import type { Asset } from '@/lib/types'
+import { SelectionHead, TopBarTakeover } from './TopBarTakeover'
 
 type Pop = 'album' | 'tag' | 'rate' | 'move' | null
 
-export function SelectionBar() {
+/** `items` is the list the grid shows, so sizes and Favourite match what was selected. */
+export function SelectionBar({ items: shown }: { readonly items: readonly Asset[] }) {
   const [params] = useSearchParams()
   const albumId = params.get('album') ?? ''
-  const assets = useAssets(params.get('q') ?? '', params.get('folder') ?? '', albumId, params.get('area') ?? '', params.get('people') ?? '').data
   const { ids } = useSelection()
   const [pop, setPop] = useState<Pop>(null)
   const [tagDraft, setTagDraft] = useState('')
@@ -24,9 +26,8 @@ export function SelectionBar() {
   const folders = useFolders().data ?? []
   const tags = useTagSuggestions().data ?? []
   const change = useChange()
-  const bar = useRef<HTMLElement>(null)
 
-  const selected = useMemo(() => (assets ?? []).filter((a) => ids.has(a.id)), [assets, ids])
+  const selected = useMemo(() => shown.filter((a) => ids.has(a.id)), [shown, ids])
   const list = [...ids]
   const n = list.length
   const items = `${count(n)} ${plural(n, 'item')}`
@@ -91,12 +92,9 @@ export function SelectionBar() {
   }
 
   return (
-    <header className="topbar selecting" ref={bar}>
-      <div className="sel-count">
-        <b>{count(n)}</b>
-        <span>selected</span>
-        <span className="muted" style={{ fontSize: 'var(--text-sm)' }}>{n ? `· ${bytes(size)}` : ''}</span>
-      </div>
+    // Escape is handled by the grid, which clears the selection.
+    <TopBarTakeover>
+      <SelectionHead n={n} detail={n ? bytes(size) : undefined} onClear={() => selection.clear()} />
 
       <div className="pop-anchor">
         <button type="button" className="pill-btn ghost" onClick={() => toggle('album')}>
@@ -231,14 +229,6 @@ export function SelectionBar() {
         <Icon name="trash" size={16} />
         Delete
       </button>
-
-      <div className="grow" />
-
-      <button type="button" className="pill-btn" onClick={() => selection.clear()}>
-        <Icon name="x" size={15} />
-        Clear
-        <span className="subtle" style={{ fontSize: 'var(--text-2xs)', fontWeight: 600 }}>Esc</span>
-      </button>
-    </header>
+    </TopBarTakeover>
   )
 }

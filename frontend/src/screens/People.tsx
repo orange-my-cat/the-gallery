@@ -15,7 +15,7 @@ import { SameOrNot } from '@/components/SameOrNot'
 import { api } from '@/lib/api'
 import { count, plural } from '@/lib/format'
 import { useChange, usePeople, useRescanPeople } from '@/lib/queries'
-import { TopBarTakeover } from '@/shell/TopBarTakeover'
+import { SelectionHead, TopBarTakeover } from '@/shell/TopBarTakeover'
 
 export function People() {
   const listing = usePeople().data
@@ -58,11 +58,7 @@ export function People() {
 
         {chosen.length > 0 && (
           <TopBarTakeover onEscape={done}>
-            <div className="sel-count">
-              <b>{count(chosen.length)}</b>
-              <span>selected</span>
-            </div>
-            <div className="grow" />
+            <SelectionHead n={chosen.length} onClear={done} />
             <button
               type="button"
               className="pill-btn ghost"
@@ -99,9 +95,6 @@ export function People() {
             >
               <Icon name="x" size={15} />
               Not a person
-            </button>
-            <button type="button" className="icon-btn" title="Clear the selection (Esc)" onClick={done}>
-              <Icon name="x" size={16} />
             </button>
           </TopBarTakeover>
         )}

@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { Icon } from '@/components/Icon'
 import { api } from '@/lib/api'
-import { count, plural } from '@/lib/format'
+import { count } from '@/lib/format'
 import { keys } from '@/lib/queries'
 import type { Question } from '@/lib/types'
 
@@ -21,7 +21,6 @@ export function SameOrNot() {
   const client = useQueryClient()
   const navigate = useNavigate()
   const [queue, setQueue] = useState<Question[]>([])
-  const [left, setLeft] = useState(0)
   const [people, setPeople] = useState<number | null>(null)
   const [answered, setAnswered] = useState(0)
   const [busy, setBusy] = useState(false)
@@ -33,7 +32,6 @@ export function SameOrNot() {
     const body = await api.peopleQuestions(skipped.current)
     const have = new Set(keep.map((q) => q.face.id))
     setQueue([...keep, ...body.questions.filter((q) => !have.has(q.face.id))])
-    setLeft(body.left ?? 0)
     setPeople(body.people)
   }, [])
 
@@ -99,9 +97,7 @@ export function SameOrNot() {
       <div className="son-head">
         <h2>Are they the same person?</h2>
         <span className="muted num">
-          {q
-            ? `${count(left)} ${plural(left, 'face')} the app isn’t sure about · your answers teach it${answered ? ` · ${count(answered)} answered` : ''}`
-            : 'Nothing to ask right now'}
+          {q ? (answered ? `${count(answered)} answered` : '') : 'Nothing to ask right now'}
         </span>
         <div className="grow" />
         <button type="button" className="pill-btn ghost small" onClick={() => setHidden((h) => !h)}>
@@ -122,7 +118,7 @@ export function SameOrNot() {
           </div>
           <div className="son-q">
             <b>{q.matched ? `Is this really ${who}?` : `Is this ${who}?`}</b>
-            <span className="muted">{q.matched ? 'The app put them together, only just.' : 'The app thinks it might be.'}</span>
+            {q.matched && <span className="muted">The app put them together, only just.</span>}
             <div className="son-them">
               {q.person.faces.map((url) => (
                 <span key={url} className="face-small" style={{ backgroundImage: `url("${url}")` }} />

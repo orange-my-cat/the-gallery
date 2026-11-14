@@ -5,12 +5,10 @@ import { Icon } from '@/components/Icon'
 import { describe } from '@/lib/filters'
 import { count, plural, sinceLabel } from '@/lib/format'
 import { useScanStatus, useStartScan } from '@/lib/queries'
-import { useSelection } from '@/lib/selection'
 import type { ScanStatus } from '@/lib/types'
 import { ActivityPanel } from './ActivityPanel'
 import { FiltersPanel } from './FiltersPanel'
 import { ScanPanel } from './ScanPanel'
-import { SelectionBar } from './SelectionBar'
 import { useTopBarTaken } from './TopBarTakeover'
 
 /** The pill, and the details panel it opens (LIB-06). */
@@ -186,7 +184,6 @@ export function TopBar() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const { ids } = useSelection()
   const taken = useTopBarTaken()
   const search = useRef<HTMLInputElement>(null)
   const scan = useScanStatus().data
@@ -209,7 +206,6 @@ export function TopBar() {
   }, [])
 
   if (taken) return null // a screen has put its selection controls here
-  if (ids.size > 0 && onTimeline) return <SelectionBar />
 
   const onQuery = (value: string) => {
     if (onTimeline) {
@@ -230,7 +226,7 @@ export function TopBar() {
           className="input"
           value={query}
           onChange={(e) => onQuery(e.target.value)}
-          placeholder="Search places, files, cameras, tags"
+          placeholder="Search people, places, files, cameras, tags"
         />
         <span className="kbd">Ctrl K</span>
       </label>

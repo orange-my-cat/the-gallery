@@ -17,6 +17,7 @@ import { layoutTimeline, monthAt, type Block, type DayBlock, type RowBlock } fro
 import { useAlbums, useAssets, useChange, useFolderListing, useLibrary, usePeople, useScanStatus } from '@/lib/queries'
 import { selection, useSelection } from '@/lib/selection'
 import type { Asset } from '@/lib/types'
+import { SelectionBar } from '@/shell/SelectionBar'
 
 const BADGE: Record<Asset['kind'], string> = { jpg: '', heic: 'HEIC', raw: 'RAW', pair: 'RAW+JPG', video: '' }
 
@@ -66,6 +67,8 @@ export function Timeline({ people, header, base = '/' }: { people?: string; head
   const scan = useScanStatus().data
   const library = useLibrary().data
   const { ids: selected, anchor } = useSelection()
+  // A selection belongs to this grid: leaving it (another page, or a person's Faces) drops it.
+  useEffect(() => () => selection.clear(), [])
   const change = useChange()
 
   const items = useMemo(() => assets.data ?? [], [assets.data])
@@ -630,6 +633,7 @@ export function Timeline({ people, header, base = '/' }: { people?: string; head
         )}
       </div>
 
+      {selected.size > 0 && <SelectionBar items={items} />}
       <Outlet />
     </div>
   )

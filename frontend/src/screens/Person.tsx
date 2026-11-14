@@ -18,7 +18,7 @@ import { api } from '@/lib/api'
 import { count, plural } from '@/lib/format'
 import { useChange, usePerson, useSuggestions, useUnassignedFaces } from '@/lib/queries'
 import type { FaceRef } from '@/lib/types'
-import { TopBarTakeover } from '@/shell/TopBarTakeover'
+import { SelectionHead, TopBarTakeover } from '@/shell/TopBarTakeover'
 import { Timeline } from './Timeline'
 
 type Picking = 'move' | 'merge' | null
@@ -207,11 +207,7 @@ function OnePerson({ id }: { readonly id: string }) {
           <div className="folders">
             {chosen.length > 0 && (
               <TopBarTakeover onEscape={faces.clear}>
-                <div className="sel-count">
-                  <b>{count(chosen.length)}</b>
-                  <span>selected</span>
-                </div>
-                <div className="grow" />
+                <SelectionHead n={chosen.length} onClear={faces.clear} />
                 <button
                   type="button"
                   className="pill-btn ghost"
@@ -231,33 +227,23 @@ function OnePerson({ id }: { readonly id: string }) {
                 >
                   Not a face
                 </button>
-                <button type="button" className="icon-btn" title="Clear the selection (Esc)" onClick={faces.clear}>
-                  <Icon name="x" size={16} />
-                </button>
               </TopBarTakeover>
             )}
             {chosen.length === 0 && extra.length > 0 && (
               <TopBarTakeover onEscape={more.clear}>
-                <div className="sel-count">
-                  <b>{count(extra.length)}</b>
-                  <span>selected</span>
-                </div>
-                <div className="grow" />
+                <SelectionHead n={extra.length} onClear={more.clear} />
                 <button
-                type="button"
-                className="pill-btn ghost"
-                onClick={() =>
-                  void change(() => api.assignFaces(extra, id), { msg: `Added ${extra.length} to ${label}` }).then(() => {
-                    more.clear()
-                    void suggestions.refetch()
-                  })
-                }
+                  type="button"
+                  className="pill-btn ghost"
+                  onClick={() =>
+                    void change(() => api.assignFaces(extra, id), { msg: `Added ${extra.length} to ${label}` }).then(() => {
+                      more.clear()
+                      void suggestions.refetch()
+                    })
+                  }
                 >
-                <Icon name="plus" size={15} />
-                {`Add to ${person.name || 'this person'}`}
-                </button>
-                <button type="button" className="icon-btn" title="Clear the selection (Esc)" onClick={more.clear}>
-                  <Icon name="x" size={16} />
+                  <Icon name="plus" size={15} />
+                  {`Add to ${person.name || 'this person'}`}
                 </button>
               </TopBarTakeover>
             )}
@@ -345,11 +331,7 @@ function Unassigned() {
         <p className="muted face-hint">Select faces to add them to a person, or mark them as not a face.</p>
         {chosen.length > 0 && (
           <TopBarTakeover onEscape={sel.clear}>
-            <div className="sel-count">
-              <b>{count(chosen.length)}</b>
-              <span>selected</span>
-            </div>
-            <div className="grow" />
+            <SelectionHead n={chosen.length} onClear={sel.clear} />
             <button type="button" className="pill-btn ghost" onClick={() => setPicking(true)}>
               <Icon name="users" size={15} />
               Add to a person…
@@ -360,9 +342,6 @@ function Unassigned() {
               onClick={() => void change(() => api.ignoreFaces(chosen), { msg: `Marked ${chosen.length} as not a face` }).then(sel.clear)}
             >
               Not a face
-            </button>
-            <button type="button" className="icon-btn" title="Clear the selection (Esc)" onClick={sel.clear}>
-              <Icon name="x" size={16} />
             </button>
           </TopBarTakeover>
         )}

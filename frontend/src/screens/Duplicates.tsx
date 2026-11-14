@@ -115,10 +115,7 @@ export function Duplicates() {
         )}
 
         {queue && queue.total === 0 && (
-          <p className="muted">
-            Nothing to review. The library is checked for copies after every scan: identical files, and photos that are
-            the same picture to the pixel with different details. Photos that only look alike are never offered.
-          </p>
+          <p className="muted">Nothing to review.</p>
         )}
 
         <div className="folder-grid">
