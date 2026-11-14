@@ -310,3 +310,11 @@ def test_exact_copies_merge_in_bulk_and_by_themselves_when_switched_on(library, 
     write(library / "d" / "y.jpg", picture(30))
     scan()
     assert Operation.objects.filter(kind="merge", state=OpState.APPLIED).count() == 4
+
+
+def test_same_picture_groups_never_merge_in_bulk(pair):
+    # Settled by the rules (no conflict), but not byte-identical: only by hand.
+    assert review.detail(pair.group.pk)["conflicts"] == 0
+    assert review.queue()["exactReady"] == 0
+    assert review.merge_exact() == []
+    assert review.queue()["total"] == 1
