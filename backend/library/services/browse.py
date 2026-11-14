@@ -259,9 +259,15 @@ def decode_cursor(cursor: str) -> tuple[datetime, int]:
 
 
 def search(qs: QuerySet[Asset], query: str) -> QuerySet[Asset]:
-    """BRW-07: file name and folder, title, description, place, camera, tags
-    and albums. Every word must match somewhere."""
+    """BRW-07: file name and folder, title, description, place, camera, tags,
+    albums and the names of the people in it. Every word must match somewhere."""
+    from people.models import Face
+
     for word in query.split():
+        # A subquery, not a join: faces would multiply the rows the joins above make.
+        named = Face.objects.filter(
+            file__asset=OuterRef("pk"), file__state=FileState.PRESENT, ignored=False, person__name__icontains=word
+        )
         qs = qs.filter(
             Q(files__rel_path__icontains=word)
             | Q(title__icontains=word)
@@ -275,6 +281,7 @@ def search(qs: QuerySet[Asset], query: str) -> QuerySet[Asset]:
             | Q(lens__icontains=word)
             | Q(asset_tags__tag__name__icontains=word)
             | Q(album_items__album__name__icontains=word)
+            | Exists(named)
         )
     return qs.distinct() if query.split() else qs
 

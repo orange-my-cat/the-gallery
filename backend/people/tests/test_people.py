@@ -261,6 +261,12 @@ def test_people_api_and_browsing_by_person(signed_in, album):
     assert [p["name"] for p in item["people"]] == ["Ana", ""]
     assert all(p["faceUrl"].startswith("/media/face/") for p in item["people"])
 
+    # Search finds people by a name no file name shares, every other word still applying.
+    signed_in.patch(f"/api/people/{ben.pk}", {"name": "Ben Okafor"}, content_type="application/json")
+    found = sorted(a["name"] for a in signed_in.get("/api/assets", {"q": "okafor"}).json()["results"])
+    assert found == ["ben0.jpg", "ben1.jpg", "ben2.jpg", "ben3.jpg", "both.jpg"]
+    assert [a["name"] for a in signed_in.get("/api/assets", {"q": "okafor both"}).json()["results"]] == ["both.jpg"]
+
     cy = Face.objects.get(file__rel_path="cy.jpg")
     assert signed_in.post("/api/faces/assign", {"faces": [cy.pk], "name": "Cy"}, content_type="application/json").status_code == 200
     assert signed_in.post("/api/people/merge", {"ids": [ana.pk]}, content_type="application/json").status_code == 400
