@@ -153,6 +153,52 @@ if (await clusters.count()) {
   console.log('  (no geotagged items: the map is empty)')
 }
 
+// People (Phase 2): everyone found, one person, their likely faces, and the
+// people shown in the viewer.
+await page.goto(`${BASE}/people`)
+await page.locator('.folders-head').waitFor()
+await page.waitForLoadState('networkidle')
+await shot(page, '24-people')
+if (await page.locator('.same-or-not .son-card').count()) {
+  // Skipping changes nothing; it shows the next question.
+  const before = await page.locator('.son-face .face-big').getAttribute('style')
+  await page.keyboard.press('s')
+  await page.locator('.son-last').waitFor()
+  const after = await page.locator('.son-face .face-big').getAttribute('style')
+  console.log(`  same-person question: skip moved on = ${before !== after}`)
+}
+const firstPerson = page.locator('.person-card .face-btn').first()
+if (await firstPerson.count()) {
+  // Selecting people puts their controls in the top bar, pinned while scrolling.
+  await page.locator('.person-card').nth(0).hover()
+  await page.locator('.person-card .select-dot').nth(0).click()
+  await page.locator('.person-card').nth(1).hover()
+  await page.locator('.person-card .select-dot').nth(1).click()
+  await page.locator('.topbar.selecting').waitFor()
+  await page.locator('.folders').evaluate((el) => el.scrollTo(0, el.scrollHeight))
+  await shot(page, '28-people-selected-scrolled')
+  await page.keyboard.press('Escape')
+  await page.locator('.topbar.selecting').waitFor({ state: 'detached' })
+  await firstPerson.click()
+  await page.locator('.person-head').waitFor()
+  await page.waitForLoadState('networkidle')
+  await shot(page, '25-person')
+  await page.locator('.face-tile .face-img').first().click()
+  await page.locator('.topbar.selecting').waitFor()
+  await shot(page, '29-person-face-selected')
+  await page.keyboard.press('Escape')
+  await page.locator('.suggest .pill-btn').click()
+  await page.waitForLoadState('networkidle')
+  await page.locator('.suggest').scrollIntoViewIfNeeded()
+  await shot(page, '26-person-suggestions')
+  await page.locator('.face-tile .open').first().click({ force: true })
+  await page.locator('.person-chip').first().waitFor()
+  await page.waitForTimeout(600)
+  await shot(page, '27-viewer-people')
+} else {
+  console.log('  (no people found yet)')
+}
+
 await page.goto(`${BASE}/albums`)
 await page.locator('.folders-head').waitFor()
 await shot(page, '14-albums')

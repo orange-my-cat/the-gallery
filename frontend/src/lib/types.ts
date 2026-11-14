@@ -29,6 +29,8 @@ export interface Asset {
   readonly place: string
   /** The place is the town nearest its GPS (MET-03), not one the file names. */
   readonly placeFromGps?: boolean
+  /** Who is in it (PPL-03); an empty name is a person not named yet. */
+  readonly people?: readonly PersonRef[]
   readonly gps: readonly [number, number] | null
   readonly folder: string
   readonly title: string
@@ -206,6 +208,65 @@ export interface TrashListing {
   readonly items: readonly TrashItem[]
   readonly count: number
   readonly retentionDays: number
+}
+
+// ── People (Phase 2) ──────────────────────────────────────────────────────
+
+export interface PersonRef {
+  readonly id: string
+  readonly name: string
+  /** Their face in this photo. */
+  readonly faceUrl?: string
+}
+
+export interface PersonSummary {
+  readonly id: string
+  readonly name: string
+  /** Named or shaped by the owner; otherwise a group the app found. */
+  readonly confirmed: boolean
+  readonly faces: number
+  readonly items: number
+  readonly coverUrl: string | null
+}
+
+export interface PeopleListing {
+  readonly people: readonly PersonSummary[]
+  readonly unassigned: number
+  /** Photos searched for faces so far. */
+  readonly scan: { readonly done: number; readonly total: number }
+}
+
+export interface FaceRef {
+  readonly id: string
+  readonly url: string
+  readonly assetId: string
+  readonly similarity?: number
+}
+
+/** "Are they the same person?" (see SameOrNot). */
+export interface Question {
+  readonly face: FaceRef
+  readonly person: { readonly id: string; readonly name: string; readonly faces: readonly string[] }
+  /** The app already put them together, only just. */
+  readonly matched: boolean
+  readonly similarity: number
+}
+
+export interface Questions {
+  readonly questions: readonly Question[]
+  /** Confirmed people there are to ask about. */
+  readonly people: number
+  /** Faces in the uncertain band, in all. */
+  readonly left?: number
+}
+
+export interface PersonDetail {
+  readonly id: string
+  readonly name: string
+  readonly confirmed: boolean
+  readonly items: number
+  readonly faces: readonly FaceRef[]
+  readonly coverUrl: string | null
 }
 
 /** Every geotagged item, for the map (MAP-01): [id, lat, lon, thumbnail URL]. */

@@ -19,6 +19,10 @@ import type {
   AssetPage,
   DuplicateDetail,
   MapPoints,
+  FaceRef,
+  PeopleListing,
+  PersonDetail,
+  Questions,
   DuplicateKind,
   DuplicateQueue,
   FolderBrowse,
@@ -143,8 +147,9 @@ function toAsset({ thumbUrl, previewUrl, thumbReady, ...rest }: AssetDto): Asset
 }
 
 const live = {
-  async assetsPage(query: string, folder: string, album: string, area: string, cursor: string | null): Promise<AssetPage> {
+  async assetsPage(query: string, folder: string, album: string, area: string, people: string, cursor: string | null): Promise<AssetPage> {
     const params = new URLSearchParams({ limit: '1000' })
+    if (people) params.set('people', people)
     if (query.trim()) params.set('q', query.trim())
     if (folder) params.set('folder', folder)
     if (album) params.set('album', album)
@@ -187,8 +192,10 @@ export const api = {
   // ── Phase 1a ───────────────────────────────────────────────────────────────
   library: (): Promise<LibraryInfo> => (demo ? mock.library() : http.get<LibraryInfo>('/library')),
   /** `area` is a box on the map, "south,west,north,east" (MAP-01). */
-  assetsPage: (query: string, folder: string, album: string, area: string, cursor: string | null): Promise<AssetPage> =>
-    demo ? mock.assets(query).then((results) => ({ results, next: null })) : live.assetsPage(query, folder, album, area, cursor),
+  assetsPage: (query: string, folder: string, album: string, area: string, people: string, cursor: string | null): Promise<AssetPage> =>
+    demo
+      ? mock.assets(query).then((results) => ({ results, next: null }))
+      : live.assetsPage(query, folder, album, area, people, cursor),
   /** One level of the folder tree (BRW-03). The design's sample library has no folder view. */
   folderListing: (path: string): Promise<FolderListing> =>
     demo
@@ -258,6 +265,30 @@ export const api = {
     http.post<OperationRef>('/operations', { kind: 'restore', ids }),
   purge: (ids: readonly string[]): Promise<OperationRef> => http.post<OperationRef>('/operations', { kind: 'purge', ids }),
   emptyTrash: (): Promise<OperationRef> => http.post<OperationRef>('/trash/empty'),
+
+  // ── Phase 2: people ────────────────────────────────────────────────────────
+  people: (): Promise<PeopleListing> =>
+    demo ? Promise.resolve({ people: [], unassigned: 0, scan: { done: 0, total: 0 } }) : http.get<PeopleListing>('/people'),
+  person: (id: string): Promise<PersonDetail> => http.get<PersonDetail>(`/people/${id}`),
+  suggestions: (id: string): Promise<FaceRef[]> => http.get<FaceRef[]>(`/people/${id}/suggestions`),
+  unassignedFaces: (): Promise<FaceRef[]> => http.get<FaceRef[]>('/faces'),
+  renamePerson: (id: string, name: string): Promise<OperationRef> =>
+    request<OperationRef>(`/people/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) }),
+  deletePerson: (id: string): Promise<OperationRef> => request<OperationRef>(`/people/${id}`, { method: 'DELETE' }),
+  deletePeople: (ids: readonly string[]): Promise<OperationRef> => http.post<OperationRef>('/people/delete', { ids }),
+  /** Groups that are not people (a statue, a poster); look-alikes found later are set aside too. */
+  notPeople: (ids: readonly string[]): Promise<OperationRef> => http.post<OperationRef>('/people/not-people', { ids }),
+  mergePeople: (ids: readonly string[], into?: string): Promise<OperationRef> =>
+    http.post<OperationRef>('/people/merge', into ? { ids, into } : { ids }),
+  /** To a person, or - with no person - to a new one with this name. */
+  assignFaces: (faces: readonly string[], person: string | null, name = ''): Promise<OperationRef> =>
+    http.post<OperationRef>('/faces/assign', person ? { faces, person } : { faces, name }),
+  removeFaces: (faces: readonly string[]): Promise<OperationRef> => http.post<OperationRef>('/faces/remove', { faces }),
+  ignoreFaces: (faces: readonly string[]): Promise<OperationRef> => http.post<OperationRef>('/faces/ignore', { faces }),
+  peopleQuestions: (skip: readonly string[]): Promise<Questions> =>
+    http.get<Questions>(skip.length ? `/people/questions?skip=${skip.join(',')}` : '/people/questions'),
+  /** The answer "no" to "is this them?". */
+  notThem: (face: string, person: string): Promise<OperationRef> => http.post<OperationRef>('/faces/not-them', { face, person }),
 
   // ── Phase 1d: the map ──────────────────────────────────────────────────────
   mapPoints: (): Promise<MapPoints> =>

@@ -21,6 +21,15 @@ class AssetPageQuery(serializers.Serializer):
     folder = serializers.CharField(required=False, allow_blank=True, default="", max_length=1024)
     album = serializers.IntegerField(required=False, min_value=1, default=None, allow_null=True)
     favourites = serializers.BooleanField(required=False, default=False)
+    # PPL-03: "12,15" - items with every one of these people in them.
+    people = serializers.CharField(required=False, allow_blank=True, default="", max_length=200)
+
+    def validate_people(self, value: str):
+        try:
+            return [int(v) for v in value.split(",") if v.strip()]
+        except ValueError:
+            raise serializers.ValidationError("Person ids, comma-separated.") from None
+
     # MAP-01: "south,west,north,east" in degrees - a map cluster's items.
     area = serializers.CharField(required=False, allow_blank=True, default="", max_length=100)
 
@@ -54,6 +63,7 @@ class AssetListView(APIView):
             album=params.validated_data["album"],
             favourites=params.validated_data["favourites"],
             area=params.validated_data["area"],
+            people=params.validated_data["people"],
         )
         return Response({"results": page.results, "next": page.next})
 

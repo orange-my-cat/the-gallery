@@ -159,6 +159,19 @@ def _media_kind(asset: Asset, primary: MediaFile, raw: MediaFile | None) -> str:
     return "jpg"
 
 
+def _people_in(files: list[MediaFile]) -> list[dict[str, str]]:
+    """PPL-03: the people whose faces are in these files, named ones first."""
+    seen: dict[int, dict[str, str]] = {}
+    for f in files:
+        for face in f.faces.all():
+            if face.person_id and not face.ignored and face.person_id not in seen:
+                # Their face in this very photo, so even the unnamed are recognisable.
+                seen[face.person_id] = {
+                    "id": str(face.person_id), "name": face.person.name, "faceUrl": f"/media/face/{face.pk}",
+                }
+    return sorted(seen.values(), key=lambda p: (not p["name"], p["name"].lower()))
+
+
 def present_asset(asset: Asset, *, trashed: bool = False) -> dict[str, Any] | None:
     """The asset as the screens see it - its trashed files only, for the Trash view."""
     every = [f for f in asset.files.all() if (f.state == FileState.TRASHED) == trashed]
@@ -205,6 +218,7 @@ def present_asset(asset: Asset, *, trashed: bool = False) -> dict[str, Any] | No
         # The file's (or the owner's) place, else the town nearest its GPS.
         "place": asset.place or (asset.geo_place.label if asset.geo_place else ""),
         "placeFromGps": not asset.place and asset.geo_place is not None,
+        "people": _people_in(files),
         "gps": [asset.lat, asset.lon] if asset.lat is not None and asset.lon is not None else None,
         "folder": display_folder(shown_path),
         "title": asset.title,
@@ -282,6 +296,8 @@ def with_details(qs: QuerySet[Asset]) -> QuerySet[Asset]:
     """Everything present_asset reads, in a fixed number of queries."""
     return qs.select_related("geo_place").prefetch_related(
         Prefetch("files", queryset=MediaFile.objects.order_by("pk")),
+        # PPL-03: who is in it.
+        "files__faces__person",
         Prefetch("asset_tags", queryset=AssetTag.objects.select_related("tag")),
         Prefetch("album_items", queryset=AlbumItem.objects.select_related("album")),
     )
@@ -296,9 +312,21 @@ def timeline_page(
     album: int | None = None,
     favourites: bool = False,
     area: tuple[float, float, float, float] | None = None,
+    people: list[int] | None = None,
 ) -> Page:
     limit = max(1, min(limit, MAX_PAGE))
     qs = search(in_folder(visible_assets(), folder), query.strip())
+    for person in people or []:
+        # PPL-03: every one of these people is in it.
+        from people.models import Face
+
+        qs = qs.filter(
+            Exists(
+                Face.objects.filter(
+                    file__asset=OuterRef("pk"), file__state=FileState.PRESENT, person_id=person, ignored=False
+                )
+            )
+        )
     if area is not None:
         south, west, north, east = area
         qs = qs.filter(lat__gte=south, lat__lte=north)

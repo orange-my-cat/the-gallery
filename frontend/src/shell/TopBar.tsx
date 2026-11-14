@@ -9,6 +9,7 @@ import type { ScanStatus } from '@/lib/types'
 import { ActivityPanel } from './ActivityPanel'
 import { ScanPanel } from './ScanPanel'
 import { SelectionBar } from './SelectionBar'
+import { useTopBarTaken } from './TopBarTakeover'
 
 /** The pill, and the details panel it opens (LIB-06). */
 function ScanStatusPill() {
@@ -150,6 +151,7 @@ export function TopBar() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const { ids } = useSelection()
+  const taken = useTopBarTaken()
   const search = useRef<HTMLInputElement>(null)
   const scan = useScanStatus().data
   const startScan = useStartScan()
@@ -170,6 +172,7 @@ export function TopBar() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  if (taken) return null // a screen has put its selection controls here
   if (ids.size > 0 && onTimeline) return <SelectionBar />
 
   const onQuery = (value: string) => {

@@ -21,7 +21,12 @@ import type { Operation, ScanStatus, SettingsPatch } from './types'
 export const keys = {
   session: ['session'] as const,
   library: ['library'] as const,
-  assets: (q: string, folder: string, album: string, area: string) => ['assets', q, folder, album, area] as const,
+  assets: (q: string, folder: string, album: string, area: string, people: string) =>
+    ['assets', q, folder, album, area, people] as const,
+  people: ['people'] as const,
+  person: (id: string) => ['people', id] as const,
+  suggestions: (id: string) => ['people', id, 'suggestions'] as const,
+  unassignedFaces: ['people', 'unassigned'] as const,
   mapPoints: ['map-points'] as const,
   trashListing: ['trash-listing'] as const,
   operations: ['operations'] as const,
@@ -71,6 +76,12 @@ export const useTrashCount = () => useQuery({ queryKey: keys.trash, queryFn: api
 export const useAlbums = () => useQuery({ queryKey: keys.albums, queryFn: api.albums, staleTime: Infinity })
 export const useFolders = () => useQuery({ queryKey: keys.folders, queryFn: api.folders, staleTime: Infinity })
 export const useTagSuggestions = () => useQuery({ queryKey: keys.tags, queryFn: api.tagSuggestions, staleTime: Infinity })
+export const usePeople = () => useQuery({ queryKey: keys.people, queryFn: api.people })
+export const usePerson = (id: string) => useQuery({ queryKey: keys.person(id), queryFn: () => api.person(id), retry: false })
+export const useSuggestions = (id: string, enabled: boolean) =>
+  useQuery({ queryKey: keys.suggestions(id), queryFn: () => api.suggestions(id), enabled })
+export const useUnassignedFaces = () => useQuery({ queryKey: keys.unassignedFaces, queryFn: api.unassignedFaces })
+
 /** Every geotagged point, fetched once and kept until something changes the library. */
 export const useMapPoints = () => useQuery({ queryKey: keys.mapPoints, queryFn: api.mapPoints, staleTime: Infinity })
 
@@ -90,10 +101,10 @@ export const useDuplicate = (id: string, keeper: string | null, choices: Readonl
  * cursor and gathered into one list, because the justified layout needs every
  * item's shape. The first page renders straight away; the rest follow.
  */
-export function useAssets(query: string, folder = '', album = '', area = '') {
+export function useAssets(query: string, folder = '', album = '', area = '', people = '') {
   const result = useInfiniteQuery({
-    queryKey: keys.assets(query, folder, album, area),
-    queryFn: ({ pageParam }) => api.assetsPage(query, folder, album, area, pageParam),
+    queryKey: keys.assets(query, folder, album, area, people),
+    queryFn: ({ pageParam }) => api.assetsPage(query, folder, album, area, people, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.next,
     placeholderData: keepPreviousData,
@@ -217,6 +228,7 @@ export function invalidateLibrary(client: QueryClient) {
     client.invalidateQueries({ queryKey: keys.library }),
     client.invalidateQueries({ queryKey: keys.duplicates }),
     client.invalidateQueries({ queryKey: keys.mapPoints }),
+    client.invalidateQueries({ queryKey: keys.people }),
   ])
 }
 

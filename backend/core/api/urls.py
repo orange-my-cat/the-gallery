@@ -26,4 +26,5 @@ urlpatterns = [
     path("", include("fileops.api.urls")),
     path("", include("duplicates.api.urls")),
     path("", include("places.api.urls")),
+    path("", include("people.api.urls")),
 ]

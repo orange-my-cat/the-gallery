@@ -76,6 +76,13 @@ RUN if [ -f requirements.lock.txt ]; then \
         pip install -r requirements.txt; \
     fi
 
+# PPL-01: the face models (OpenCV Zoo's YuNet, MIT, and SFace, Apache-2.0),
+# downloaded once and checked against their SHA-256 by a stdlib-only script -
+# its own layer, so a code change does not download them again.
+ENV FACE_MODELS_DIR=/opt/face-models
+COPY backend/people/fetch_models.py /tmp/fetch_models.py
+RUN python /tmp/fetch_models.py "$FACE_MODELS_DIR" && rm /tmp/fetch_models.py
+
 COPY backend/ ./
 
 # The built bundle lands where WhiteNoise will serve it from.

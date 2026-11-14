@@ -9,6 +9,8 @@
 
 # Thumbnail and preview cache (development CACHE_ROOT default).
 .cache/
+# The face models (manage.py fetch_face_models); the image bakes its own.
+.face-models/
 
 # Python
 __pycache__/

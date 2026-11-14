@@ -72,7 +72,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    # The HLD's people app (Phase 2) arrives with the feature that needs it.
     "core",
     "jobs",
     "library",
@@ -80,6 +79,7 @@ INSTALLED_APPS = [
     "fileops",
     "duplicates",
     "places",
+    "people",
 ]
 
 MIDDLEWARE = [
@@ -270,6 +270,11 @@ MEDIA_ACCEL_CACHE_PREFIX = "/_protected/cache/"
 EXIFTOOL_PATH = os.environ.get("EXIFTOOL_PATH", "").strip() or "exiftool"
 FFMPEG_PATH = os.environ.get("FFMPEG_PATH", "").strip() or "ffmpeg"
 FFPROBE_PATH = os.environ.get("FFPROBE_PATH", "").strip() or "ffprobe"
+
+# PPL-01: the face models (OpenCV Zoo's YuNet and SFace). Baked into the image
+# at /opt/face-models; in development, `manage.py fetch_face_models` downloads
+# them to .face-models at the repository root (git-ignored).
+FACE_MODELS_DIR = Path(os.environ.get("FACE_MODELS_DIR", "").strip() or BASE_DIR.parent / ".face-models")
 
 
 # ---------------------------------------------------------------------------

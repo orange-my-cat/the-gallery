@@ -30,6 +30,7 @@ class OpKind(models.TextChoices):
     RENAME = "rename"
     MERGE = "merge"  # duplicates merged into one copy (DUP-05)
     DISMISS = "dismiss"  # a duplicate group marked "not duplicates"
+    PEOPLE = "people"  # naming, merging and regrouping people (PPL-02, PPL-04)
 
 
 class OpState(models.TextChoices):

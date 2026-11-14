@@ -11,6 +11,8 @@ import { Duplicates } from './screens/Duplicates'
 import { Trash } from './screens/Trash'
 import { Folders } from './screens/Folders'
 import { NotBuilt } from './screens/NotBuilt'
+import { People } from './screens/People'
+import { Person } from './screens/Person'
 import { Settings } from './screens/Settings'
 import { SignIn } from './screens/SignIn'
 import { Timeline } from './screens/Timeline'
@@ -45,7 +47,8 @@ export function App() {
           }
         />
         <Route path="/trash" element={demo ? <NotBuilt icon="trash" title="Trash" phase="1b" /> : <Trash />} />
-        <Route path="/people" element={<NotBuilt icon="users" title="People" phase="2" />} />
+        <Route path="/people" element={demo ? <NotBuilt icon="users" title="People" phase="2" /> : <People />} />
+        <Route path="/people/:id" element={<Person />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

@@ -13,7 +13,7 @@ import { Icon } from '@/components/Icon'
 import { api } from '@/lib/api'
 import { count, duration } from '@/lib/format'
 import { layoutTimeline, monthAt, type Block, type DayBlock, type RowBlock } from '@/lib/layout'
-import { useAlbums, useAssets, useChange, useFolderListing, useLibrary, useScanStatus } from '@/lib/queries'
+import { useAlbums, useAssets, useChange, useFolderListing, useLibrary, usePeople, useScanStatus } from '@/lib/queries'
 import { selection, useSelection } from '@/lib/selection'
 import type { Asset } from '@/lib/types'
 
@@ -30,10 +30,17 @@ export function Timeline() {
   const viewerOpen = useMatch('/photo/:id') !== null
   // `?area=` narrows it to a box on the map: a cluster's items (MAP-01).
   const area = params.get('area') ?? ''
-  const assets = useAssets(query, folder, albumId, area)
+  // `?people=` narrows it to items with every one of these people (PPL-03).
+  const peopleFilter = params.get('people') ?? ''
+  const assets = useAssets(query, folder, albumId, area, peopleFilter)
   const parent = folder.includes('/') ? folder.slice(0, folder.lastIndexOf('/')) : ''
   const folderCard = useFolderListing(parent).data?.folders.find((f) => f.path === folder)
   const album = useAlbums().data?.find((a) => a.id === albumId)
+  const everyone = usePeople().data?.people
+  const filteredPeople = peopleFilter
+    .split(',')
+    .filter(Boolean)
+    .map((pid) => everyone?.find((p) => p.id === pid)?.name || 'Unnamed')
   const scan = useScanStatus().data
   const library = useLibrary().data
   const { ids: selected, anchor } = useSelection()
@@ -338,6 +345,39 @@ export function Timeline() {
             onClick={() => {
               const next = new URLSearchParams(params)
               next.delete('album')
+              setParams(next)
+            }}
+          >
+            <Icon name="x" size={16} />
+          </button>
+        </div>
+      )}
+      {peopleFilter && (
+        <div className="folder-bar">
+          <button
+            type="button"
+            className="pill-btn back"
+            onClick={() => navigate(peopleFilter.includes(',') ? '/people' : `/people/${peopleFilter}`)}
+          >
+            <Icon name="arrow-left" size={16} />
+            People
+          </button>
+          <div className="lines">
+            <span className="display">{everyone ? filteredPeople.join(' & ') : 'People'}</span>
+            <span className="muted num">
+              {assets.data
+                ? `${count(assets.data.length)} ${assets.data.length === 1 ? 'item' : 'items'}${filteredPeople.length > 1 ? ' with all of them' : ''}`
+                : ''}
+            </span>
+          </div>
+          <div className="grow" />
+          <button
+            type="button"
+            className="icon-btn"
+            title="Show the whole timeline"
+            onClick={() => {
+              const next = new URLSearchParams(params)
+              next.delete('people')
               setParams(next)
             }}
           >

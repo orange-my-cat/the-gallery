@@ -44,6 +44,9 @@ HANDLERS: dict[str, str] = {
     "dedupe": "duplicates.services.detect.dedupe_job",
     "load_places": "places.services.geocode.load_job",
     "geocode": "places.services.geocode.geocode_job",
+    "faces": "people.services.faces.faces_job",
+    "cluster_faces": "people.services.cluster.cluster_job",
+    "match_faces": "people.services.cluster.match_job",
 }
 
 # HLD, "Jobs by priority". The walk goes first so the queue fills; reconcile
@@ -60,6 +63,11 @@ PRIORITY: dict[str, int] = {
     "fingerprint": 4,
     "load_places": 5,
     "geocode": 5,
+    # Last of all (HLD): faces on the CPU, then grouping them.
+    "faces": 7,
+    "cluster_faces": 8,
+    # The owner just named or changed someone and is looking: soon.
+    "match_faces": 2,
     # Last: it should see every hash the scan's files are getting.
     "dedupe": 6,
 }
@@ -73,6 +81,10 @@ SCHEDULERS = (
     "duplicates.services.detect.schedule_due",
     # Place names: load GeoNames once, then name what has a position.
     "places.services.geocode.schedule_due",
+    # People: search photos for faces (the grouping follows by itself).
+    "people.services.faces.schedule_due",
+    # ...and a full matching and regrouping run at least daily.
+    "people.services.cluster.schedule_due",
 )
 SCHEDULE_EVERY = timedelta(seconds=30)
 

@@ -66,10 +66,9 @@ export function Sidebar({ theme, onToggleTheme }: { readonly theme: Theme; reado
           <span className="grow">Trash</span>
           <span className="nav-meta">{trash !== undefined ? count(trash) : ''}</span>
         </NavLink>
-        <NavLink to="/people" className={({ isActive }) => `nav-item dim${isActive ? ' active' : ''}`}>
+        <NavLink to="/people" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
           <Icon name="users" size={18} />
           <span className="grow">People</span>
-          <span className="nav-phase">Phase 2</span>
         </NavLink>
       </div>
 

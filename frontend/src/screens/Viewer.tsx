@@ -48,7 +48,7 @@ export function Viewer() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   // The same list the timeline shows, so next and previous stay within a folder or search.
-  const items = useAssets(params.get('q') ?? '', params.get('folder') ?? '', params.get('album') ?? '', params.get('area') ?? '').data ?? []
+  const items = useAssets(params.get('q') ?? '', params.get('folder') ?? '', params.get('album') ?? '', params.get('area') ?? '', params.get('people') ?? '').data ?? []
   const [infoOpen, setInfoOpen] = useState(true)
 
   const index = items.findIndex((a) => a.id === id)
@@ -84,6 +84,7 @@ interface BodyProps {
 
 function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyProps) {
   const change = useChange()
+  const navigate = useNavigate()
   const stageRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [stage, setStage] = useState({ w: 1000, h: 700 })
@@ -739,6 +740,26 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
               )}
             </div>
           </div>
+
+          {!!asset.people?.length && (
+            <div className="info-section">
+              <span className="caps">People</span>
+              <div className="chips">
+                {asset.people.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="tagc person-chip"
+                    title={`Photos with ${p.name || 'this person'}`}
+                    onClick={() => navigate(`/?people=${p.id}`)}
+                  >
+                    {p.faceUrl && <span className="chip-face" style={{ backgroundImage: `url("${p.faceUrl}")` }} />}
+                    {p.name || 'Unnamed'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="info-section">
             <span className="caps">Tags</span>
