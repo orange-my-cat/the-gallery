@@ -312,9 +312,24 @@ def test_exact_copies_merge_in_bulk_and_by_themselves_when_switched_on(library, 
     assert Operation.objects.filter(kind="merge", state=OpState.APPLIED).count() == 4
 
 
-def test_same_picture_groups_never_merge_in_bulk(pair):
-    # Settled by the rules (no conflict), but not byte-identical: only by hand.
-    assert review.detail(pair.group.pk)["conflicts"] == 0
-    assert review.queue()["exactReady"] == 0
-    assert review.merge_exact() == []
-    assert review.queue()["total"] == 1
+def test_settled_same_picture_groups_merge_in_bulk_and_conflicts_wait(pair, library, exif):
+    # A second same-picture pair whose titles disagree: it needs the owner.
+    data = picture(40, (1600, 1200), quality=95)
+    write(library / "2025" / "DSCF0001.JPG", data)
+    write(library / "Phone" / "IMG_0001.jpg", data + b"\x00phone tags")
+    exif["DSCF0001.JPG"] = camera(size=(1600, 1200), **{"XMP:Title": "Cliffs"})
+    exif["IMG_0001.jpg"] = stripped(size=(1600, 1200), **{"XMP:Title": "Beach"})
+    scan()
+    queue = review.queue()
+    assert queue["counts"]["pixels"] == 2 and queue["ready"] == {"exact": 0, "pixels": 1}
+    assert {g["id"]: g["ready"] for g in queue["groups"]}[str(pair.group.pk)] is True
+
+    assert review.merge_exact() == []  # the auto-merge setting's scope stays exact copies
+    (op,) = review.merge_ready("pixels")
+    drain()
+    op.refresh_from_db()
+    assert op.state == OpState.APPLIED
+    kept = Asset.objects.get(pk=pair.keeper.asset_id)
+    assert kept.title == "Last light, Point Addis" and kept.favourite
+    after = review.queue()
+    assert after["total"] == 1 and after["ready"]["pixels"] == 0

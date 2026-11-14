@@ -293,12 +293,15 @@ export interface DuplicateCard {
   readonly thumbs: readonly string[]
   /** A merge (or trash) of it is under way. */
   readonly merging: boolean
+  /** It would merge as proposed with nothing to settle. */
+  readonly ready: boolean
 }
 
 export interface DuplicateQueue {
   readonly total: number
   readonly counts: Readonly<Record<DuplicateKind, number>>
-  /** Exact groups that would merge as proposed with nothing to settle (DUP-06). */
+  /** Groups that would merge as proposed with nothing to settle (DUP-06), by kind. */
+  readonly ready: Readonly<Record<DuplicateKind, number>>
   readonly exactReady: number
   readonly groups: readonly DuplicateCard[]
 }

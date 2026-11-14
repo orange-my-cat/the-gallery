@@ -54,3 +54,15 @@ class MergeExactView(APIView):
     def post(self, request):
         started = review.merge_exact()
         return Response({"started": len(started), "operations": [present(op) for op in started]})
+
+
+class MergeReadyView(APIView):
+    """``POST /api/duplicates/merge-ready`` - `{kind?}`: every group the rules
+    settle completely (a keeper and no conflict), exact or same picture."""
+
+    def post(self, request):
+        kind = _data(request).get("kind") or None
+        if kind and kind not in GroupKind.values:
+            raise review.InvalidRequest("kind is exact or pixels.", field="kind")
+        started = review.merge_ready(kind)
+        return Response({"started": len(started), "operations": [present(op) for op in started]})

@@ -299,7 +299,7 @@ export const api = {
   // ── Phase 1c: duplicates ───────────────────────────────────────────────────
   duplicates: (kind?: DuplicateKind): Promise<DuplicateQueue> =>
     demo
-      ? Promise.resolve({ total: 0, counts: { exact: 0, pixels: 0 }, exactReady: 0, groups: [] })
+      ? Promise.resolve({ total: 0, counts: { exact: 0, pixels: 0 }, ready: { exact: 0, pixels: 0 }, exactReady: 0, groups: [] })
       : http.get<DuplicateQueue>(kind ? `/duplicates?kind=${kind}` : '/duplicates'),
   /** One group, previewed with this keeper and these choices ({field: assetId}). */
   duplicate: (id: string, keeper: string | null, choices: Readonly<Record<string, string>>): Promise<DuplicateDetail> => {
@@ -313,7 +313,8 @@ export const api = {
   merge: (id: string, keeper: string, choices: Readonly<Record<string, string>>): Promise<OperationRef> =>
     http.post<OperationRef>(`/duplicates/${id}/merge`, { keeper, choices }),
   dismissDuplicate: (id: string): Promise<OperationRef> => http.post<OperationRef>(`/duplicates/${id}/dismiss`),
-  mergeExact: (): Promise<{ started: number; operations: Operation[] }> => http.post('/duplicates/merge-exact'),
+  mergeReady: (kind?: DuplicateKind): Promise<{ started: number; operations: Operation[] }> =>
+    http.post('/duplicates/merge-ready', kind ? { kind } : {}),
 
   operation: (id: string): Promise<Operation> => (demo ? mock.operation(id) : http.get<Operation>(`/operations/${id}`)),
   /** Starts the undo; an undo of a file change comes back `undoing` - poll operation(). */

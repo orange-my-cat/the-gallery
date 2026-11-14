@@ -9,6 +9,8 @@
   metadata into its files (keeping their exact bytes aside), trash the other
   copies, carry their albums over, and mark the group merged. Any failure
   reverses every step already done.
+- `merge_ready()` merges, each as its own merge, every group the rules settle
+  completely: a copy can be kept and no field needs the owner's choice.
 - `dismiss()` settles a group without merging ("Not duplicates").
 
 A copy can be the keeper only if it holds an identical copy of every file of
@@ -87,10 +89,16 @@ def queue(kind: str | None = None) -> dict[str, Any]:
     counts = {k: 0 for k in KIND_ORDER}
     for g, _ in everything:
         counts[g.kind] = counts.get(g.kind, 0) + 1
+    settled = ready(everything)
+    ready_counts = {k: 0 for k in KIND_ORDER}
+    for g in settled:
+        ready_counts[g.kind] = ready_counts.get(g.kind, 0) + 1
+    ready_ids = {g.pk for g in settled}
     return {
         "total": len(everything),
         "counts": counts,
-        "exactReady": len(ready_exact(everything)),
+        "ready": ready_counts,
+        "exactReady": ready_counts[GroupKind.EXACT],
         "groups": [
             {
                 "id": str(g.pk),
@@ -99,6 +107,7 @@ def queue(kind: str | None = None) -> dict[str, Any]:
                 "count": len(live),
                 "thumbs": [t for t in (_thumb(assets[a]) for a in live[:4] if a in assets) if t],
                 "merging": _pending(g),
+                "ready": g.pk in ready_ids,
             }
             for g, live in shown
         ],
@@ -424,11 +433,12 @@ def merge(group_id: Any, keeper: Any = None, choices: Any = None) -> Operation:
     return fileops._queue(op, steps)
 
 
-def ready_exact(groups: list[tuple[DuplicateGroup, list[int]]] | None = None) -> list[DuplicateGroup]:
-    """Exact groups that would merge as proposed with nothing to settle (DUP-06)."""
+def ready(groups: list[tuple[DuplicateGroup, list[int]]] | None = None, kind: str | None = None) -> list[DuplicateGroup]:
+    """Groups that would merge as proposed with nothing to settle: a copy can
+    be kept, and every field is agreed or decided by a rule (DUP-06)."""
     out = []
-    for group, _ in groups if groups is not None else open_groups(GroupKind.EXACT):
-        if group.kind != GroupKind.EXACT or _pending(group):
+    for group, _ in groups if groups is not None else open_groups(kind):
+        if (kind and group.kind != kind) or _pending(group):
             continue
         try:
             plan = _Plan(group)
@@ -439,15 +449,24 @@ def ready_exact(groups: list[tuple[DuplicateGroup, list[int]]] | None = None) ->
     return out
 
 
-def merge_exact(limit: int | None = None) -> list[Operation]:
-    """Merge every conflict-free exact group as proposed, each its own undoable merge."""
+def ready_exact(groups: list[tuple[DuplicateGroup, list[int]]] | None = None) -> list[DuplicateGroup]:
+    return ready(groups, GroupKind.EXACT)
+
+
+def merge_ready(kind: str | None = None, limit: int | None = None) -> list[Operation]:
+    """Merge every settled group (of `kind`, or all) as proposed, each its own undoable merge."""
     started = []
-    for group in ready_exact()[:limit]:
+    for group in ready(kind=kind)[:limit]:
         try:
             started.append(merge(group.pk))
         except BusinessRuleError:
             continue  # changed meanwhile; it will be looked at again
     return started
+
+
+def merge_exact(limit: int | None = None) -> list[Operation]:
+    """Merge every conflict-free exact group as proposed (the auto-merge setting's scope)."""
+    return merge_ready(GroupKind.EXACT, limit)
 
 
 # ---------------------------------------------------------------------------

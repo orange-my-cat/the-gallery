@@ -3,8 +3,9 @@
  *
  * Not in the Claude Design handoff, which opens straight into one group; its
  * "Duplicates" breadcrumb implies this list. The same card grid as Folders and
- * Albums: each card is a group, opened into the review screen. Byte-identical
- * groups with nothing to settle can be merged together from here.
+ * Albums: each card is a group, opened into the review screen. Groups the
+ * rules settle completely (a copy can be kept, no field needs a choice) can be
+ * merged together from here, each as its own undoable merge.
  */
 
 import { useState } from 'react'
@@ -38,18 +39,20 @@ export function Duplicates() {
   const [merging, setMerging] = useState(false)
 
   const groups = (queue?.groups ?? []).filter((g) => filter === 'all' || g.kind === filter)
-  const ready = queue?.exactReady ?? 0
+  const scope = filter === 'all' ? undefined : filter
+  const ready = queue ? (scope ? queue.ready[scope] : queue.ready.exact + queue.ready.pixels) : 0
+  const readyText = scope === 'exact' ? 'exact ' : scope === 'pixels' ? 'same-picture ' : ''
 
   /** Each group is its own merge, undoable from Activity; wait for them all. */
   const mergeAll = async () => {
     setMerging(true)
     try {
-      const { operations } = await api.mergeExact()
+      const { operations } = await api.mergeReady(scope)
       await invalidateLibrary(client)
       const done = await Promise.all(operations.map((op) => settled(op.id)))
       const failed = done.filter((op) => op.state === 'failed').length
       const merged = done.length - failed
-      const msg = `Merged ${count(merged)} exact ${plural(merged, 'group')}`
+      const msg = `Merged ${count(merged)} ${readyText}${plural(merged, 'group')}`
       if (failed) {
         toast.show({ msg, detail: `${count(failed)} could not merge and ${plural(failed, 'was', 'were')} left as they were`, tone: 'error' })
       } else {
@@ -93,12 +96,16 @@ export function Duplicates() {
           </div>
         )}
 
-        {ready > 0 && (filter === 'all' || filter === 'exact') && (
+        {ready > 0 && (
           <div className="dup-ready">
             <Icon name="copy" size={18} />
             <div className="lines">
-              <b>{`${count(ready)} exact ${plural(ready, 'group')} can merge as proposed`}</b>
-              <span>Byte-identical copies with no conflicting details. Each keeps one copy and moves the rest to Trash.</span>
+              <b>{`${count(ready)} ${readyText}${plural(ready, 'group')} can merge as proposed`}</b>
+              <span>
+                {scope === 'exact'
+                  ? 'Byte-identical copies. Each keeps one copy and moves the rest to Trash.'
+                  : 'Identical to the pixel, with a clear copy to keep and no details that disagree. Each keeps one copy, gives it the combined details, and moves the rest to Trash.'}
+              </span>
             </div>
             <button type="button" className="btn btn-secondary" disabled={merging} onClick={() => void mergeAll()}>
               {merging ? <Icon name="loader" size={15} className="spin" /> : <Icon name="merge" size={15} />}
@@ -127,7 +134,7 @@ export function Duplicates() {
               <div className="meta">
                 <b>{g.title}</b>
                 <span className="subtle">
-                  {g.merging ? 'Merging…' : KIND_LABEL[g.kind]}
+                  {g.merging ? 'Merging…' : `${KIND_LABEL[g.kind]}${g.ready ? ' · ready to merge' : ''}`}
                 </span>
               </div>
             </div>

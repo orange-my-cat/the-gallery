@@ -83,3 +83,15 @@ def test_dismiss_and_bulk_merge(signed_in, two_copies):
     assert bulk["started"] == 1
     drain()
     assert signed_in.get("/api/duplicates").json()["total"] == 0
+
+
+def test_merge_ready_by_kind(signed_in, two_copies):
+    queue = signed_in.get("/api/duplicates").json()
+    assert queue["ready"] == {"exact": 1, "pixels": 0} and queue["groups"][0]["ready"] is True
+    assert signed_in.post("/api/duplicates/merge-ready", {"kind": "nope"}, content_type="application/json").status_code == 400
+    none = signed_in.post("/api/duplicates/merge-ready", {"kind": "pixels"}, content_type="application/json").json()
+    assert none["started"] == 0
+    bulk = signed_in.post("/api/duplicates/merge-ready", {}, content_type="application/json").json()
+    assert bulk["started"] == 1
+    drain()
+    assert signed_in.get("/api/duplicates").json()["total"] == 0
