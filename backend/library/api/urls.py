@@ -5,6 +5,7 @@ from django.urls import path
 from library.api.views import (
     AssetListView,
     BrowseFoldersView,
+    FacetsView,
     FolderListView,
     LibraryView,
     RetryFailedView,
@@ -16,6 +17,7 @@ from library.api.views import (
 
 urlpatterns = [
     path("assets", AssetListView.as_view(), name="assets"),
+    path("assets/facets", FacetsView.as_view(), name="asset-facets"),
     path("folders", FolderListView.as_view(), name="folders"),
     path("library", LibraryView.as_view(), name="library"),
     path("settings", SettingsView.as_view(), name="settings"),

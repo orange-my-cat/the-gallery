@@ -96,6 +96,25 @@ await page.goto(`${BASE}/?q=${encodeURIComponent(process.env.SEARCH ?? 'harbour'
 await page.waitForLoadState('networkidle')
 await shot(page, '05-search')
 
+// Filters (BRW-06): the panel, then a filter from it shown as a chip.
+await page.goto(`${BASE}/`)
+await page.waitForLoadState('networkidle')
+await page.getByRole('button', { name: 'Filters' }).click()
+await page.locator('.filters-panel').waitFor()
+await shot(page, '34-filters-panel')
+await page.locator('.filters-panel .filter-pill', { hasText: 'Photos' }).click()
+await page.locator('.filter-bar .filter-chip').first().waitFor()
+await page.waitForLoadState('networkidle')
+const chips = await page.locator('.filter-bar .filter-chip').allInnerTexts()
+const filtered = await page.locator('.filter-bar .num').innerText()
+console.log(`  filter chips: ${JSON.stringify(chips)}; ${filtered}; url ${new URL(page.url()).search}`)
+await page.keyboard.press('Escape')
+await shot(page, '35-filtered-timeline')
+await page.locator('.filter-bar .filter-chip').first().click()
+await page.waitForLoadState('networkidle')
+await page.locator('.filter-bar').waitFor({ state: 'detached', timeout: 5000 }).catch(() => {})
+console.log(`  chip removed: ${(await page.locator('.filter-bar').count()) === 0}`)
+
 // Duplicates (1c): the queue and a group to merge.
 await page.goto(`${BASE}/duplicates`)
 await page.locator('.folders-head').waitFor()
@@ -182,7 +201,27 @@ if (await firstPerson.count()) {
   await firstPerson.click()
   await page.locator('.person-head').waitFor()
   await page.waitForLoadState('networkidle')
+  // Their photos in the timeline's grid; the viewer opens over the page and
+  // steps through only their photos, and closing it returns to them.
+  const personPath = new URL(page.url()).pathname
+  await page.locator('.tl-scroll .tile').first().waitFor()
   await shot(page, '25-person')
+  await page.locator('.tl-scroll .tile').first().click()
+  await page.locator('.viewer .picture, .viewer video').first().waitFor()
+  const viewerPath = new URL(page.url()).pathname
+  await page.keyboard.press('ArrowRight')
+  await page.waitForTimeout(300)
+  const steppedPath = new URL(page.url()).pathname
+  await page.keyboard.press('Escape')
+  await page.locator('.viewer').waitFor({ state: 'detached' })
+  const closedPath = new URL(page.url()).pathname
+  console.log(`  person viewer: ${viewerPath} → ${steppedPath} → closed to ${closedPath}`)
+  if (!viewerPath.startsWith(`${personPath}/photo/`) || !steppedPath.startsWith(`${personPath}/photo/`) || closedPath !== personPath) {
+    problems.push(`[live] the viewer on ${personPath} did not stay on the person's page`)
+  }
+  await page.locator('.person-bar .seg-opt', { hasText: 'Faces' }).click()
+  await page.locator('.face-tile').first().waitFor()
+  await shot(page, '32-person-faces')
   await page.locator('.face-tile .face-img').first().click()
   await page.locator('.topbar.selecting').waitFor()
   await shot(page, '29-person-face-selected')
@@ -256,6 +295,22 @@ await context.close()
   await p.goto(`${BASE}/?mock=normal`)
   await p.locator('.timeline').waitFor()
   await shot(p, '07-demo-timeline')
+
+  // Minimising a month hides its days and keeps its header; Alt-click folds every month.
+  // (Rows are windowed, so check structure rather than how many days are drawn.)
+  await p.locator('.month-head').first().click()
+  await p.locator('.month-head.collapsed').first().waitFor()
+  const foldedOne = await p.locator('.month-head.collapsed + .month-head').count()
+  await shot(p, '30-timeline-month-minimised')
+  await p.locator('.month-head:not(.collapsed)').first().click({ modifiers: ['Alt'] })
+  await p.waitForTimeout(300)
+  const allFolded = (await p.locator('.month-head:not(.collapsed)').count()) === 0 && (await p.locator('.day-head').count()) === 0
+  await shot(p, '31-timeline-all-minimised')
+  await p.locator('.month-head').first().click({ modifiers: ['Alt'] })
+  await p.waitForTimeout(300)
+  const allOpen = (await p.locator('.month-head.collapsed').count()) === 0 && (await p.locator('.day-head').count()) > 0
+  console.log(`  minimise one month: ${foldedOne === 1}, all: ${allFolded}, unfold all: ${allOpen}`)
+  if (foldedOne !== 1 || !allFolded || !allOpen) problems.push('[demo] minimising months did not fold and unfold')
   await demo.close()
 }
 

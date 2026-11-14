@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { Icon } from '@/components/Icon'
+import { describe } from '@/lib/filters'
 import { count, plural, sinceLabel } from '@/lib/format'
 import { useScanStatus, useStartScan } from '@/lib/queries'
 import { useSelection } from '@/lib/selection'
 import type { ScanStatus } from '@/lib/types'
 import { ActivityPanel } from './ActivityPanel'
+import { FiltersPanel } from './FiltersPanel'
 import { ScanPanel } from './ScanPanel'
 import { SelectionBar } from './SelectionBar'
 import { useTopBarTaken } from './TopBarTakeover'
@@ -52,6 +54,40 @@ function ScanStatusPill() {
         <Pill scan={scan} />
       </div>
       {open && <ScanPanel />}
+    </div>
+  )
+}
+
+/** The Filters pill and its panel (BRW-06): lit, with a count, while any is on. */
+function FiltersButton() {
+  const { pathname } = useLocation()
+  const [params] = useSearchParams()
+  const [open, setOpen] = useState(false)
+  const wrap = useRef<HTMLDivElement>(null)
+  const on = pathname === '/' ? describe(params).length + (params.get('album') ? 1 : 0) : 0
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('mousedown', onDown)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('mousedown', onDown)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+  return (
+    <div className="filters-wrap" ref={wrap}>
+      <button type="button" className={`pill-btn${on ? ' on' : ''}`} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <Icon name="filter" size={16} />
+        Filters
+        {on > 0 && <span className="count-badge num">{on}</span>}
+      </button>
+      {open && <FiltersPanel />}
     </div>
   )
 }
@@ -198,10 +234,7 @@ export function TopBar() {
         />
         <span className="kbd">Ctrl K</span>
       </label>
-      <button type="button" className="pill-btn">
-        <Icon name="filter" size={16} />
-        Filters
-      </button>
+      <FiltersButton />
       <div className="grow" />
       <ScanStatusPill />
       <ActivityButton />

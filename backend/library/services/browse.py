@@ -33,6 +33,7 @@ from library.models import (
     ScanRun,
     ScanState,
 )
+from library.services import filters as timeline_filters
 from library.services.folders import approx_label, folder_date, parse_folder_name, span_label
 from library.services.paths import RAW_EXTENSIONS, extension, must_choose_folder, normalise_rel, scan_root
 from library.services.thumbnails import cache_path
@@ -313,9 +314,12 @@ def timeline_page(
     favourites: bool = False,
     area: tuple[float, float, float, float] | None = None,
     people: list[int] | None = None,
+    filters: timeline_filters.Filters | None = None,
 ) -> Page:
     limit = max(1, min(limit, MAX_PAGE))
     qs = search(in_folder(visible_assets(), folder), query.strip())
+    if filters is not None:
+        qs = timeline_filters.apply(qs, filters)
     for person in people or []:
         # PPL-03: every one of these people is in it.
         from people.models import Face

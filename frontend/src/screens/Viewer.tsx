@@ -11,11 +11,12 @@
 
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { flushSync } from 'react-dom'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { Icon } from '@/components/Icon'
 import { api, type AssetPatch } from '@/lib/api'
 import { bytes, count, DAYS, duration, MONTHS, parseLocal, plural, timeLabel } from '@/lib/format'
+import { filtersOf } from '@/lib/filters'
 import { useAssets, useChange } from '@/lib/queries'
 import type { Asset } from '@/lib/types'
 
@@ -44,19 +45,22 @@ function readSound(): Sound {
 }
 
 export function Viewer() {
-  const { id } = useParams()
+  // Opened from a person's page the route is /people/:person/photo/:id.
+  const { id, person } = useParams()
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  // The same list the timeline shows, so next and previous stay within a folder or search.
-  const items = useAssets(params.get('q') ?? '', params.get('folder') ?? '', params.get('album') ?? '', params.get('area') ?? '', params.get('people') ?? '').data ?? []
+  // Closing returns to the page it was opened from: the timeline, or that person.
+  const base = useLocation().pathname.replace(/\/photo\/[^/]+$/, '')
+  // The same list the page behind shows, so next and previous stay within a folder, search or person.
+  const items = useAssets(params.get('q') ?? '', params.get('folder') ?? '', params.get('album') ?? '', params.get('area') ?? '', person ?? params.get('people') ?? '', filtersOf(params)).data ?? []
   const [infoOpen, setInfoOpen] = useState(true)
 
   const index = items.findIndex((a) => a.id === id)
   const asset = items[index]
 
   const go = useCallback(
-    (target: string | null) => navigate({ pathname: target ? `/photo/${target}` : '/', search: params.toString() }),
-    [navigate, params],
+    (target: string | null) => navigate({ pathname: target ? `${base}/photo/${target}` : base || '/', search: params.toString() }),
+    [navigate, params, base],
   )
 
   if (!asset) return null
@@ -751,7 +755,7 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
                     type="button"
                     className="tagc person-chip"
                     title={`Photos with ${p.name || 'this person'}`}
-                    onClick={() => navigate(`/?people=${p.id}`)}
+                    onClick={() => navigate(`/people/${p.id}`)}
                   >
                     {p.faceUrl && <span className="chip-face" style={{ backgroundImage: `url("${p.faceUrl}")` }} />}
                     {p.name || 'Unnamed'}

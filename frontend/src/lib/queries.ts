@@ -22,8 +22,9 @@ import type { Operation, ScanStatus, SettingsPatch } from './types'
 export const keys = {
   session: ['session'] as const,
   library: ['library'] as const,
-  assets: (q: string, folder: string, album: string, area: string, people: string) =>
-    ['assets', q, folder, album, area, people] as const,
+  assets: (q: string, folder: string, album: string, area: string, people: string, filters: string) =>
+    ['assets', q, folder, album, area, people, filters] as const,
+  facets: ['facets'] as const,
   people: ['people'] as const,
   person: (id: string) => ['people', id] as const,
   suggestions: (id: string) => ['people', id, 'suggestions'] as const,
@@ -74,6 +75,7 @@ export function useLogin() {
 
 export const useLibrary = () => useQuery({ queryKey: keys.library, queryFn: api.library, staleTime: Infinity })
 export const useTrashCount = () => useQuery({ queryKey: keys.trash, queryFn: api.trashCount })
+export const useFacets = () => useQuery({ queryKey: keys.facets, queryFn: api.facets, staleTime: 60_000 })
 export const useAlbums = () => useQuery({ queryKey: keys.albums, queryFn: api.albums, staleTime: Infinity })
 export const useFolders = () => useQuery({ queryKey: keys.folders, queryFn: api.folders, staleTime: Infinity })
 export const useTagSuggestions = () => useQuery({ queryKey: keys.tags, queryFn: api.tagSuggestions, staleTime: Infinity })
@@ -102,10 +104,10 @@ export const useDuplicate = (id: string, keeper: string | null, choices: Readonl
  * cursor and gathered into one list, because the justified layout needs every
  * item's shape. The first page renders straight away; the rest follow.
  */
-export function useAssets(query: string, folder = '', album = '', area = '', people = '') {
+export function useAssets(query: string, folder = '', album = '', area = '', people = '', filters = '') {
   const result = useInfiniteQuery({
-    queryKey: keys.assets(query, folder, album, area, people),
-    queryFn: ({ pageParam }) => api.assetsPage(query, folder, album, area, people, pageParam),
+    queryKey: keys.assets(query, folder, album, area, people, filters),
+    queryFn: ({ pageParam }) => api.assetsPage(query, folder, album, area, people, filters, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.next,
     placeholderData: keepPreviousData,
@@ -240,6 +242,7 @@ export function invalidateLibrary(client: QueryClient) {
     client.invalidateQueries({ queryKey: keys.trashListing }),
     client.invalidateQueries({ queryKey: keys.albums }),
     client.invalidateQueries({ queryKey: keys.tags }),
+    client.invalidateQueries({ queryKey: keys.facets }),
     client.invalidateQueries({ queryKey: keys.folders }),
     client.invalidateQueries({ queryKey: keys.operations }),
     client.invalidateQueries({ queryKey: keys.library }),

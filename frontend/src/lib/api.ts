@@ -23,6 +23,7 @@ import type {
   PeopleListing,
   PersonDetail,
   Questions,
+  Facets,
   DuplicateKind,
   DuplicateQueue,
   FolderBrowse,
@@ -147,8 +148,9 @@ function toAsset({ thumbUrl, previewUrl, thumbReady, ...rest }: AssetDto): Asset
 }
 
 const live = {
-  async assetsPage(query: string, folder: string, album: string, area: string, people: string, cursor: string | null): Promise<AssetPage> {
-    const params = new URLSearchParams({ limit: '1000' })
+  async assetsPage(query: string, folder: string, album: string, area: string, people: string, filters: string, cursor: string | null): Promise<AssetPage> {
+    const params = new URLSearchParams(filters)
+    params.set('limit', '1000')
     if (people) params.set('people', people)
     if (query.trim()) params.set('q', query.trim())
     if (folder) params.set('folder', folder)
@@ -192,10 +194,11 @@ export const api = {
   // ── Phase 1a ───────────────────────────────────────────────────────────────
   library: (): Promise<LibraryInfo> => (demo ? mock.library() : http.get<LibraryInfo>('/library')),
   /** `area` is a box on the map, "south,west,north,east" (MAP-01). */
-  assetsPage: (query: string, folder: string, album: string, area: string, people: string, cursor: string | null): Promise<AssetPage> =>
+  assetsPage: (query: string, folder: string, album: string, area: string, people: string, filters: string, cursor: string | null): Promise<AssetPage> =>
     demo
       ? mock.assets(query).then((results) => ({ results, next: null }))
-      : live.assetsPage(query, folder, album, area, people, cursor),
+      : live.assetsPage(query, folder, album, area, people, filters, cursor),
+  facets: (): Promise<Facets> => (demo ? Promise.resolve({ cameras: [], tags: [] }) : http.get<Facets>('/assets/facets')),
   /** One level of the folder tree (BRW-03). The design's sample library has no folder view. */
   folderListing: (path: string): Promise<FolderListing> =>
     demo

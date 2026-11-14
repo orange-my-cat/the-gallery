@@ -369,10 +369,18 @@ button { font: inherit; }
 
 .month-head {
   position: absolute; left: 24px; right: 72px; height: 64px; display: flex; align-items: flex-end;
-  gap: 12px; padding-bottom: 8px;
+  gap: 12px; padding: 0 0 8px; border: 0; background: transparent; color: inherit; font: inherit;
+  text-align: left; cursor: pointer;
 }
 .month-head .display { font-size: var(--text-2xl); }
 .month-head .num { color: var(--color-text-subtle); font-size: var(--text-sm); padding-bottom: 2px; }
+.month-head .fold {
+  align-self: flex-end; margin: 0 0 4px -4px; color: var(--color-text-subtle);
+  transform: rotate(90deg); transition: transform 120ms ease, color 120ms ease;
+}
+.month-head:hover .fold, .month-head:focus-visible .fold { color: var(--color-text); }
+.month-head.collapsed .fold { transform: none; }
+.month-head.collapsed .display { color: var(--color-text-muted); }
 .day-head {
   position: absolute; left: 24px; right: 72px; height: 40px; display: flex; align-items: center;
   gap: 10px; font-size: var(--text-sm);
@@ -786,6 +794,16 @@ button { font: inherit; }
 .person-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: var(--space-4); }
 .person-head .lines { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .person-head .person-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+/* A person's page: the head is a bar above their photos or faces, like .folder-bar. */
+.person-bar {
+  flex: none; margin: 0; padding: 12px var(--space-6);
+  background: var(--color-surface); border-bottom: 1px solid var(--color-divider);
+}
+.person-bar .seg { flex: none; }
+/* One row on a laptop screen: the subtitle gives way before anything wraps. */
+.person-bar .lines { flex: 1 1 0; min-width: 220px; }
+.person-bar .lines .muted { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.person-bar .person-actions { margin-left: 0; }
 .name-input {
   border: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--text-2xl);
   padding: 2px 6px; margin-left: -6px; border-radius: 8px; min-width: 240px;
@@ -846,6 +864,31 @@ button { font: inherit; }
 .son-actions kbd { font: inherit; font-size: var(--text-2xs); opacity: 0.7; margin-left: 4px; padding: 0 5px; border-radius: 4px; border: 1px solid currentColor; }
 .son-last { margin: 0; font-size: var(--text-sm); display: flex; gap: 8px; align-items: center; }
 .son-last .link { border: 0; background: transparent; padding: 0; color: var(--color-accent-text); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+
+/* Timeline filters (BRW-06): the Filters pill's panel, and the chips above the grid. */
+.filters-wrap { position: relative; }
+.pill-btn.on { background: var(--color-accent-subtle); border-color: transparent; color: var(--color-accent-text); }
+.count-badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--color-accent); color: var(--color-text-on-accent); font-size: var(--text-2xs); font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.popover.filters-panel { width: 440px; max-width: calc(100vw - 32px); max-height: min(78vh, 680px); overflow-y: auto; padding: 14px 16px; gap: 14px; font-size: var(--text-sm); }
+.filters-panel section { display: flex; flex-direction: column; gap: 6px; }
+.fp-dates, .fp-selects { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fp-selects { grid-template-columns: 1fr; }
+.fp-dates label, .fp-selects label { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fp-dates .subtle { font-size: var(--text-xs); }
+.fp-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.fp-choices .filter-pill { height: 30px; padding: 0 12px; }
+.fp-foot { display: flex; justify-content: flex-end; }
+.filter-bar {
+  flex: none; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px var(--space-6);
+  background: var(--color-surface); border-bottom: 1px solid var(--color-divider); color: var(--color-text-muted);
+}
+.filter-bar .muted { font-size: var(--text-sm); margin-left: 4px; }
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 12px; border-radius: var(--radius-pill);
+  border: 0; background: var(--color-accent-subtle); color: var(--color-accent-text); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer;
+}
+.filter-chip:hover { filter: brightness(0.97); }
 
 /* ── Duplicate queue ───────────────────────────────────────────────────── */
 

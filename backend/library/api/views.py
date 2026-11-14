@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from jobs.services import retry_failed
 from library.models import ScanTrigger
 from library.services import browse
+from library.services import filters as timeline_filters
 from library.services import settings as app_settings
 from library.services.paths import scan_root
 from library.services.scan import start_scan
@@ -21,6 +22,14 @@ class AssetPageQuery(serializers.Serializer):
     folder = serializers.CharField(required=False, allow_blank=True, default="", max_length=1024)
     album = serializers.IntegerField(required=False, min_value=1, default=None, allow_null=True)
     favourites = serializers.BooleanField(required=False, default=False)
+    # BRW-06: `from`/`to` are capture days, inclusive; `rating` is a minimum.
+    since = serializers.DateField(required=False, default=None, allow_null=True)
+    until = serializers.DateField(required=False, default=None, allow_null=True)
+    type = serializers.ChoiceField(choices=timeline_filters.MEDIA, required=False, allow_blank=True, default="")
+    camera = serializers.CharField(required=False, allow_blank=True, default="", max_length=300)
+    tag = serializers.CharField(required=False, allow_blank=True, default="", max_length=100)
+    rating = serializers.IntegerField(required=False, min_value=0, max_value=5, default=0)
+    located = serializers.ChoiceField(choices=("yes", "no"), required=False, allow_blank=True, default="")
     # PPL-03: "12,15" - items with every one of these people in them.
     people = serializers.CharField(required=False, allow_blank=True, default="", max_length=200)
 
@@ -49,12 +58,21 @@ class AssetListView(APIView):
     """``GET /api/assets?cursor=&limit=&q=&folder=&area=`` - the timeline, newest first, by cursor.
 
     `folder` narrows it to one folder and everything below it (BRW-03), and
-    `area` to a box on the map (MAP-01).
+    `area` to a box on the map (MAP-01). The filters (BRW-06): `from`, `to`
+    (YYYY-MM-DD), `type` (photo, video, raw), `camera`, `tag`, `rating` (at
+    least), `favourites` and `located` (yes, no).
     """
 
     def get(self, request):
-        params = AssetPageQuery(data=request.query_params)
+        data = request.query_params.copy()
+        # `from` is a Python keyword, so the serializer names them since/until.
+        for old, new in (("from", "since"), ("to", "until")):
+            if old in data:
+                data[new] = data.pop(old)[-1]
+        params = AssetPageQuery(data=data)
         params.is_valid(raise_exception=True)
+        v = params.validated_data
+        located = {"yes": True, "no": False}.get(v["located"])
         page = browse.timeline_page(
             cursor=params.validated_data["cursor"] or None,
             limit=params.validated_data["limit"],
@@ -64,8 +82,19 @@ class AssetListView(APIView):
             favourites=params.validated_data["favourites"],
             area=params.validated_data["area"],
             people=params.validated_data["people"],
+            filters=timeline_filters.Filters(
+                since=v["since"], until=v["until"], media=v["type"], camera=v["camera"], tag=v["tag"],
+                rating=v["rating"], favourites=v["favourites"], located=located,
+            ),
         )
         return Response({"results": page.results, "next": page.next})
+
+
+class FacetsView(APIView):
+    """``GET /api/assets/facets`` - the cameras and tags the filters can choose from (BRW-06)."""
+
+    def get(self, request):  # noqa: ARG002
+        return Response(timeline_filters.facets(browse.visible_assets()))
 
 
 class FolderQuery(serializers.Serializer):

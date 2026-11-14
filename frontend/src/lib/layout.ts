@@ -3,7 +3,8 @@
  *
  * Items arrive newest first. Each month gets a 64 px header, each day a 40 px
  * header, and each day's photos are packed into rows that fill the usable width
- * at about --size-row-target (210 px) high, preserving every aspect ratio. The
+ * at about --size-row-target (210 px) high, preserving every aspect ratio. A
+ * collapsed month keeps its header and lays out nothing else. The
  * last row of a day is never stretched past the target. Geometry matches the
  * design exactly: 24 px left gutter, 72 px right (the scrubber), 4 px gaps.
  */
@@ -27,6 +28,10 @@ export interface MonthBlock {
   readonly label: string
   readonly year: number
   readonly count: string
+  /** year * 12 + month (0-based): stable across layouts, so it can be collapsed. */
+  readonly key: number
+  /** Minimised: only the header is laid out, none of its days. */
+  readonly collapsed: boolean
 }
 export interface DayBlock {
   readonly kind: 'day'
@@ -63,7 +68,12 @@ export interface TimelineLayout {
 const dayKey = (asset: Asset, date: Date) =>
   asset.dateApprox ? `approx:${asset.dateApprox.label}` : date.toDateString()
 
-export function layoutTimeline(items: readonly Asset[], width: number, withTail: boolean): TimelineLayout {
+export function layoutTimeline(
+  items: readonly Asset[],
+  width: number,
+  withTail: boolean,
+  collapsed: ReadonlySet<number> = new Set(),
+): TimelineLayout {
   const usable = Math.max(320, width - PAD_LEFT - PAD_RIGHT)
   const blocks: Block[] = []
   const months: MonthBlock[] = []
@@ -126,7 +136,7 @@ export function layoutTimeline(items: readonly Asset[], width: number, withTail:
       flush()
       const block: MonthBlock = {
         kind: 'month', y, h: MONTH_H, label: monthLabel(date), year: date.getFullYear(),
-        count: count(perMonth.get(mk) ?? 0),
+        count: count(perMonth.get(mk) ?? 0), key: mk, collapsed: collapsed.has(mk),
       }
       blocks.push(block)
       months.push(block)
@@ -134,6 +144,7 @@ export function layoutTimeline(items: readonly Asset[], width: number, withTail:
       currentMonth = mk
       currentDay = null
     }
+    if (collapsed.has(mk)) return
     const dk = dayKey(asset, date)
     if (dk !== currentDay) {
       flush()

@@ -1,16 +1,17 @@
 /**
  * The timeline (BRW-01, BRW-02, ORG-03): a justified grid, newest first, with
  * month and day headers, a sticky header, a year/month scrubber, and selection
- * by tile, day or shift-range. Rows are windowed with TanStack Virtual; each
+ * by tile, day or shift-range. Clicking a month header minimises that month. Rows are windowed with TanStack Virtual; each
  * block's size is the distance to the next, so positions match the layout.
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
-import { Outlet, useMatch, useNavigate, useSearchParams } from 'react-router-dom'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
+import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
 
 import { Icon } from '@/components/Icon'
 import { api } from '@/lib/api'
+import { describe, filtersOf } from '@/lib/filters'
 import { count, duration } from '@/lib/format'
 import { layoutTimeline, monthAt, type Block, type DayBlock, type RowBlock } from '@/lib/layout'
 import { useAlbums, useAssets, useChange, useFolderListing, useLibrary, usePeople, useScanStatus } from '@/lib/queries'
@@ -19,7 +20,25 @@ import type { Asset } from '@/lib/types'
 
 const BADGE: Record<Asset['kind'], string> = { jpg: '', heic: 'HEIC', raw: 'RAW', pair: 'RAW+JPG', video: '' }
 
-export function Timeline() {
+const COLLAPSED_KEY = 'gallery.timeline.collapsed'
+
+function storedCollapsed(): ReadonlySet<number> {
+  try {
+    const raw: unknown = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? '[]')
+    return new Set(Array.isArray(raw) ? raw.filter((k): k is number => typeof k === 'number') : [])
+  } catch {
+    return new Set()
+  }
+}
+
+/** The viewer's path under a page: `/photo/x` on the timeline, `/people/3/photo/x` on a person. */
+const photoPath = (base: string, id: string) => `${base.replace(/\/$/, '')}/photo/${id}`
+
+/**
+ * With `people`, the grid shows that person's photos inside their page (PPL-02):
+ * `header` replaces the people bar, and the viewer opens under `base`.
+ */
+export function Timeline({ people, header, base = '/' }: { people?: string; header?: ReactNode; base?: string } = {}) {
   const [params, setParams] = useSearchParams()
   const query = params.get('q') ?? ''
   // `?folder=` narrows the timeline to one folder and its subfolders (BRW-03).
@@ -27,12 +46,15 @@ export function Timeline() {
   // `?album=` narrows it to one album (ORG-01).
   const albumId = params.get('album') ?? ''
   const navigate = useNavigate()
-  const viewerOpen = useMatch('/photo/:id') !== null
+  const viewerOpen = /\/photo\/[^/]+$/.test(useLocation().pathname)
   // `?area=` narrows it to a box on the map: a cluster's items (MAP-01).
   const area = params.get('area') ?? ''
   // `?people=` narrows it to items with every one of these people (PPL-03).
-  const peopleFilter = params.get('people') ?? ''
-  const assets = useAssets(query, folder, albumId, area, peopleFilter)
+  const peopleFilter = people ?? params.get('people') ?? ''
+  // The Filters panel's choices (BRW-06).
+  const filters = filtersOf(params)
+  const chips = describe(params)
+  const assets = useAssets(query, folder, albumId, area, peopleFilter, filters)
   const parent = folder.includes('/') ? folder.slice(0, folder.lastIndexOf('/')) : ''
   const folderCard = useFolderListing(parent).data?.folders.find((f) => f.path === folder)
   const album = useAlbums().data?.find((a) => a.id === albumId)
@@ -66,7 +88,20 @@ export function Timeline() {
     return () => ro.disconnect()
   }, [])
 
-  const layout = useMemo(() => layoutTimeline(items, size.w, firstScan), [items, size.w, firstScan])
+  // Minimised months (year * 12 + month): a per-browser convenience.
+  const [collapsed, setCollapsed] = useState<ReadonlySet<number>>(storedCollapsed)
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...collapsed]))
+    } catch {
+      // Private window or blocked storage: the months stay folded for this visit.
+    }
+  }, [collapsed])
+
+  const layout = useMemo(
+    () => layoutTimeline(items, size.w, firstScan, collapsed),
+    [items, size.w, firstScan, collapsed],
+  )
   const sizes = useMemo(
     () => layout.blocks.map((b, i) => (layout.blocks[i + 1]?.y ?? layout.total) - b.y),
     [layout],
@@ -94,6 +129,30 @@ export function Timeline() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0
     setSt(0)
   }, [query])
+
+  // Folding a month keeps the header that was clicked where it was on screen,
+  // so the content below it moves rather than the page jumping.
+  const keepInPlace = useRef<{ key: number; offset: number } | null>(null)
+  const toggleMonth = (key: number, y: number, all: boolean) => {
+    keepInPlace.current = { key, offset: y - (scrollRef.current?.scrollTop ?? 0) }
+    setCollapsed((prev) => {
+      const fold = !prev.has(key)
+      if (all) return fold ? new Set(layout.months.map((m) => m.key)) : new Set()
+      const next = new Set(prev)
+      if (fold) next.add(key)
+      else next.delete(key)
+      return next
+    })
+  }
+  useLayoutEffect(() => {
+    const keep = keepInPlace.current
+    const el = scrollRef.current
+    keepInPlace.current = null
+    if (!keep || !el) return
+    const m = layout.months.find((x) => x.key === keep.key)
+    if (m) el.scrollTop = m.y - keep.offset
+    setSt(el.scrollTop)
+  }, [layout])
 
   // ── Hover, shift and keyboard ──────────────────────────────────────────────
   const [hoverId, setHoverId] = useState<string | null>(null)
@@ -145,7 +204,7 @@ export function Timeline() {
     selection.add(items.slice(Math.min(a, b), Math.max(a, b) + 1).map((x) => x.id), id)
   }
   const toggle = (id: string, e: MouseEvent) => (e.shiftKey && anchorIndex !== undefined ? selectRange(id) : selection.toggle(id))
-  const open = (id: string) => navigate({ pathname: `/photo/${id}`, search: params.toString() })
+  const open = (id: string) => navigate({ pathname: photoPath(base, id), search: params.toString() })
 
   const tileClick = (asset: Asset, e: MouseEvent) => {
     if (e.shiftKey && anchorIndex !== undefined) return selectRange(asset.id)
@@ -281,17 +340,27 @@ export function Timeline() {
   const renderBlock = (b: Block) => {
     if (b.kind === 'month') {
       return (
-        <div key={`m${b.y}`} className="month-head" style={{ top: b.y }}>
+        <button
+          key={`m${b.key}`}
+          type="button"
+          className={`month-head${b.collapsed ? ' collapsed' : ''}`}
+          style={{ top: b.y }}
+          aria-expanded={!b.collapsed}
+          title={`${b.collapsed ? 'Show' : 'Minimise'} ${b.label} (Alt-click for every month)`}
+          onClick={(e) => toggleMonth(b.key, b.y, e.altKey)}
+        >
           <span className="display">{b.label}</span>
           <span className="num">{b.count}</span>
-        </div>
+          <Icon name="chevron-right" size={18} className="fold" />
+        </button>
       )
     }
     return b.kind === 'day' ? renderDay(b) : renderRow(b)
   }
 
   return (
-    <div className="timeline" data-screen-label="Timeline">
+    <div className="timeline" data-screen-label={people ? 'Person' : 'Timeline'}>
+      {header}
       {folder && (
         <div className="folder-bar">
           <button
@@ -352,7 +421,7 @@ export function Timeline() {
           </button>
         </div>
       )}
-      {peopleFilter && (
+      {peopleFilter && !people && (
         <div className="folder-bar">
           <button
             type="button"
@@ -382,6 +451,42 @@ export function Timeline() {
             }}
           >
             <Icon name="x" size={16} />
+          </button>
+        </div>
+      )}
+      {chips.length > 0 && (
+        <div className="filter-bar">
+          <Icon name="filter" size={15} />
+          {chips.map((c) => (
+            <button
+              key={c.label}
+              type="button"
+              className="filter-chip"
+              title="Remove this filter"
+              onClick={() => {
+                const next = new URLSearchParams(params)
+                for (const k of c.keys) next.delete(k)
+                setParams(next)
+              }}
+            >
+              {c.label}
+              <Icon name="x" size={12} />
+            </button>
+          ))}
+          <span className="muted num">
+            {assets.data ? `${count(assets.data.length)} ${assets.data.length === 1 ? 'item' : 'items'}` : ''}
+          </span>
+          <div className="grow" />
+          <button
+            type="button"
+            className="pill-btn ghost small"
+            onClick={() => {
+              const next = new URLSearchParams(params)
+              for (const c of chips) for (const k of c.keys) next.delete(k)
+              setParams(next)
+            }}
+          >
+            Clear filters
           </button>
         </div>
       )}

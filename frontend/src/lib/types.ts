@@ -281,6 +281,12 @@ export interface MapPoints {
 /** A box on the map: south, west, north, east, in degrees. */
 export type Area = readonly [number, number, number, number]
 
+/** What the timeline filters can choose from (BRW-06), with item counts. */
+export interface Facets {
+  readonly cameras: readonly { readonly name: string; readonly count: number }[]
+  readonly tags: readonly { readonly name: string; readonly count: number }[]
+}
+
 /** Same bytes, or the same picture to the pixel with other metadata. */
 export type DuplicateKind = 'exact' | 'pixels'
 

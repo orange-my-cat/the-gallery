@@ -48,7 +48,9 @@ export function App() {
         />
         <Route path="/trash" element={demo ? <NotBuilt icon="trash" title="Trash" phase="1b" /> : <Trash />} />
         <Route path="/people" element={demo ? <NotBuilt icon="users" title="People" phase="2" /> : <People />} />
-        <Route path="/people/:id" element={<Person />} />
+        <Route path="/people/:person" element={<Person />}>
+          <Route path="photo/:id" element={<Viewer />} />
+        </Route>
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

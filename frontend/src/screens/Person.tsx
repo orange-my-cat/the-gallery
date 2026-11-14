@@ -1,14 +1,16 @@
 /**
  * One person (PPL-02, PPL-04), or the faces in no group (`/people/unassigned`).
  *
- * Name them; see their photos; merge them into someone else; delete them.
- * Faces can be selected and removed, moved to another person (or a new one),
- * or marked as not a face. "Find more" lists faces that look like them, to
- * add by hand - nothing joins a person without the owner choosing it.
+ * Name them; merge them into someone else; delete them. Photos (the default)
+ * browses their photos in the timeline's grid, with the viewer opening on top
+ * at /people/:person/photo/:id. Faces lists their faces: these can be selected
+ * and removed, moved to another person (or a new one), or marked as not a face.
+ * "Find more" lists faces that look like them, to add by hand - nothing joins
+ * a person without the owner choosing it.
  */
 
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { Icon } from '@/components/Icon'
 import { PersonPicker } from '@/components/PersonPicker'
@@ -17,6 +19,7 @@ import { count, plural } from '@/lib/format'
 import { useChange, usePerson, useSuggestions, useUnassignedFaces } from '@/lib/queries'
 import type { FaceRef } from '@/lib/types'
 import { TopBarTakeover } from '@/shell/TopBarTakeover'
+import { Timeline } from './Timeline'
 
 type Picking = 'move' | 'merge' | null
 
@@ -71,8 +74,8 @@ function useSelection() {
 }
 
 export function Person() {
-  const { id = '' } = useParams()
-  return id === 'unassigned' ? <Unassigned /> : <OnePerson id={id} />
+  const { person: id = '' } = useParams()
+  return id === 'unassigned' ? <Unassigned /> : <OnePerson key={id} id={id} />
 }
 
 function OnePerson({ id }: { readonly id: string }) {
@@ -86,6 +89,14 @@ function OnePerson({ id }: { readonly id: string }) {
   const suggestions = useSuggestions(id, finding)
   const [name, setName] = useState('')
   const [picking, setPicking] = useState<Picking>(null)
+  const [params, setParams] = useSearchParams()
+  const showFaces = params.get('view') === 'faces'
+  const setView = (faces: boolean) => {
+    const next = new URLSearchParams(params)
+    if (faces) next.set('view', 'faces')
+    else next.delete('view')
+    setParams(next, { replace: true })
+  }
   useEffect(() => setName(person?.name ?? ''), [person?.name])
 
   if (query.error) {
@@ -109,155 +120,176 @@ function OnePerson({ id }: { readonly id: string }) {
   const saveName = () => {
     if (name.trim() !== person.name) void change(() => api.renamePerson(id, name), { msg: name.trim() ? `Named ${name.trim()}` : 'Name cleared' })
   }
-  const openPhoto = (f: FaceRef) => navigate(`/photo/${f.assetId}?people=${id}`)
+  // Opens over this page, stepping through this person's photos.
+  const openPhoto = (f: FaceRef) => navigate({ pathname: `/people/${id}/photo/${f.assetId}`, search: params.toString() })
+
+  const summary =
+    `${count(person.items)} ${plural(person.items, 'photo')} · ${count(person.faces.length)} ${plural(person.faces.length, 'face')}` +
+    (person.confirmed ? '' : ' · found by the app; naming or changing it confirms it')
+  const head = (
+    <div className="person-head person-bar">
+      <button type="button" className="pill-btn back" onClick={() => navigate('/people')}>
+        <Icon name="arrow-left" size={16} />
+        People
+      </button>
+      <div className="face-round lg" style={person.coverUrl ? { backgroundImage: `url("${person.coverUrl}")` } : undefined} />
+      <div className="lines">
+        <input
+          className="name-input display"
+          value={name}
+          placeholder="Add a name"
+          onChange={(e) => setName(e.target.value)}
+          onBlur={saveName}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+            if (e.key === 'Escape') setName(person.name)
+          }}
+          aria-label="Name"
+        />
+        <span className="muted num" title={summary}>
+          {summary}
+        </span>
+      </div>
+      <div className="grow" />
+      <div className="seg" role="radiogroup" aria-label="Show">
+        <label className="seg-opt">
+          <input type="radio" name="person-view" checked={!showFaces} onChange={() => setView(false)} />
+          <Icon name="images" size={15} />
+          Photos
+        </label>
+        <label className="seg-opt">
+          <input type="radio" name="person-view" checked={showFaces} onChange={() => setView(true)} />
+          <Icon name="users" size={15} />
+          Faces
+        </label>
+      </div>
+      <div className="person-actions">
+        <button type="button" className="pill-btn" onClick={() => setPicking('merge')}>
+          <Icon name="merge" size={15} />
+          Merge into…
+        </button>
+        <button
+          type="button"
+          className="pill-btn"
+          title="A statue, a poster, a face on a screen: set aside, and so are look-alikes found later"
+          onClick={() =>
+            void change(() => api.notPeople([id]), {
+              msg: 'Marked as not a person',
+              detail: 'Faces that look like these are set aside too',
+            }).then((ok) => ok && navigate('/people'))
+          }
+        >
+          <Icon name="x" size={15} />
+          Not a person
+        </button>
+        <button
+          type="button"
+          className="pill-btn danger"
+          onClick={() =>
+            void change(() => api.deletePerson(id), {
+              msg: `Deleted ${person.name || 'the person'}`,
+              detail: 'Their photos stay; the faces are set aside',
+            }).then((ok) => ok && navigate('/people'))
+          }
+        >
+          <Icon name="trash" size={15} />
+          Delete
+        </button>
+      </div>
+    </div>
+  )
 
   return (
-    <div className="timeline" data-screen-label="Person">
-      <div className="folders">
-        <div className="person-head">
-          <button type="button" className="pill-btn back" onClick={() => navigate('/people')}>
-            <Icon name="arrow-left" size={16} />
-            People
-          </button>
-          <div className="face-round lg" style={person.coverUrl ? { backgroundImage: `url("${person.coverUrl}")` } : undefined} />
-          <div className="lines">
-            <input
-              className="name-input display"
-              value={name}
-              placeholder="Add a name"
-              onChange={(e) => setName(e.target.value)}
-              onBlur={saveName}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                if (e.key === 'Escape') setName(person.name)
-              }}
-              aria-label="Name"
-            />
-            <span className="muted num">
-              {`${count(person.items)} ${plural(person.items, 'photo')} · ${count(person.faces.length)} ${plural(person.faces.length, 'face')}`}
-              {!person.confirmed && ' · found by the app; naming or changing it confirms it'}
-            </span>
-          </div>
-          <div className="grow" />
-          <div className="person-actions">
-            <button type="button" className="btn btn-primary" onClick={() => navigate(`/?people=${id}`)}>
-              <Icon name="images" size={15} />
-              View photos
-            </button>
-            <button type="button" className="pill-btn" onClick={() => setPicking('merge')}>
-              <Icon name="merge" size={15} />
-              Merge into…
-            </button>
-            <button
-              type="button"
-              className="pill-btn"
-              title="A statue, a poster, a face on a screen: set aside, and so are look-alikes found later"
-              onClick={() =>
-                void change(() => api.notPeople([id]), {
-                  msg: 'Marked as not a person',
-                  detail: 'Faces that look like these are set aside too',
-                }).then((ok) => ok && navigate('/people'))
-              }
-            >
-              <Icon name="x" size={15} />
-              Not a person
-            </button>
-            <button
-              type="button"
-              className="pill-btn danger"
-              onClick={() =>
-                void change(() => api.deletePerson(id), {
-                  msg: `Deleted ${person.name || 'the person'}`,
-                  detail: 'Their photos stay; the faces are set aside',
-                }).then((ok) => ok && navigate('/people'))
-              }
-            >
-              <Icon name="trash" size={15} />
-              Delete
-            </button>
-          </div>
-        </div>
-
-        {chosen.length > 0 && (
-          <TopBarTakeover onEscape={faces.clear}>
-            <div className="sel-count">
-              <b>{count(chosen.length)}</b>
-              <span>selected</span>
-            </div>
-            <div className="grow" />
-            <button
-              type="button"
-              className="pill-btn ghost"
-              onClick={() => void change(() => api.removeFaces(chosen), { msg: `Removed ${chosen.length} from ${label}`, detail: 'They won’t be suggested for them again' }).then(faces.clear)}
-            >
-              <Icon name="x" size={15} />
-              {`Remove from ${person.name || 'this person'}`}
-            </button>
-            <button type="button" className="pill-btn ghost" onClick={() => setPicking('move')}>
-              <Icon name="users" size={15} />
-              Move to…
-            </button>
-            <button
-              type="button"
-              className="pill-btn ghost"
-              onClick={() => void change(() => api.ignoreFaces(chosen), { msg: `Marked ${chosen.length} as not a face` }).then(faces.clear)}
-            >
-              Not a face
-            </button>
-            <button type="button" className="icon-btn" title="Clear the selection (Esc)" onClick={faces.clear}>
-              <Icon name="x" size={16} />
-            </button>
-          </TopBarTakeover>
-        )}
-        {chosen.length === 0 && extra.length > 0 && (
-          <TopBarTakeover onEscape={more.clear}>
-            <div className="sel-count">
-              <b>{count(extra.length)}</b>
-              <span>selected</span>
-            </div>
-            <div className="grow" />
-            <button
-            type="button"
-            className="pill-btn ghost"
-            onClick={() =>
-              void change(() => api.assignFaces(extra, id), { msg: `Added ${extra.length} to ${label}` }).then(() => {
-                more.clear()
-                void suggestions.refetch()
-              })
-            }
-            >
-            <Icon name="plus" size={15} />
-            {`Add to ${person.name || 'this person'}`}
-            </button>
-            <button type="button" className="icon-btn" title="Clear the selection (Esc)" onClick={more.clear}>
-              <Icon name="x" size={16} />
-            </button>
-          </TopBarTakeover>
-        )}
-
-        <FaceGrid faces={person.faces} selected={faces.selected} onToggle={faces.toggle} onOpen={openPhoto} />
-
-        <section className="suggest">
-          <div className="suggest-head">
-            <h2>{`Might also be ${person.name || 'them'}`}</h2>
-            {!finding && (
-              <button type="button" className="pill-btn" onClick={() => setFinding(true)}>
-                <Icon name="search" size={15} />
-                Find more faces
-              </button>
+    <>
+      {showFaces ? (
+        <div className="timeline" data-screen-label="Person faces">
+          {head}
+          <div className="folders">
+            {chosen.length > 0 && (
+              <TopBarTakeover onEscape={faces.clear}>
+                <div className="sel-count">
+                  <b>{count(chosen.length)}</b>
+                  <span>selected</span>
+                </div>
+                <div className="grow" />
+                <button
+                  type="button"
+                  className="pill-btn ghost"
+                  onClick={() => void change(() => api.removeFaces(chosen), { msg: `Removed ${chosen.length} from ${label}`, detail: 'They won’t be suggested for them again' }).then(faces.clear)}
+                >
+                  <Icon name="x" size={15} />
+                  {`Remove from ${person.name || 'this person'}`}
+                </button>
+                <button type="button" className="pill-btn ghost" onClick={() => setPicking('move')}>
+                  <Icon name="users" size={15} />
+                  Move to…
+                </button>
+                <button
+                  type="button"
+                  className="pill-btn ghost"
+                  onClick={() => void change(() => api.ignoreFaces(chosen), { msg: `Marked ${chosen.length} as not a face` }).then(faces.clear)}
+                >
+                  Not a face
+                </button>
+                <button type="button" className="icon-btn" title="Clear the selection (Esc)" onClick={faces.clear}>
+                  <Icon name="x" size={16} />
+                </button>
+              </TopBarTakeover>
             )}
+            {chosen.length === 0 && extra.length > 0 && (
+              <TopBarTakeover onEscape={more.clear}>
+                <div className="sel-count">
+                  <b>{count(extra.length)}</b>
+                  <span>selected</span>
+                </div>
+                <div className="grow" />
+                <button
+                type="button"
+                className="pill-btn ghost"
+                onClick={() =>
+                  void change(() => api.assignFaces(extra, id), { msg: `Added ${extra.length} to ${label}` }).then(() => {
+                    more.clear()
+                    void suggestions.refetch()
+                  })
+                }
+                >
+                <Icon name="plus" size={15} />
+                {`Add to ${person.name || 'this person'}`}
+                </button>
+                <button type="button" className="icon-btn" title="Clear the selection (Esc)" onClick={more.clear}>
+                  <Icon name="x" size={16} />
+                </button>
+              </TopBarTakeover>
+            )}
+    
+            <FaceGrid faces={person.faces} selected={faces.selected} onToggle={faces.toggle} onOpen={openPhoto} />
+    
+            <section className="suggest">
+              <div className="suggest-head">
+                <h2>{`Might also be ${person.name || 'them'}`}</h2>
+                {!finding && (
+                  <button type="button" className="pill-btn" onClick={() => setFinding(true)}>
+                    <Icon name="search" size={15} />
+                    Find more faces
+                  </button>
+                )}
+              </div>
+              {finding && suggestions.data && suggestions.data.length === 0 && (
+                <p className="muted">No other faces look like them.</p>
+              )}
+              {finding && suggestions.data && suggestions.data.length > 0 && (
+                <>
+                  <p className="muted">Faces in no group, or in groups you haven’t confirmed, most alike first. Select the ones that are them.</p>
+                  <FaceGrid faces={suggestions.data} selected={more.selected} onToggle={more.toggle} onOpen={openPhoto} />
+                </>
+              )}
+            </section>
           </div>
-          {finding && suggestions.data && suggestions.data.length === 0 && (
-            <p className="muted">No other faces look like them.</p>
-          )}
-          {finding && suggestions.data && suggestions.data.length > 0 && (
-            <>
-              <p className="muted">Faces in no group, or in groups you haven’t confirmed, most alike first. Select the ones that are them.</p>
-              <FaceGrid faces={suggestions.data} selected={more.selected} onToggle={more.toggle} onOpen={openPhoto} />
-            </>
-          )}
-        </section>
-      </div>
+          <Outlet />
+        </div>
+      ) : (
+        <Timeline people={id} header={head} base={`/people/${id}`} />
+      )}
 
       {picking === 'move' && (
         <PersonPicker
@@ -285,7 +317,7 @@ function OnePerson({ id }: { readonly id: string }) {
           }}
         />
       )}
-    </div>
+    </>
   )
 }
 
