@@ -101,6 +101,56 @@ def test_different_identifiers_never_pair_even_with_one_name(library, tags):
     assert Asset.objects.count() == 2
 
 
+def scan_in_order(library, files: dict[str, bytes]) -> None:
+    for name, data in files.items():
+        write(library / "Japan" / name, data)
+        scan()
+
+
+def motion_of(rel: str) -> str | None:
+    clip = Asset.objects.get(primary_file__rel_path=rel).files.filter(role=FileRole.LIVE_VIDEO).first()
+    return clip.rel_path if clip else None
+
+
+@pytest.mark.parametrize(
+    "order", [("JPG", "HEIC", "MOV"), ("JPG", "MOV", "HEIC"), ("MOV", "JPG", "HEIC")], ids="-".join
+)
+def test_the_identifier_beats_another_phones_photo_of_the_same_name(library, tags, order):
+    # One trip folder, two phones' imports: IMG_6821.JPG is someone else's photo.
+    tags["IMG_6821.JPG"] = still_tags(live_id=None)
+    tags["IMG_6821.HEIC"] = still_tags()
+    tags["IMG_6821.MOV"] = clip_tags()
+    data = {"JPG": jpeg_bytes(color=(1, 1, 1)), "HEIC": jpeg_bytes(color=(2, 2, 2)), "MOV": CLIP}
+    scan_in_order(library, {f"IMG_6821.{ext}": data[ext] for ext in order})
+
+    assert motion_of("Japan/IMG_6821.HEIC") == "Japan/IMG_6821.MOV"
+    assert motion_of("Japan/IMG_6821.JPG") is None
+    assert Asset.objects.count() == 2
+
+
+@pytest.mark.parametrize("clip_before_its_still", [False, True])
+def test_halves_numbered_one_apart_pair_by_identifier(library, tags, clip_before_its_still):
+    # An export tool left the still as IMG_2911.JPG and its clip as IMG_2912.JPG,
+    # next to IMG_2912.MOV - another photo, extension swapped, tags lost.
+    tags["IMG_2911.JPG"] = still_tags()
+    tags["IMG_2912.MOV"] = {"File:MIMEType": "image/jpeg"}
+    tags["IMG_2912.JPG"] = clip_tags()
+    files = {"IMG_2912.MOV": jpeg_bytes(color=(1, 1, 1)), "IMG_2912.JPG": CLIP, "IMG_2911.JPG": jpeg_bytes()}
+    if not clip_before_its_still:
+        files = {"IMG_2911.JPG": files.pop("IMG_2911.JPG"), **files}
+    scan_in_order(library, files)
+
+    assert motion_of("Japan/IMG_2911.JPG") == "Japan/IMG_2912.JPG"
+    assert motion_of("Japan/IMG_2912.MOV") is None
+
+
+def test_a_clip_whose_still_lost_its_tags_still_pairs_by_name(library, tags):
+    tags["IMG_2437.HEIC"] = still_tags(live_id=None)
+    tags["IMG_2437.MOV"] = clip_tags()
+    scan_in_order(library, {"IMG_2437.HEIC": jpeg_bytes(), "IMG_2437.MOV": CLIP})
+    assert motion_of("Japan/IMG_2437.HEIC") == "Japan/IMG_2437.MOV"
+
+
 def test_halves_in_different_folders_do_not_pair(library, tags):
     tags["IMG_1.HEIC"] = still_tags()
     tags["IMG_1_a.MOV"] = clip_tags()
@@ -197,3 +247,38 @@ def test_migration_links_the_pairs_already_indexed(library, tags):
     live = dict(MediaFile.objects.filter(role=FileRole.LIVE_VIDEO).values_list("rel_path", "asset__primary_file__rel_path"))
     assert live == {"IMG_1_a.MOV": "IMG_1.HEIC", "IMG_2.MOV": "IMG_2.JPG"}
     assert MediaFile.objects.get(rel_path="IMG_1.HEIC").live_id == UUID
+
+
+def test_migration_moves_clips_paired_by_name_onto_their_identified_stills(library, tags):
+    migration = importlib.import_module("library.migrations.0010_relink_live_photos_by_identifier")
+    other = "1B3C353E-E3E8-44C3-9E6A-A7DC505B78FE"
+    tags["IMG_6821.JPG"] = still_tags(live_id=None)
+    tags["IMG_6821.HEIC"] = still_tags()
+    tags["IMG_6821.MOV"] = clip_tags()
+    tags["IMG_2911.JPG"] = still_tags(other)
+    tags["IMG_2912.MOV"] = {"File:MIMEType": "image/jpeg"}
+    tags["IMG_2912.JPG"] = clip_tags(other)
+    tags["IMG_2437.HEIC"] = still_tags(live_id=None)
+    tags["IMG_2437.MOV"] = clip_tags("CF503745-36C2-4016-9C97-349488D44548")
+    scan_in_order(library, {
+        "IMG_6821.JPG": jpeg_bytes(color=(1, 1, 1)), "IMG_6821.HEIC": jpeg_bytes(color=(2, 2, 2)),
+        "IMG_6821.MOV": CLIP, "IMG_2911.JPG": jpeg_bytes(color=(3, 3, 3)),
+        "IMG_2912.MOV": jpeg_bytes(color=(4, 4, 4)), "IMG_2912.JPG": CLIP + b"2",
+        "IMG_2437.HEIC": jpeg_bytes(color=(5, 5, 5)), "IMG_2437.MOV": CLIP + b"3",
+    })
+    # As the indexer left them before the identifier won: on the same-named photo.
+    for clip, wrong in [("IMG_6821.MOV", "IMG_6821.JPG"), ("IMG_2912.JPG", "IMG_2912.MOV")]:
+        MediaFile.objects.filter(rel_path=f"Japan/{clip}").update(
+            asset=Asset.objects.get(primary_file__rel_path=f"Japan/{wrong}")
+        )
+    assets = Asset.objects.count()
+
+    migration.forwards(apps, None)
+
+    live = dict(MediaFile.objects.filter(role=FileRole.LIVE_VIDEO).values_list("rel_path", "asset__primary_file__rel_path"))
+    assert live == {
+        "Japan/IMG_6821.MOV": "Japan/IMG_6821.HEIC",
+        "Japan/IMG_2912.JPG": "Japan/IMG_2911.JPG",
+        "Japan/IMG_2437.MOV": "Japan/IMG_2437.HEIC",  # its still lost its tags: nowhere better
+    }
+    assert Asset.objects.count() == assets

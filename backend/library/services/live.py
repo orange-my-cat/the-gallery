@@ -15,6 +15,12 @@ reaches first:
    only for a clip short enough to be a Live Photo's. A camera that numbers its
    photos and videos in one sequence never gives a photo and a video one name.
 
+The identifier always wins over the name. A folder that gathers several
+phones' imports holds unrelated `IMG_0904`s, and export tools have been seen
+to number a pair's halves one apart (`IMG_2911.JPG` with `IMG_2912.MOV`), so a
+half whose identifier is on another half in the folder never pairs by name -
+and a clip paired by name before its identified still was indexed moves over.
+
 A clip already the owner's own item - in an album, rated, tagged, edited - is
 left as it is rather than folded away.
 """
@@ -69,8 +75,27 @@ def _untouched(asset: Asset) -> bool:
     )
 
 
-def _same_name_first(key: str):
-    return lambda f: (f.pair_key != key, f.pk)
+def _best_first(key: str, live_id: str):
+    """Same identifier, then same name, then the oldest."""
+    return lambda f: (not (live_id and f.live_id == live_id), f.pair_key != key, f.pk)
+
+
+def _own_half_is_here(live_id: str, others: list[MediaFile]) -> list[MediaFile]:
+    """Only the halves carrying `live_id`, when there are any: a stranger with
+    the same name never stands in for the file the identifier points at."""
+    if live_id and any(f.live_id == live_id for f in others):
+        return [f for f in others if f.live_id == live_id]
+    return others
+
+
+def _paired_by_name(clip: MediaFile) -> bool:
+    """A clip whose still does not carry the clip's identifier: joined by name."""
+    return bool(clip.live_id) and not (
+        clip.asset.files.exclude(role=FileRole.LIVE_VIDEO)
+        .exclude(state=FileState.TRASHED)
+        .filter(live_id=clip.live_id)
+        .exists()
+    )
 
 
 def _candidates(rel: str, live_id: str, key: str):
@@ -94,37 +119,46 @@ def still_for_clip(rel: str, mime: str, live_id: str, seconds: float | None) -> 
         return None
     key = pair_key(rel)
     stills = [
+        f for f in _candidates(rel, live_id, key) if f.role != FileRole.LIVE_VIDEO and is_still(f.rel_path, f.mime)
+    ]
+    stills = [
         f
-        for f in _candidates(rel, live_id, key)
-        if f.role != FileRole.LIVE_VIDEO
-        and is_still(f.rel_path, f.mime)
-        and belong_together(
+        for f in _own_half_is_here(live_id, stills)
+        if belong_together(
             still_id=f.live_id, still_key=f.pair_key, clip_id=live_id, clip_key=key, clip_seconds=seconds
         )
         and not _has_live(f.asset)
     ]
-    return min(stills, key=_same_name_first(key), default=None)
+    return min(stills, key=_best_first(key, live_id), default=None)
 
 
 def clip_for_still(still: MediaFile) -> MediaFile | None:
-    """An indexed clip, still an item of its own, that belongs to this still."""
+    """An indexed clip that belongs to this still: an item of its own, or the
+    motion of another photo it joined only by name before this still came."""
     if not is_still(still.rel_path, still.mime) or _has_live(still.asset):
         return None
     clips = [
         f
         for f in _candidates(still.rel_path, still.live_id, still.pair_key)
-        if f.role == FileRole.PRIMARY
-        and is_clip(f.rel_path, f.mime)
-        and belong_together(
-            still_id=still.live_id,
-            still_key=still.pair_key,
-            clip_id=f.live_id,
-            clip_key=f.pair_key,
-            clip_seconds=f.asset.duration,
-        )
-        and _untouched(f.asset)
+        if f.role in (FileRole.PRIMARY, FileRole.LIVE_VIDEO) and is_clip(f.rel_path, f.mime)
     ]
-    return min(clips, key=_same_name_first(still.pair_key), default=None)
+    clips = [
+        f
+        for f in _own_half_is_here(still.live_id, clips)
+        if (
+            f.role == FileRole.PRIMARY
+            and belong_together(
+                still_id=still.live_id,
+                still_key=still.pair_key,
+                clip_id=f.live_id,
+                clip_key=f.pair_key,
+                clip_seconds=f.asset.duration,
+            )
+            and _untouched(f.asset)
+        )
+        or (f.role == FileRole.LIVE_VIDEO and still.live_id and f.live_id == still.live_id and _paired_by_name(f))
+    ]
+    return min(clips, key=_best_first(still.pair_key, still.live_id), default=None)
 
 
 def attach(clip: MediaFile, asset: Asset) -> None:
