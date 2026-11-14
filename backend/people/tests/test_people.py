@@ -291,3 +291,27 @@ def test_not_people_api(signed_in, album):
     response = signed_in.post("/api/people/not-people", {"ids": [ben.pk]}, content_type="application/json")
     assert response.status_code == 200 and "not a person" in response.json()["summary"]
     assert not Person.objects.filter(pk=ben.pk).exists()
+
+
+def test_rescan_searches_new_photos_and_regroups_now(signed_in, album, fake_faces):
+    from jobs.models import Job, JobState
+
+    ana = person_of("ana0.jpg")
+    signed_in.patch(f"/api/people/{ana.pk}", {"name": "Ana"}, content_type="application/json")
+    drain()
+
+    # Nothing new to search: still a regrouping run, and the owner's work stays.
+    response = signed_in.post("/api/people/rescan")
+    assert response.status_code == 202 and response.json() == {"queued": 0}
+    assert Job.objects.filter(kind="cluster_faces", state=JobState.QUEUED).exists()
+    drain()
+    assert person_of("ana0.jpg").pk == ana.pk and person_of("ana0.jpg").name == "Ana"
+
+    # A photo the scheduler has not reached yet is searched at once.
+    photo(album, fake_faces, "ana5.jpg", "ana", colour=200)
+    start_scan()
+    drain()
+    assert not FaceScan.objects.filter(file__rel_path="ana5.jpg").exists()
+    assert signed_in.post("/api/people/rescan").json() == {"queued": 1}
+    drain()
+    assert person_of("ana5.jpg").pk == ana.pk

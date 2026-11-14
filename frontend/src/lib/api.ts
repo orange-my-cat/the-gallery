@@ -269,6 +269,8 @@ export const api = {
   // ── Phase 2: people ────────────────────────────────────────────────────────
   people: (): Promise<PeopleListing> =>
     demo ? Promise.resolve({ people: [], unassigned: 0, scan: { done: 0, total: 0 } }) : http.get<PeopleListing>('/people'),
+  /** Look for faces in photos not searched yet and regroup everyone now, not at the daily run. */
+  rescanPeople: (): Promise<{ queued: number }> => http.post<{ queued: number }>('/people/rescan'),
   person: (id: string): Promise<PersonDetail> => http.get<PersonDetail>(`/people/${id}`),
   suggestions: (id: string): Promise<FaceRef[]> => http.get<FaceRef[]>(`/people/${id}/suggestions`),
   unassignedFaces: (): Promise<FaceRef[]> => http.get<FaceRef[]>('/faces'),

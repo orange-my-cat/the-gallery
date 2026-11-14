@@ -14,13 +14,14 @@ import { Icon } from '@/components/Icon'
 import { SameOrNot } from '@/components/SameOrNot'
 import { api } from '@/lib/api'
 import { count, plural } from '@/lib/format'
-import { useChange, usePeople } from '@/lib/queries'
+import { useChange, usePeople, useRescanPeople } from '@/lib/queries'
 import { TopBarTakeover } from '@/shell/TopBarTakeover'
 
 export function People() {
   const listing = usePeople().data
   const navigate = useNavigate()
   const change = useChange()
+  const rescan = useRescanPeople()
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
 
   const toggle = (id: string) =>
@@ -42,6 +43,17 @@ export function People() {
         <div className="folders-head">
           <span className="display">People</span>
           {listing && <span className="num">{`${count(listing.people.length)} ${plural(listing.people.length, 'person', 'people')}`}</span>}
+          <div className="grow" />
+          <button
+            type="button"
+            className="pill-btn ghost"
+            disabled={rescan.isPending}
+            title="Look for faces in photos not searched yet, and regroup everyone now instead of at the daily run"
+            onClick={() => rescan.mutate()}
+          >
+            <Icon name="refresh" size={15} />
+            Rescan
+          </button>
         </div>
 
         {chosen.length > 0 && (

@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from fileops.api.views import _accepted, _data
-from people.services import browse, ops, questions
+from people.services import browse, faces, ops, questions
 
 
 class PeopleView(APIView):
@@ -14,6 +14,13 @@ class PeopleView(APIView):
 
     def get(self, request):
         return Response(browse.people())
+
+
+class RescanView(APIView):
+    """``POST /api/people/rescan`` - look for faces and regroup now, not at the next scheduled run."""
+
+    def post(self, request):
+        return Response(faces.rescan(), status=202)
 
 
 class PersonView(APIView):

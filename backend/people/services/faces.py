@@ -204,3 +204,16 @@ def schedule_due(now=None) -> int:
                 break
     return queued
 
+
+
+def rescan() -> dict[str, int]:
+    """The owner asked (People screen): search what has not been searched yet
+    without waiting for the scheduler, and regroup everyone now rather than at
+    the daily run. Faces already found, and what the owner decided about them,
+    stay as they are; the regrouping waits for the searches to finish."""
+    from people.services.cluster import request_cluster
+
+    queued = schedule_due()
+    if Face.objects.exists() or queued:
+        request_cluster()
+    return {"queued": queued}

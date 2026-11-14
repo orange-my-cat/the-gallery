@@ -15,6 +15,7 @@ import {
 } from '@tanstack/react-query'
 
 import { api, ApiError, type OperationRef } from './api'
+import { count, plural } from './format'
 import { useToast } from './toast'
 import type { Operation, ScanStatus, SettingsPatch } from './types'
 
@@ -199,6 +200,22 @@ export function useSaveSettings() {
       void client.invalidateQueries({ queryKey: keys.library })
       if (scanStarted) void client.invalidateQueries({ queryKey: keys.scan })
     },
+  })
+}
+
+export function useRescanPeople() {
+  const client = useQueryClient()
+  const toast = useToast()
+  return useMutation({
+    mutationFn: api.rescanPeople,
+    onSuccess: ({ queued }) => {
+      void client.invalidateQueries({ queryKey: keys.people })
+      toast.show({
+        msg: queued ? `Looking for faces in ${count(queued)} ${plural(queued, 'photo')}` : 'Regrouping faces',
+        detail: 'Groups update when it finishes; names and choices you made stay',
+      })
+    },
+    onError: (error) => toast.show({ msg: 'The rescan did not start', detail: error.message, tone: 'error' }),
   })
 }
 

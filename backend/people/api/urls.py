@@ -6,6 +6,7 @@ from people.api import views
 
 urlpatterns = [
     path("people", views.PeopleView.as_view(), name="people"),
+    path("people/rescan", views.RescanView.as_view(), name="people-rescan"),
     path("people/merge", views.MergeView.as_view(), name="people-merge"),
     path("people/questions", views.QuestionsView.as_view(), name="people-questions"),
     path("people/delete", views.DeleteView.as_view(), name="people-delete"),
