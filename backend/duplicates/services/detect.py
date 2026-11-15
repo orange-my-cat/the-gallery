@@ -4,9 +4,10 @@ Only pixel-identical copies are duplicates (the owner's rule, 2026-11-14;
 it replaces the BRD's visual matching, DUP-02). Two kinds of group:
 
 - `exact` - byte-identical files of different items, any media type.
-- `pixels` - photos whose decoded pixels are identical though their bytes are
-  not: the same picture with different metadata (a title written into one, a
-  tool that rewrote the tags). See `fingerprint`.
+- `pixels` - photos whose decoded pixels, or videos whose encoded streams, are
+  identical though their bytes are not: the same picture or clip with
+  different metadata (a title written into one, a tool that rewrote the tags,
+  a clip moved from .MOV to .MP4). See `fingerprint`.
 
 Photos that merely look alike - resized, re-compressed, a burst - are never
 grouped. A RAW and the JPEG it was paired with, or a Live Photo's still and
@@ -74,8 +75,9 @@ def schedule_due(now=None) -> int:
 
 
 def queue_fingerprint(media: MediaFile, *, scan_id: int | None = None) -> None:
-    """After indexing: RAW and video match by bytes at once; a photo reuses a
-    byte-identical copy's fingerprint, or is queued to be decoded."""
+    """After indexing: RAW and a Live Photo's clip match by bytes at once; a
+    photo or video reuses a byte-identical copy's fingerprint, or is queued to
+    be read."""
     if media.pixel_hash:
         return
     if not decodes(media):

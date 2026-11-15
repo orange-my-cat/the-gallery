@@ -133,7 +133,7 @@ export function DuplicateReview() {
   const subtitle =
     g.kind === 'exact'
       ? `Byte-identical files in ${n === 2 ? 'two places' : `${n} places`}. One copy is kept and the ${n === 2 ? 'other goes' : 'others go'} to Trash.`
-      : 'The same picture to the last pixel, with different details written into the files. Their details are combined into the copy that is kept, and the others go to Trash.'
+      : 'The same picture to the last pixel, or the same video frame for frame, with different details written into the files. Their details are combined into the copy that is kept, and the others go to Trash.'
 
   return (
     <div className="review" data-screen-label="Duplicate review">

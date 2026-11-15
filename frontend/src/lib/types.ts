@@ -287,7 +287,7 @@ export interface Facets {
   readonly tags: readonly { readonly name: string; readonly count: number }[]
 }
 
-/** Same bytes, or the same picture to the pixel with other metadata. */
+/** Same bytes, or the same picture (or video's streams) to the pixel with other metadata. */
 export type DuplicateKind = 'exact' | 'pixels'
 
 /** One group in the review queue (DUP-01 to DUP-03). */

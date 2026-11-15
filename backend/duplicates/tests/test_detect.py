@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import importlib
 import io
+import shutil
+import subprocess
 
 import pytest
+from django.apps import apps
+from django.conf import settings
+from django.db.models import F
 from PIL import Image
 
 from core.models import AppSettings
@@ -79,7 +85,7 @@ def test_a_raw_and_its_jpeg_are_one_item_not_duplicates(library, tags):
     assert groups() == []
 
 
-def test_raw_and_video_match_by_their_bytes_only(library, tags):
+def test_a_video_ffmpeg_cannot_read_matches_by_its_bytes_only(library, tags):
     write(library / "a" / "clip.mp4", b"video bytes")
     write(library / "b" / "clip.mp4", b"video bytes")
     write(library / "c" / "clip.mp4", b"video bytes, re-muxed")
@@ -87,7 +93,78 @@ def test_raw_and_video_match_by_their_bytes_only(library, tags):
     scan()
     (group,) = groups()
     assert group.kind == GroupKind.EXACT and len(group.asset_ids) == 2
-    assert all(f.pixel_hash == f.sha256 for f in MediaFile.objects.all()), "never decoded"
+    assert all(f.pixel_hash == f.sha256 for f in MediaFile.objects.all()), "no streams to hash"
+
+
+def test_without_ffmpeg_videos_match_by_their_bytes(library, tags, settings, monkeypatch):
+    from duplicates.services import fingerprint
+
+    warned: list[str] = []
+    monkeypatch.setattr(fingerprint.logger, "warning", lambda msg, *args: warned.append(msg % args))
+    settings.FFMPEG_PATH = "definitely-not-ffmpeg-xyz"
+    write(library / "clip.mov", b"video bytes")
+    tags["clip.mov"] = {"File:MIMEType": "video/quicktime"}
+    scan()
+    clip = MediaFile.objects.get()
+    assert clip.pixel_hash == clip.sha256
+    assert any("ffmpeg could not be started (definitely-not-ffmpeg-xyz)" in w for w in warned)
+
+
+def make_clip(path, *args: str) -> None:
+    """A one-second clip with sound, from ffmpeg's test sources, or `args`
+    applied to an existing one (`-i`, ...)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    source = args or (
+        "-f", "lavfi", "-i", "testsrc=size=160x120:rate=10:duration=1",
+        "-f", "lavfi", "-i", "sine=duration=1",
+        "-c:v", "mpeg4", "-c:a", "aac", "-shortest",
+    )  # fmt: skip
+    subprocess.run([settings.FFMPEG_PATH, "-v", "error", "-y", *source, str(path)], check=True, timeout=60)  # noqa: S603
+
+
+@pytest.mark.skipif(shutil.which(settings.FFMPEG_PATH) is None, reason="ffmpeg is not installed on this machine")
+def test_videos_with_the_same_streams_are_a_pixel_group(library, tags, monkeypatch):
+    from library.services import thumbnails
+
+    monkeypatch.setattr(thumbnails, "_open_video", lambda path: Image.new("RGB", (160, 120)))
+    original = library / "2024" / "trip.mov"
+    make_clip(original)
+    # A title and date written in; moved to MP4; re-encoded smaller.
+    make_clip(library / "Edited" / "retitled.mov", "-i", str(original), "-map", "0", "-c", "copy",
+              "-metadata", "title=Edited", "-metadata", "creation_time=2020-01-01T00:00:00Z")  # fmt: skip
+    make_clip(library / "Export" / "remuxed.mp4", "-i", str(original), "-map", "0", "-c", "copy")
+    make_clip(library / "Shared" / "smaller.mov", "-i", str(original), "-c:v", "mpeg4", "-q:v", "20", "-c:a", "copy")
+    for name in ("trip.mov", "retitled.mov", "smaller.mov"):
+        tags[name] = {"File:MIMEType": "video/quicktime", "Composite:ImageSize": "160 120"}
+    tags["remuxed.mp4"] = {"File:MIMEType": "video/mp4", "Composite:ImageSize": "160 120"}
+    scan()
+
+    (group,) = groups()
+    assert group.kind == GroupKind.PIXELS
+    assert names(group) == ["remuxed.mp4", "retitled.mov", "trip.mov"]
+    assert len({f.sha256 for f in MediaFile.objects.all()}) == 4
+
+
+def test_the_migration_clears_video_fingerprints_to_be_worked_out_again(library, tags):
+    migration = importlib.import_module("library.migrations.0011_refingerprint_videos")
+    write(library / "photo.jpg", picture(16))
+    write(library / "IMG_1.CR3", b"raw bytes")
+    write(library / "clip.mov", b"video bytes")
+    write(library / "IMG_2.JPG", b"a clip, whatever its name")
+    write(library / "IMG_3.MOV", b"a Live Photo's clip")
+    tags["IMG_1.CR3"] = {"File:MIMEType": "image/x-canon-cr3", "Composite:ImageSize": "640 480"}
+    tags["clip.mov"] = tags["IMG_3.MOV"] = {"File:MIMEType": "video/quicktime"}
+    tags["IMG_2.JPG"] = {"File:MIMEType": "video/mp4"}
+    scan()
+    MediaFile.objects.filter(rel_path="IMG_3.MOV").update(role="live_video")
+    MediaFile.objects.exclude(rel_path="photo.jpg").update(pixel_hash=F("sha256"))  # as fingerprinted before
+    before = dict(MediaFile.objects.values_list("rel_path", "pixel_hash"))
+
+    migration.forwards(apps, None)
+
+    after = dict(MediaFile.objects.values_list("rel_path", "pixel_hash"))
+    assert after["clip.mov"] == after["IMG_2.JPG"] == ""
+    assert {k: v for k, v in after.items() if v} == {k: before[k] for k in ("photo.jpg", "IMG_1.CR3", "IMG_3.MOV")}
 
 
 def test_the_fingerprint_is_of_the_picture_as_shown(tmp_path):
