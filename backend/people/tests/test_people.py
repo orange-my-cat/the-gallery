@@ -13,6 +13,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.test import Client
 
+from core.services.exceptions import NotFoundError
 from fileops.services import ops as fileops
 from library.models import MediaFile
 from library.services.scan import start_scan
@@ -192,6 +193,27 @@ def test_pinning_puts_people_first_survives_regrouping_and_undo(album):
     assert (ben.pinned, ben.confirmed) == (False, True), "unpinning leaves the group confirmed"
 
 
+def test_pinned_people_keep_the_order_they_are_put_in(album):
+    ana, ben = person_of("ana0.jpg"), person_of("ben0.jpg")
+    ops.pin([ana.pk])
+    ops.pin([ben.pk])
+    order = lambda: [p["id"] for p in browse.people()["people"]]  # noqa: E731
+    assert order() == [str(ana.pk), str(ben.pk)], "a new pin goes last"
+    op = ops.reorder_pinned([ben.pk, ana.pk])
+    assert op.summary == "Reordered pinned people"
+    assert order() == [str(ben.pk), str(ana.pk)]
+    fileops.undo(op.pk)
+    assert order() == [str(ana.pk), str(ben.pk)]
+
+    with pytest.raises(ops.InvalidRequest):
+        ops.reorder_pinned([ana.pk, ben.pk])  # already so
+    with pytest.raises(ops.InvalidRequest):
+        ops.pin([ana.pk])  # already pinned
+    ops.pin([ana.pk], False)
+    with pytest.raises(NotFoundError):
+        ops.reorder_pinned([ben.pk, ana.pk])  # no longer pinned
+
+
 def test_merging_keeps_a_pin_and_deleting_then_undoing_restores_it(album):
     ana, ben = person_of("ana0.jpg"), person_of("ben0.jpg")
     ops.rename(ana.pk, "Ana")
@@ -337,6 +359,11 @@ def test_pin_api(signed_in, album):
     assert signed_in.get(f"/api/people/{ben.pk}").json()["pinned"] is True
     response = signed_in.post("/api/people/pin", {"ids": [ben.pk], "pinned": "yes"}, content_type="application/json")
     assert response.status_code == 400
+    ana = person_of("ana0.jpg")
+    signed_in.post("/api/people/pin", {"ids": [ana.pk], "pinned": True}, content_type="application/json")
+    response = signed_in.post("/api/people/pin-order", {"ids": [ana.pk, ben.pk]}, content_type="application/json")
+    assert response.status_code == 200
+    assert [p["id"] for p in signed_in.get("/api/people").json()["people"]][:2] == [str(ana.pk), str(ben.pk)]
 
 
 def test_rescan_searches_new_photos_and_regroups_now(signed_in, album, fake_faces):

@@ -59,6 +59,13 @@ class PinView(APIView):
         return _accepted(ops.pin(data.get("ids") or [], data.get("pinned", True)))
 
 
+class PinOrderView(APIView):
+    """``POST /api/people/pin-order`` - `{ids}`: the pinned people, in their new order."""
+
+    def post(self, request):
+        return _accepted(ops.reorder_pinned(_data(request).get("ids") or []))
+
+
 class DeleteView(APIView):
     """``POST /api/people/delete`` - `{ids}`: several people in one change."""
 

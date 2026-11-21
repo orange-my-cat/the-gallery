@@ -81,7 +81,7 @@ def revert_person_create(op: Operation, s: Step) -> None:
     Person.objects.filter(pk=s["person"]).delete()
 
 
-_FIELDS = ("name", "confirmed", "pinned", "cover_id")
+_FIELDS = ("name", "confirmed", "pinned", "pin_order", "cover_id")
 
 
 @step("person_update", touches_files=False)
@@ -104,7 +104,10 @@ def revert_person_update(op: Operation, s: Step) -> None:
 @step("person_delete", touches_files=False)
 def apply_person_delete(op: Operation, s: Step) -> Step:
     person = Person.objects.select_for_update().get(pk=s["person"])
-    snapshot = {"name": person.name, "confirmed": person.confirmed, "pinned": person.pinned, "cover_id": person.cover_id}
+    snapshot = {
+        "name": person.name, "confirmed": person.confirmed, "pinned": person.pinned,
+        "pin_order": person.pin_order, "cover_id": person.cover_id,
+    }
     person.delete()
     return {**s, "snapshot": snapshot}
 
@@ -115,5 +118,6 @@ def revert_person_delete(op: Operation, s: Step) -> None:
     snap = s["snapshot"]
     cover = snap["cover_id"] if Face.objects.filter(pk=snap["cover_id"]).exists() else None
     Person.objects.create(
-        pk=s["person"], name=snap["name"], confirmed=snap["confirmed"], pinned=snap.get("pinned", False), cover_id=cover
+        pk=s["person"], name=snap["name"], confirmed=snap["confirmed"], pinned=snap.get("pinned", False),
+        pin_order=snap.get("pin_order", 0), cover_id=cover,
     )

@@ -283,6 +283,8 @@ export const api = {
   /** Keep people at the top of People (pinning also confirms the group), or stop. */
   pinPeople: (ids: readonly string[], pinned: boolean): Promise<OperationRef> =>
     http.post<OperationRef>('/people/pin', { ids, pinned }),
+  /** The pinned people, in their new order. */
+  reorderPinned: (ids: readonly string[]): Promise<OperationRef> => http.post<OperationRef>('/people/pin-order', { ids }),
   deletePeople: (ids: readonly string[]): Promise<OperationRef> => http.post<OperationRef>('/people/delete', { ids }),
   /** Groups that are not people (a statue, a poster); look-alikes found later are set aside too. */
   notPeople: (ids: readonly string[]): Promise<OperationRef> => http.post<OperationRef>('/people/not-people', { ids }),

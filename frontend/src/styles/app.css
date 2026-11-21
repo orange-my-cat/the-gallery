@@ -806,6 +806,10 @@ button { font: inherit; }
 .pin-dot:hover { background: var(--color-surface-hover); color: var(--color-text); }
 .person-card:hover .pin-dot, .pin-dot:focus-visible, .pin-dot.on { opacity: 1; }
 .pin-dot.on { color: var(--color-accent); }
+.people-section { margin: var(--space-2) 0 var(--space-3); }
+.people-grid + .people-section { margin-top: var(--space-8); }
+.person-card[draggable='true'] { cursor: grab; }
+.person-card.dragging { opacity: 0.4; }
 .person-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: var(--space-4); }
 .person-head .lines { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .person-head .person-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }

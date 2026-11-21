@@ -1,7 +1,7 @@
 """What the owner can do with people (PPL-02, PPL-04), as logged, undoable changes.
 
 - name a person (or rename one);
-- pin people to the top of the list, or unpin them;
+- pin people to the top of the list, unpin them, or reorder the pinned;
 - merge people into one;
 - add faces to a person - from nobody, or from someone else - or start a new
   person with them;
@@ -105,13 +105,43 @@ def pin(ids: Iterable[Any], pinned: Any = True) -> Operation:
     people = [_person(pk) for pk in dict.fromkeys(ids)]
     if not people:
         raise InvalidRequest("Choose at least one person.", field="ids")
-    plan = [
-        {"t": "person_update", "person": p.pk, "set": {"pinned": True, "confirmed": True} if pinned else {"pinned": False}}
-        for p in people
-    ]
+    if pinned:
+        # Newly pinned go after those pinned already, in the order chosen.
+        last = max(Person.objects.filter(pinned=True).values_list("pin_order", flat=True), default=-1)
+        newly = [p for p in people if not p.pinned]
+        plan = [
+            {"t": "person_update", "person": p.pk, "set": {"pinned": True, "confirmed": True, "pin_order": last + 1 + i}}
+            for i, p in enumerate(newly)
+        ]
+    else:
+        plan = [{"t": "person_update", "person": p.pk, "set": {"pinned": False}} for p in people if p.pinned]
+    if not plan:
+        raise InvalidRequest("Already pinned." if pinned else "Not pinned.", field="ids")
     what = label(people[0]) if len(people) == 1 else f"{len(people)} people"
     op = engine.run(_new(f"{'Pinned' if pinned else 'Unpinned'} {what}"), plan)
     return _rematch(op) if pinned and any(not p.confirmed for p in people) else op
+
+
+def reorder_pinned(ids: Iterable[Any]) -> Operation:
+    """Put the pinned people in this order. Anyone pinned but not listed (a
+    pin made elsewhere since the list was loaded) keeps their place after."""
+    try:
+        wanted = list(dict.fromkeys(int(i) for i in ids))
+    except (TypeError, ValueError) as exc:
+        raise InvalidRequest("Person ids are numbers.", field="ids") from exc
+    pinned = list(Person.objects.filter(pinned=True).order_by("pin_order", "pk"))
+    by_pk = {p.pk: p for p in pinned}
+    if not wanted or any(pk not in by_pk for pk in wanted):
+        raise NotFoundError("Some of those people are no longer pinned. Reload and try again.")
+    order = [by_pk[pk] for pk in wanted] + [p for p in pinned if p.pk not in set(wanted)]
+    plan = [
+        {"t": "person_update", "person": p.pk, "set": {"pin_order": i}}
+        for i, p in enumerate(order)
+        if p.pin_order != i
+    ]
+    if not plan:
+        raise InvalidRequest("They are already in that order.", field="ids")
+    return engine.run(_new("Reordered pinned people"), plan)
 
 
 def merge(ids: Iterable[Any], into: Any = None) -> Operation:
@@ -131,8 +161,10 @@ def merge(ids: Iterable[Any], into: Any = None) -> Operation:
     if faces:
         plan.append({"t": "faces_set", "faces": faces, "person": keep.pk})
     keep_set: dict[str, Any] = {"confirmed": True}
-    if any(p.pinned for p in people):
-        keep_set["pinned"] = True
+    pins = [p.pin_order for p in people if p.pinned]
+    if pins:
+        # The merged person takes the earliest pinned place among them.
+        keep_set.update(pinned=True, pin_order=min(pins))
     plan.append({"t": "person_update", "person": keep.pk, "set": keep_set})
     plan += [{"t": "person_delete", "person": p.pk} for p in others]
     return _rematch(engine.run(_new(f"Merged {len(people)} people into {label(keep)}"), plan))

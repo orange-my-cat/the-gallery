@@ -22,6 +22,8 @@ class Person(models.Model):
     # Kept at the top of People by the owner. Pinning confirms the group too,
     # so regrouping never dissolves someone the owner pinned.
     pinned = models.BooleanField(default=False)
+    # Where among the pinned, smallest first; the owner can reorder them.
+    pin_order = models.PositiveIntegerField(default=0)
     # The face shown for the person; the clearest one unless the owner chose.
     cover = models.ForeignKey("Face", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
