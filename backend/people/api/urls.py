@@ -9,6 +9,7 @@ urlpatterns = [
     path("people/rescan", views.RescanView.as_view(), name="people-rescan"),
     path("people/merge", views.MergeView.as_view(), name="people-merge"),
     path("people/questions", views.QuestionsView.as_view(), name="people-questions"),
+    path("people/pin", views.PinView.as_view(), name="people-pin"),
     path("people/delete", views.DeleteView.as_view(), name="people-delete"),
     path("people/not-people", views.NotPeopleView.as_view(), name="people-not-people"),
     path("people/<int:person_id>", views.PersonView.as_view(), name="person"),

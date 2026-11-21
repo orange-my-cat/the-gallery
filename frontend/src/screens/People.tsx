@@ -1,10 +1,10 @@
 /**
- * People (PPL-02, PPL-03): everyone whose face was found, named people first.
+ * People (PPL-02, PPL-03): everyone whose face was found, pinned and then named people first.
  *
  * Not in the Claude Design handoff beyond its nav item; the same card grid as
- * Folders and Albums, with round face crops. Cards can be selected to merge or
- * delete several people at once; a card opens the person. Faces that belong to
- * no group yet have a card of their own.
+ * Folders and Albums, with round face crops. Cards can be selected to merge,
+ * pin or delete several people at once; a card opens the person. Pinned people
+ * come first. Faces that belong to no group yet have a card of their own.
  */
 
 import { useState } from 'react'
@@ -33,6 +33,12 @@ export function People() {
     })
   const chosen = [...selected]
   const done = () => setSelected(new Set())
+  const pinnedIds = new Set(listing?.people.filter((p) => p.pinned).map((p) => p.id))
+  const unpin = chosen.length > 0 && chosen.every((id) => pinnedIds.has(id))
+  const pin = (ids: readonly string[], pinned: boolean, name?: string) =>
+    change(() => api.pinPeople(ids, pinned), {
+      msg: `${pinned ? 'Pinned' : 'Unpinned'} ${name ?? (ids.length === 1 ? 'a person' : `${ids.length} people`)}`,
+    })
 
   const scan = listing?.scan
   const searching = scan && scan.done < scan.total
@@ -68,6 +74,15 @@ export function People() {
             >
               <Icon name="merge" size={15} />
               Merge
+            </button>
+            <button
+              type="button"
+              className="pill-btn ghost"
+              title={unpin ? 'Stop keeping them at the top' : 'Keep them at the top of People'}
+              onClick={() => void pin(chosen, !unpin).then(done)}
+            >
+              <Icon name={unpin ? 'pushpin-off' : 'pushpin'} size={15} />
+              {unpin ? 'Unpin' : 'Pin'}
             </button>
             <button
               type="button"
@@ -129,6 +144,17 @@ export function People() {
                 >
                   {on && <Icon name="check" size={12} stroke={3} />}
                 </button>
+                {!chosen.length && (
+                  <button
+                    type="button"
+                    className={`pin-dot${p.pinned ? ' on' : ''}`}
+                    title={p.pinned ? 'Unpin' : 'Pin to the top'}
+                    aria-pressed={p.pinned}
+                    onClick={() => void pin([p.id], !p.pinned, p.name || undefined)}
+                  >
+                    <Icon name="pushpin" size={14} />
+                  </button>
+                )}
                 <div className="meta">
                   <b className={p.name ? '' : 'muted'}>{p.name || 'Unnamed'}</b>
                   <span className="subtle num">{`${count(p.items)} ${plural(p.items, 'photo')}`}</span>

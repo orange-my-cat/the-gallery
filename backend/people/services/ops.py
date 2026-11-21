@@ -1,6 +1,7 @@
 """What the owner can do with people (PPL-02, PPL-04), as logged, undoable changes.
 
 - name a person (or rename one);
+- pin people to the top of the list, or unpin them;
 - merge people into one;
 - add faces to a person - from nobody, or from someone else - or start a new
   person with them;
@@ -96,6 +97,23 @@ def rename(person_id: Any, name: Any) -> Operation:
     )
 
 
+def pin(ids: Iterable[Any], pinned: Any = True) -> Operation:
+    """Pin people to the top of People, or unpin them. Pinning confirms a
+    group the app found, so the next regrouping cannot dissolve it."""
+    if not isinstance(pinned, bool):
+        raise InvalidRequest("Pinned is true or false.", field="pinned")
+    people = [_person(pk) for pk in dict.fromkeys(ids)]
+    if not people:
+        raise InvalidRequest("Choose at least one person.", field="ids")
+    plan = [
+        {"t": "person_update", "person": p.pk, "set": {"pinned": True, "confirmed": True} if pinned else {"pinned": False}}
+        for p in people
+    ]
+    what = label(people[0]) if len(people) == 1 else f"{len(people)} people"
+    op = engine.run(_new(f"{'Pinned' if pinned else 'Unpinned'} {what}"), plan)
+    return _rematch(op) if pinned and any(not p.confirmed for p in people) else op
+
+
 def merge(ids: Iterable[Any], into: Any = None) -> Operation:
     """Merge people into one: `into`, or else the named one with most faces."""
     people = [_person(pk) for pk in dict.fromkeys(ids)]
@@ -112,7 +130,10 @@ def merge(ids: Iterable[Any], into: Any = None) -> Operation:
     plan: list[dict] = []
     if faces:
         plan.append({"t": "faces_set", "faces": faces, "person": keep.pk})
-    plan.append({"t": "person_update", "person": keep.pk, "set": {"confirmed": True}})
+    keep_set: dict[str, Any] = {"confirmed": True}
+    if any(p.pinned for p in people):
+        keep_set["pinned"] = True
+    plan.append({"t": "person_update", "person": keep.pk, "set": keep_set})
     plan += [{"t": "person_delete", "person": p.pk} for p in others]
     return _rematch(engine.run(_new(f"Merged {len(people)} people into {label(keep)}"), plan))
 

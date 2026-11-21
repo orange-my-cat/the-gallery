@@ -1,4 +1,4 @@
-"""What the People screens show (PPL-02, PPL-03)."""
+"""What the People screens show (PPL-02, PPL-03). Pinned people come first, then named."""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ def people() -> dict[str, Any]:
         )
         .filter(n__gt=0)
     )
-    listed = sorted(rows, key=lambda p: (not p.name, p.name.lower() if p.name else "", -p.n))
+    listed = sorted(rows, key=lambda p: (not p.pinned, not p.name, p.name.lower() if p.name else "", -p.n))
     total = sum(
         1
         for m in MediaFile.objects.filter(state=FileState.PRESENT).exclude(pixel_hash="").only("pk", "rel_path", "mime", "role", "state")
@@ -51,6 +51,7 @@ def people() -> dict[str, Any]:
                 "id": str(p.pk),
                 "name": p.name,
                 "confirmed": p.confirmed,
+                "pinned": p.pinned,
                 "faces": p.n,
                 "items": p.items,
                 "coverUrl": face_url(p.cover_id) if p.cover_id else None,
@@ -74,6 +75,7 @@ def person(person_id: Any) -> dict[str, Any]:
         "id": str(p.pk),
         "name": p.name,
         "confirmed": p.confirmed,
+        "pinned": p.pinned,
         "items": len({f.file.asset_id for f in faces}),
         "faces": [_face(f) for f in faces],
         "coverUrl": face_url(p.cover_id) if p.cover_id else None,

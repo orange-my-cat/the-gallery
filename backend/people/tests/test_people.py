@@ -18,7 +18,7 @@ from library.models import MediaFile
 from library.services.scan import start_scan
 from library.tests.conftest import drain, jpeg_bytes, library, tags, write  # noqa: F401 - fixtures
 from people.models import Face, FaceScan, Person
-from people.services import cluster, faces, ops
+from people.services import browse, cluster, faces, ops
 
 pytestmark = pytest.mark.django_db
 
@@ -170,6 +170,39 @@ def test_merging_people_and_undo(album):
     assert snapshot() == before
 
 
+def test_pinning_puts_people_first_survives_regrouping_and_undo(album):
+    ana, ben = person_of("ana0.jpg"), person_of("ben0.jpg")
+    ops.rename(ana.pk, "Ana")
+    assert [p["id"] for p in browse.people()["people"]] == [str(ana.pk), str(ben.pk)], "named first"
+    before = snapshot()
+    op = ops.pin([ben.pk])
+    ben.refresh_from_db()
+    assert (ben.pinned, ben.confirmed) == (True, True), "pinning keeps the group from being regrouped away"
+    listed = browse.people()["people"]
+    assert [p["id"] for p in listed] == [str(ben.pk), str(ana.pk)] and listed[0]["pinned"]
+    cluster.recluster()
+    assert Person.objects.get(pk=ben.pk).pinned
+    fileops.undo(op.pk)
+    ben.refresh_from_db()
+    assert not ben.pinned and snapshot() == before
+
+    ops.pin([ben.pk])
+    ops.pin([ben.pk], False)
+    ben.refresh_from_db()
+    assert (ben.pinned, ben.confirmed) == (False, True), "unpinning leaves the group confirmed"
+
+
+def test_merging_keeps_a_pin_and_deleting_then_undoing_restores_it(album):
+    ana, ben = person_of("ana0.jpg"), person_of("ben0.jpg")
+    ops.rename(ana.pk, "Ana")
+    ops.pin([ben.pk])
+    ops.merge([ana.pk, ben.pk])
+    assert Person.objects.get(pk=ana.pk).pinned, "the kept person keeps the pin"
+    op = ops.delete_people([ana.pk])
+    fileops.undo(op.pk)
+    assert Person.objects.get(pk=ana.pk).pinned
+
+
 def test_removing_a_face_and_it_is_never_suggested_back(album):
     ana = person_of("ana0.jpg")
     face = Face.objects.get(file__rel_path="ana4.jpg")
@@ -180,7 +213,6 @@ def test_removing_a_face_and_it_is_never_suggested_back(album):
     cluster.recluster()
     face.refresh_from_db()
     assert face.person_id != ana.pk, "matching never puts it back with Ana"
-    from people.services import browse
 
     assert str(face.pk) not in {s["id"] for s in browse.suggestions(ana.pk)}
     fileops.undo(op.pk)
@@ -202,7 +234,6 @@ def test_adding_faces_to_a_person_and_starting_a_new_one(album):
 
 
 def test_suggestions_rank_faces_that_look_like_the_person(album):
-    from people.services import browse
 
     ana = person_of("ana0.jpg")
     cy = Face.objects.get(file__rel_path="cy.jpg")
@@ -297,6 +328,15 @@ def test_not_people_api(signed_in, album):
     response = signed_in.post("/api/people/not-people", {"ids": [ben.pk]}, content_type="application/json")
     assert response.status_code == 200 and "not a person" in response.json()["summary"]
     assert not Person.objects.filter(pk=ben.pk).exists()
+
+
+def test_pin_api(signed_in, album):
+    ben = person_of("ben0.jpg")
+    response = signed_in.post("/api/people/pin", {"ids": [ben.pk], "pinned": True}, content_type="application/json")
+    assert response.status_code == 200 and response.json()["summary"].startswith("Pinned")
+    assert signed_in.get(f"/api/people/{ben.pk}").json()["pinned"] is True
+    response = signed_in.post("/api/people/pin", {"ids": [ben.pk], "pinned": "yes"}, content_type="application/json")
+    assert response.status_code == 400
 
 
 def test_rescan_searches_new_photos_and_regroups_now(signed_in, album, fake_faces):

@@ -19,6 +19,9 @@ from django.db import models
 class Person(models.Model):
     name = models.CharField(max_length=200, blank=True, default="")
     confirmed = models.BooleanField(default=False)
+    # Kept at the top of People by the owner. Pinning confirms the group too,
+    # so regrouping never dissolves someone the owner pinned.
+    pinned = models.BooleanField(default=False)
     # The face shown for the person; the clearest one unless the owner chose.
     cover = models.ForeignKey("Face", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)

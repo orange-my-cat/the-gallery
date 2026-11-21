@@ -798,6 +798,14 @@ button { font: inherit; }
 }
 .person-card:hover .select-dot, .face-tile:hover .select-dot, .select-dot.on { opacity: 1; }
 .select-dot.on { background: var(--color-accent); border-color: var(--color-accent); }
+.pin-dot {
+  position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; padding: 0; border: 0;
+  display: grid; place-items: center; background: transparent; color: var(--color-text-subtle);
+  cursor: pointer; opacity: 0; transition: opacity var(--duration-fast);
+}
+.pin-dot:hover { background: var(--color-surface-hover); color: var(--color-text); }
+.person-card:hover .pin-dot, .pin-dot:focus-visible, .pin-dot.on { opacity: 1; }
+.pin-dot.on { color: var(--color-accent); }
 .person-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: var(--space-4); }
 .person-head .lines { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .person-head .person-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }

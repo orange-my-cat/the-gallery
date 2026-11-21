@@ -226,6 +226,8 @@ export interface PersonSummary {
   readonly name: string
   /** Named or shaped by the owner; otherwise a group the app found. */
   readonly confirmed: boolean
+  /** Kept at the top of People by the owner. */
+  readonly pinned: boolean
   readonly faces: number
   readonly items: number
   readonly coverUrl: string | null
@@ -266,6 +268,7 @@ export interface PersonDetail {
   readonly id: string
   readonly name: string
   readonly confirmed: boolean
+  readonly pinned: boolean
   readonly items: number
   readonly faces: readonly FaceRef[]
   readonly coverUrl: string | null

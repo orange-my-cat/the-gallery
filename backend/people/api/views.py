@@ -10,7 +10,7 @@ from people.services import browse, faces, ops, questions
 
 
 class PeopleView(APIView):
-    """``GET /api/people`` - everyone found, named first."""
+    """``GET /api/people`` - everyone found, pinned then named first."""
 
     def get(self, request):
         return Response(browse.people())
@@ -49,6 +49,14 @@ class MergeView(APIView):
     def post(self, request):
         data = _data(request)
         return _accepted(ops.merge(data.get("ids") or [], data.get("into")))
+
+
+class PinView(APIView):
+    """``POST /api/people/pin`` - `{ids, pinned}`: keep people at the top, or stop."""
+
+    def post(self, request):
+        data = _data(request)
+        return _accepted(ops.pin(data.get("ids") or [], data.get("pinned", True)))
 
 
 class DeleteView(APIView):
