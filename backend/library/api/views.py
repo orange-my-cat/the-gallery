@@ -25,13 +25,20 @@ class AssetPageQuery(serializers.Serializer):
     # BRW-06: `from`/`to` are capture days, inclusive; `rating` is a minimum.
     since = serializers.DateField(required=False, default=None, allow_null=True)
     until = serializers.DateField(required=False, default=None, allow_null=True)
-    type = serializers.ChoiceField(choices=timeline_filters.MEDIA, required=False, allow_blank=True, default="")
+    # Comma-separated, any of them: "photo,live".
+    type = serializers.CharField(required=False, allow_blank=True, default="", max_length=100)
     camera = serializers.CharField(required=False, allow_blank=True, default="", max_length=300)
     tag = serializers.CharField(required=False, allow_blank=True, default="", max_length=100)
     rating = serializers.IntegerField(required=False, min_value=0, max_value=5, default=0)
     located = serializers.ChoiceField(choices=("yes", "no"), required=False, allow_blank=True, default="")
     # PPL-03: "12,15" - items with every one of these people in them.
     people = serializers.CharField(required=False, allow_blank=True, default="", max_length=200)
+
+    def validate_type(self, value: str):
+        kinds = frozenset(v.strip() for v in value.split(",") if v.strip())
+        if unknown := kinds - set(timeline_filters.MEDIA):
+            raise serializers.ValidationError(f"Not a media type: {', '.join(sorted(unknown))}.")
+        return kinds
 
     def validate_people(self, value: str):
         try:
@@ -59,7 +66,7 @@ class AssetListView(APIView):
 
     `folder` narrows it to one folder and everything below it (BRW-03), and
     `area` to a box on the map (MAP-01). The filters (BRW-06): `from`, `to`
-    (YYYY-MM-DD), `type` (photo, video, raw), `camera`, `tag`, `rating` (at
+    (YYYY-MM-DD), `type` (any of photo, live, video, raw, comma-separated), `camera`, `tag`, `rating` (at
     least), `favourites` and `located` (yes, no).
     """
 
@@ -83,7 +90,7 @@ class AssetListView(APIView):
             area=params.validated_data["area"],
             people=params.validated_data["people"],
             filters=timeline_filters.Filters(
-                since=v["since"], until=v["until"], media=v["type"], camera=v["camera"], tag=v["tag"],
+                since=v["since"], until=v["until"], media=v["type"] or frozenset(), camera=v["camera"], tag=v["tag"],
                 rating=v["rating"], favourites=v["favourites"], located=located,
             ),
         )

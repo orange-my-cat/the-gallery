@@ -71,6 +71,33 @@ def test_each_filter_narrows_the_timeline(signed_in, library_of_five):
     assert "a.jpg" not in names(signed_in, located="no")
 
 
+def test_media_types_tick_any_number_at_once(signed_in, library, tags, monkeypatch):
+    from library.services import thumbnails
+
+    monkeypatch.setattr(thumbnails, "_open_video", lambda path: thumbnails.Image.new("RGB", (64, 48)))
+    uuid = "8118A98E-4F9E-4911-95A5-CC6F93DEB182"
+    tags["still.jpg"] = {"File:MIMEType": "image/jpeg"}
+    tags["IMG_1.HEIC"] = {"File:MIMEType": "image/heic", "MakerNotes:MediaGroupUUID": uuid}
+    tags["IMG_1.MOV"] = {"File:MIMEType": "video/quicktime", "QuickTime:Duration": 2.9, "QuickTime:ContentIdentifier": uuid}
+    tags["clip.mp4"] = {"File:MIMEType": "video/mp4", "QuickTime:Duration": 40}
+    write(library / "still.jpg", jpeg_bytes(color=(1, 2, 3)))
+    write(library / "IMG_1.HEIC", jpeg_bytes(color=(4, 5, 6)))
+    write(library / "IMG_1.MOV", b"\x00\x00\x00\x14ftypqt  a clip")
+    write(library / "clip.mp4", jpeg_bytes(color=(7, 8, 9)))
+    write(library / "IMG_9.CR3", b"raw bytes")
+    start_scan()
+    drain()
+
+    everything = ["IMG_1.HEIC", "IMG_9.CR3", "clip.mp4", "still.jpg"]
+    assert names(signed_in) == everything
+    assert names(signed_in, type="live") == ["IMG_1.HEIC"]
+    assert "IMG_1.HEIC" not in names(signed_in, type="photo")
+    assert "still.jpg" in names(signed_in, type="photo")
+    assert names(signed_in, type="video") == ["clip.mp4"]
+    assert names(signed_in, type="live,video") == ["IMG_1.HEIC", "clip.mp4"]
+    assert names(signed_in, type="photo,live,video,raw") == everything
+
+
 def test_filters_combine_with_each_other_and_with_search(signed_in, library_of_five):
     assert names(signed_in, tag="coast", rating=3) == ["a.jpg"]
     assert names(signed_in, tag="coast", **{"from": "2024-06-14", "to": "2024-06-14"}) == ["b.jpg"]
@@ -78,7 +105,7 @@ def test_filters_combine_with_each_other_and_with_search(signed_in, library_of_f
 
 
 @pytest.mark.parametrize(
-    "params", [{"from": "June"}, {"type": "gif"}, {"rating": 6}, {"located": "maybe"}],
+    "params", [{"from": "June"}, {"type": "gif"}, {"type": "photo,gif"}, {"rating": 6}, {"located": "maybe"}],
 )
 def test_bad_filters_say_so(signed_in, params):
     assert signed_in.get("/api/assets", params).status_code == 400

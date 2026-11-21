@@ -9,7 +9,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { Icon } from '@/components/Icon'
 import { count } from '@/lib/format'
-import { FILTER_KEYS, MEDIA_LABEL, type FilterKey } from '@/lib/filters'
+import { FILTER_KEYS, MEDIA_LABEL, mediaOf, type FilterKey } from '@/lib/filters'
 import { useAlbums, useFacets } from '@/lib/queries'
 
 type Key = FilterKey | 'album'
@@ -34,6 +34,11 @@ export function FiltersPanel() {
   }
   const get = (key: Key) => params.get(key) ?? ''
   const any = FILTER_KEYS.some((k) => params.get(k)) || !!params.get('album')
+  const media = mediaOf(params)
+  const toggleMedia = (value: string, on: boolean) => {
+    const next = Object.keys(MEDIA_LABEL).filter((m) => (m === value ? on : media.includes(m)))
+    set({ type: next.join(',') || null })
+  }
 
   const choice = (key: Key, value: string, label: string) => (
     <button
@@ -65,9 +70,14 @@ export function FiltersPanel() {
 
       <section>
         <span className="caps">Type</span>
-        <div className="fp-choices">
-          {choice('type', '', 'All')}
-          {Object.entries(MEDIA_LABEL).map(([value, label]) => choice('type', value, label))}
+        <div className="fp-checks">
+          {Object.entries(MEDIA_LABEL).map(([value, label]) => (
+            <label key={value} className="radio check">
+              <input type="checkbox" checked={media.includes(value)} onChange={(e) => toggleMedia(value, e.target.checked)} />
+              <span className="dot" />
+              {label}
+            </label>
+          ))}
         </div>
       </section>
 

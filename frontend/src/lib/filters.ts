@@ -7,7 +7,14 @@
 export const FILTER_KEYS = ['from', 'to', 'type', 'camera', 'tag', 'rating', 'favourites', 'located'] as const
 export type FilterKey = (typeof FILTER_KEYS)[number]
 
-export const MEDIA_LABEL: Record<string, string> = { photo: 'Photos', video: 'Videos', raw: 'RAW' }
+/** The media types, ticked any number at once: `type=photo,live`. */
+export const MEDIA_LABEL: Record<string, string> = { photo: 'Photos', live: 'Live photos', video: 'Videos', raw: 'RAW' }
+
+/** The media types ticked in `params`, in the panel's order. */
+export function mediaOf(params: URLSearchParams): string[] {
+  const on = new Set((params.get('type') ?? '').split(','))
+  return Object.keys(MEDIA_LABEL).filter((m) => on.has(m))
+}
 
 /** The filters in `params`, as a stable query string (also the cache key). */
 export function filtersOf(params: URLSearchParams): string {
@@ -33,8 +40,8 @@ export function describe(params: URLSearchParams): { label: string; keys: Filter
   if (from && to) out.push({ label: from === to ? day(from) : `${day(from)} – ${day(to)}`, keys: ['from', 'to'] })
   else if (from) out.push({ label: `From ${day(from)}`, keys: ['from'] })
   else if (to) out.push({ label: `Until ${day(to)}`, keys: ['to'] })
-  const type = params.get('type')
-  if (type) out.push({ label: MEDIA_LABEL[type] ?? type, keys: ['type'] })
+  const media = mediaOf(params)
+  if (media.length) out.push({ label: media.map((m) => MEDIA_LABEL[m]).join(', '), keys: ['type'] })
   const camera = params.get('camera')
   if (camera) out.push({ label: camera, keys: ['camera'] })
   const tag = params.get('tag')

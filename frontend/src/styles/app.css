@@ -897,6 +897,11 @@ button { font: inherit; }
 .fp-dates .subtle { font-size: var(--text-xs); }
 .fp-choices { display: flex; flex-wrap: wrap; gap: 6px; }
 .fp-choices .filter-pill { height: 30px; padding: 0 12px; }
+/* Media types: checkboxes, any number ticked. None ticked is every kind. */
+.fp-checks { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 2px 0; }
+.fp-checks .radio { font-size: var(--text-sm); color: var(--color-text); }
+.fp-checks .radio .dot { width: 16px; height: 16px; border-radius: 4px; background: transparent; }
+.fp-checks .radio input:checked + .dot { background: var(--color-accent); }
 .fp-foot { display: flex; justify-content: flex-end; }
 .filter-bar {
   flex: none; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px var(--space-6);

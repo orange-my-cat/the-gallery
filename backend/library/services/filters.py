@@ -1,9 +1,10 @@
-"""Timeline filters (BRW-06): date range, media type, camera, tag, rating,
+"""Timeline filters (BRW-06): date range, media types, camera, tag, rating,
 favourite and has-location. Album, folder, people and map area are filters
 of their own, older than these (see `browse.timeline_page`).
 
 Every filter narrows the timeline further: they combine with each other, with
-search and with those older ones. `facets()` lists what can be chosen - the
+search and with those older ones. Within the media types it is the other way:
+Photos and Videos together shows both. `facets()` lists what can be chosen - the
 cameras and tags that the visible library has - with how many items each.
 """
 
@@ -16,11 +17,13 @@ from django.conf import settings
 from django.db.models import Count, DateField, Exists, OuterRef, Q, QuerySet
 from django.db.models.expressions import RawSQL
 
-from library.models import Asset, AssetKind, FileState, MediaFile
+from library.models import Asset, AssetKind, FileRole, FileState, MediaFile
 from library.services.paths import RAW_EXTENSIONS
 from organise.models import AssetTag, Tag
 
-MEDIA = ("photo", "video", "raw")
+# A Live Photo is a photo with a motion clip, so "photo" is a still without one.
+# "raw" is anything with a RAW file, and overlaps "photo".
+MEDIA = ("photo", "live", "video", "raw")
 _RAW_PATH = r"\.(" + "|".join(sorted(RAW_EXTENSIONS)) + r")$"
 
 
@@ -28,7 +31,7 @@ _RAW_PATH = r"\.(" + "|".join(sorted(RAW_EXTENSIONS)) + r")$"
 class Filters:
     since: date | None = None  # capture day, inclusive
     until: date | None = None  # capture day, inclusive
-    media: str = ""  # photo | video | raw
+    media: frozenset[str] = frozenset()  # any of MEDIA; none is every kind
     camera: str = ""  # as `camera_name` shows it
     tag: str = ""
     rating: int = 0  # at least this many stars
@@ -70,13 +73,19 @@ def apply(qs: QuerySet[Asset], f: Filters) -> QuerySet[Asset]:
             qs = qs.filter(local_day__gte=f.since)
         if f.until:
             qs = qs.filter(local_day__lte=f.until)
-    raw = MediaFile.objects.filter(asset=OuterRef("pk"), state=FileState.PRESENT, rel_path__iregex=_RAW_PATH)
-    if f.media == "video":
-        qs = qs.filter(kind=AssetKind.VIDEO)
-    elif f.media == "photo":
-        qs = qs.filter(kind=AssetKind.PHOTO)
-    elif f.media == "raw":
-        qs = qs.filter(Exists(raw))
+    if f.media:
+        present = MediaFile.objects.filter(asset=OuterRef("pk"), state=FileState.PRESENT)
+        live = Exists(present.filter(role=FileRole.LIVE_VIDEO))
+        kinds = {
+            "photo": Q(kind=AssetKind.PHOTO) & ~live,
+            "live": Q(kind=AssetKind.PHOTO) & live,
+            "video": Q(kind=AssetKind.VIDEO),
+            "raw": Exists(present.filter(rel_path__iregex=_RAW_PATH)),
+        }
+        match = Q(pk__in=[])
+        for kind in f.media:
+            match |= kinds[kind]
+        qs = qs.filter(match)
     if f.camera:
         match = Q(pk__in=[])
         for make, model in _camera_pairs(qs, f.camera):
