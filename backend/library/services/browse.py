@@ -36,6 +36,7 @@ from library.models import (
 from library.services import filters as timeline_filters
 from library.services.folders import approx_label, folder_date, parse_folder_name, span_label
 from library.services.paths import RAW_EXTENSIONS, extension, must_choose_folder, normalise_rel, scan_root
+from library.services.playable import copy_path, needs_copy
 from library.services.thumbnails import cache_path
 from organise.models import AlbumItem, AssetTag
 
@@ -196,6 +197,15 @@ def present_asset(asset: Asset, *, trashed: bool = False) -> dict[str, Any] | No
             approx = {"precision": found.precision, "label": approx_label(found)}
     # Shown where it lives now, or for a trashed item where it came from.
     shown_path = named.trashed_from if trashed and named.trashed_from else named.rel_path
+    # An AVI and the like play from their converted copy, once the worker has made it.
+    video_url, video_pending = None, False
+    if kind == "video":
+        if not needs_copy(primary):
+            video_url = f"/media/original/{primary.pk}"
+        elif copy_path(primary.sha256).exists():
+            video_url = f"/media/video/{primary.pk}?v={version}"
+        else:
+            video_pending = True
     return {
         "dateApprox": approx,
         "id": str(asset.pk),
@@ -232,7 +242,8 @@ def present_asset(asset: Asset, *, trashed: bool = False) -> dict[str, Any] | No
         "thumbUrl": f"/media/thumb/{primary.pk}/400?v={version}",
         "previewUrl": f"/media/preview/{primary.pk}?v={version}",
         "originalUrl": f"/media/original/{named.pk}",
-        "videoUrl": f"/media/original/{primary.pk}" if kind == "video" else None,
+        "videoUrl": video_url,
+        "videoPending": video_pending,
         "liveUrl": f"/media/original/{motion.pk}" if motion is not None else None,
         "thumbReady": cache_path(primary.sha256, "small").exists(),
         "missing": all(f.state == FileState.MISSING for f in files),
@@ -540,7 +551,7 @@ def library_info() -> dict[str, Any]:
 
 def _failed_files() -> int:
     return Job.objects.filter(
-        state=JobState.FAILED, kind__in=["index_file", "thumb_small", "thumb_large"]
+        state=JobState.FAILED, kind__in=["index_file", "thumb_small", "thumb_large", "playable"]
     ).count()
 
 

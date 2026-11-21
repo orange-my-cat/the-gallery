@@ -30,7 +30,7 @@ from library.models import (
     MediaFile,
     ScanRun,
 )
-from library.services import live, metadata, thumbnails
+from library.services import live, metadata, playable, thumbnails
 from library.services.metadata import Normalised
 from library.services.paths import (
     PAIRABLE_JPEG_EXTENSIONS,
@@ -267,6 +267,7 @@ def index_path(rel: str, scan_id: int | None = None) -> str:
 
     if media.role != FileRole.LIVE_VIDEO:  # a Live Photo's clip is never a tile
         thumbnails.queue_missing(media, scan_id=scan_id)
+        playable.queue_missing(media, scan_id=scan_id)
         from duplicates.services.detect import queue_fingerprint
 
         queue_fingerprint(media, scan_id=scan_id)

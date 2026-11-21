@@ -38,6 +38,7 @@ HANDLERS: dict[str, str] = {
     "index_file": "library.services.indexer.index_file_job",
     "thumb_small": "library.services.thumbnails.thumb_small_job",
     "thumb_large": "library.services.thumbnails.thumb_large_job",
+    "playable": "library.services.playable.playable_job",
     "operation": "fileops.services.ops.operation_job",
     "operation_undo": "fileops.services.ops.operation_undo_job",
     "fingerprint": "duplicates.services.fingerprint.fingerprint_job",
@@ -60,6 +61,8 @@ PRIORITY: dict[str, int] = {
     "scan_reconcile": 1,
     "thumb_small": 2,
     "thumb_large": 3,
+    # A video browsers cannot play stays unplayable until this has run.
+    "playable": 3,
     "fingerprint": 4,
     "load_places": 5,
     "geocode": 5,
@@ -79,6 +82,8 @@ SCHEDULERS = (
     "fileops.services.ops.purge_due",
     # Fingerprints for files indexed before duplicate detection existed.
     "duplicates.services.detect.schedule_due",
+    # Playable copies of AVIs and the like indexed before copies were made.
+    "library.services.playable.schedule_due",
     # Place names: load GeoNames once, then name what has a position.
     "places.services.geocode.schedule_due",
     # People: search photos for faces (the grouping follows by itself).

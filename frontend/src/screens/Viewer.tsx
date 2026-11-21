@@ -106,6 +106,8 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
   const prev = items[index - 1]
   const next = items[index + 1]
   const isVideo = asset.kind === 'video'
+  // An AVI or the like whose browser-playable copy the worker has not made yet.
+  const canPlay = isVideo && !asset.videoPending
   const isRaw = asset.kind === 'raw' || asset.kind === 'pair'
   const ar = asset.width / asset.height
 
@@ -313,15 +315,15 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
       else if (e.key === '+' || e.key === '=') zoomIn()
       else if (e.key === '-') zoomOut()
       else if (e.key === 'f' || e.key === 'F') toggleFav()
-      else if (e.key === ' ' && isVideo) {
+      else if (e.key === ' ' && canPlay) {
         e.preventDefault()
         togglePlay()
       } else if (e.key === ' ' && asset.liveUrl) {
         e.preventDefault()
         if (liveOn) stopLive()
         else playLive(true)
-      } else if ((e.key === 'm' || e.key === 'M') && isVideo) toggleMute()
-      else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && isVideo) {
+      } else if ((e.key === 'm' || e.key === 'M') && canPlay) toggleMute()
+      else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && canPlay) {
         e.preventDefault()
         setVolume(audible + (e.key === 'ArrowUp' ? 0.1 : -0.1))
       } else if (e.key === 'Delete') trash()
@@ -457,7 +459,7 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
         >
           <Icon name="heart" size={17} fill={asset.favourite ? 'currentColor' : 'none'} />
         </button>
-        {(isRaw || asset.kind === 'heic') && (
+        {(isRaw || asset.kind === 'heic' || asset.videoPending) && (
           <a className="pill-btn" title="Download the original file" href={asset.originalUrl} download style={{ textDecoration: 'none' }}>
             <Icon name="download" size={15} />
             Download original
@@ -511,12 +513,17 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
             />
           )}
         </div>
-        {isVideo && !playing && (
+        {asset.videoPending && (
+          <div className="video-pending" role="status">
+            Getting this {asset.ext} ready to play in the browser. Check back in a few minutes.
+          </div>
+        )}
+        {canPlay && !playing && (
           <button type="button" className="play-big" title="Play (Space)" onClick={togglePlay}>
             <Icon name="play" size={28} fill="currentColor" stroke={0} />
           </button>
         )}
-        {isVideo && (
+        {canPlay && (
           <div className="video-bar">
             <button type="button" onClick={togglePlay}>
               <Icon name={playing ? 'pause' : 'play'} size={15} fill="currentColor" stroke={0} />

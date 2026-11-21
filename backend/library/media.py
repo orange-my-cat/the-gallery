@@ -28,6 +28,7 @@ from django.views.decorators.http import require_GET
 
 from library.models import FileState, MediaFile
 from library.services.paths import extension, library_root, to_abs
+from library.services.playable import copy_path
 from library.services.thumbnails import cache_path, cache_root
 
 IMMUTABLE = "private, max-age=31536000, immutable"
@@ -144,6 +145,25 @@ def thumb(request, file_id: int):
 @require_GET
 def preview(request, file_id: int):
     return _cached(request, file_id, "large")
+
+
+@require_GET
+def video(request, file_id: int):
+    """The browser-playable copy of a video browsers cannot play (library.services.playable)."""
+    if not request.user.is_authenticated:
+        return _forbidden()
+    media = _file(file_id)
+    path = copy_path(media.sha256)
+    if not path.is_file():
+        return _not_found()
+    rel = path.relative_to(cache_root()).as_posix()
+    return _send(
+        request,
+        path,
+        internal=settings.MEDIA_ACCEL_CACHE_PREFIX + rel,
+        content_type="video/mp4",
+        cache=IMMUTABLE,
+    )
 
 
 @require_GET

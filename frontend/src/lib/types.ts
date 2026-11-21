@@ -46,8 +46,10 @@ export interface Asset {
   readonly preview: string
   /** The file itself - the RAW of a pair. Offered as a download for HEIC and RAW. */
   readonly originalUrl: string
-  /** Streams the video, for video assets. */
+  /** Streams the video, for video assets: the original, or for AVI and the like a browser-playable copy. */
   readonly videoUrl: string | null
+  /** A video browsers cannot play whose playable copy the worker has not made yet. */
+  readonly videoPending?: boolean
   /** A Live Photo's motion clip, played over the still in the viewer. Null for anything else. */
   readonly liveUrl: string | null
   /** Not found by the last scan; it drops out after the next one if still gone. */
