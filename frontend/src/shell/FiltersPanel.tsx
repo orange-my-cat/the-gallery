@@ -72,7 +72,7 @@ export function FiltersPanel() {
         <span className="caps">Type</span>
         <div className="fp-checks">
           {Object.entries(MEDIA_LABEL).map(([value, label]) => (
-            <label key={value} className="radio check">
+            <label key={value} className="radio box">
               <input type="checkbox" checked={media.includes(value)} onChange={(e) => toggleMedia(value, e.target.checked)} />
               <span className="dot" />
               {label}
