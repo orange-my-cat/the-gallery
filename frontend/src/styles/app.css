@@ -855,7 +855,14 @@ button { font: inherit; }
 .suggest-head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 .suggest h2 { margin: 0; font-size: var(--text-xl); }
 .suggest p { margin: 0; }
-.chips .person-chip { border: 0; cursor: pointer; font-family: inherit; color: var(--color-text); gap: 6px; padding-left: 3px; }
+.chips .person-chip { color: var(--color-text); gap: 4px; padding-left: 3px; }
+/* The name opens their page; the chip's own × takes this face away from them. */
+.chips .person-chip .person-go {
+  width: auto; height: 100%; display: inline-flex; align-items: center; gap: 6px; padding: 0; border-radius: var(--radius-pill);
+  background: transparent; color: inherit; font: inherit; cursor: pointer;
+}
+.chips .person-chip .person-go:hover { background: transparent; color: inherit; }
+.chips .person-chip:not(.removable) { padding-right: 11px; }
 .chips .person-chip .chip-face { width: 20px; height: 20px; border-radius: 50%; background: var(--color-surface-sunken) center / cover no-repeat; flex: none; }
 .chips .person-chip:hover { background: var(--color-accent-subtle); color: var(--color-accent-text); }
 .picker-backdrop { position: fixed; inset: 0; z-index: 900; background: rgb(0 0 0 / 0.45); display: grid; place-items: center; }

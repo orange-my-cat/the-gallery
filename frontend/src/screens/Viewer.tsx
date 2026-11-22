@@ -52,7 +52,8 @@ export function Viewer() {
   // Closing returns to the page it was opened from: the timeline, or that person.
   const base = useLocation().pathname.replace(/\/photo\/[^/]+$/, '')
   // The same list the page behind shows, so next and previous stay within a folder, search or person.
-  const items = useAssets(params.get('q') ?? '', params.get('folder') ?? '', params.get('album') ?? '', params.get('area') ?? '', person ?? params.get('people') ?? '', filtersOf(params)).data ?? []
+  const people = person ?? params.get('people') ?? ''
+  const items = useAssets(params.get('q') ?? '', params.get('folder') ?? '', params.get('album') ?? '', params.get('area') ?? '', people, filtersOf(params)).data ?? []
   const [infoOpen, setInfoOpen] = useState(true)
 
   const index = items.findIndex((a) => a.id === id)
@@ -73,6 +74,7 @@ export function Viewer() {
       infoOpen={infoOpen}
       onToggleInfo={() => setInfoOpen((o) => !o)}
       go={go}
+      browsingPeople={people ? people.split(',') : []}
     />
   )
 }
@@ -84,9 +86,11 @@ interface BodyProps {
   readonly infoOpen: boolean
   readonly onToggleInfo: () => void
   readonly go: (id: string | null) => void
+  /** The people the list is limited to: taking one of them out of this photo drops it from the list. */
+  readonly browsingPeople: readonly string[]
 }
 
-function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyProps) {
+function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go, browsingPeople }: BodyProps) {
   const change = useChange()
   const navigate = useNavigate()
   const stageRef = useRef<HTMLDivElement>(null)
@@ -776,20 +780,38 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
               <span className="caps">People</span>
               <div className="chips">
                 {asset.people.map((p) => (
-                  <button
+                  <span
                     key={p.id}
-                    type="button"
-                    className="tagc person-chip"
-                    title={`Photos with ${p.name || 'this person'}`}
-                    onClick={() => navigate(`/people/${p.id}`)}
+                    className={`tagc person-chip${p.faces?.length ? ' removable' : ''}`}
                     onPointerEnter={() => setPointed(p.id)}
                     onPointerLeave={() => setPointed(null)}
                     onFocus={() => setPointed(p.id)}
                     onBlur={() => setPointed(null)}
                   >
-                    {p.faceUrl && <span className="chip-face" style={{ backgroundImage: `url("${p.faceUrl}")` }} />}
-                    {p.name || 'Unnamed'}
-                  </button>
+                    <button type="button" className="person-go" title={`Photos with ${p.name || 'this person'}`} onClick={() => navigate(`/people/${p.id}`)}>
+                      {p.faceUrl && <span className="chip-face" style={{ backgroundImage: `url("${p.faceUrl}")` }} />}
+                      {p.name || 'Unnamed'}
+                    </button>
+                    {!!p.faces?.length && (
+                      <button
+                        type="button"
+                        title={`Not ${p.name || 'this person'}: remove from this photo`}
+                        onClick={() => {
+                          void change(() => api.removeFaces(p.faces ?? []), {
+                            msg: `Removed from ${p.name || 'an unnamed person'}`,
+                            detail: 'This face won’t be suggested for them again',
+                          })
+                          // Browsing their photos, this one leaves the list: move on, as Delete does.
+                          if (browsingPeople.includes(p.id)) {
+                            const after = next ?? prev
+                            go(after ? after.id : null)
+                          }
+                        }}
+                      >
+                        <Icon name="x" size={10} />
+                      </button>
+                    )}
+                  </span>
                 ))}
               </div>
             </div>

@@ -171,9 +171,12 @@ def _people_in(files: list[MediaFile]) -> list[dict[str, Any]]:
             if face.person_id not in seen:
                 # Their face in this very photo, so even the unnamed are recognisable.
                 seen[face.person_id] = {
-                    "id": str(face.person_id), "name": face.person.name, "faceUrl": f"/media/face/{face.pk}", "boxes": [],
+                    "id": str(face.person_id), "name": face.person.name, "faceUrl": f"/media/face/{face.pk}",
+                    "faces": [], "boxes": [],
                 }
-            # Where they are in the picture as shown (x, y, w, h as fractions), to point them out.
+            # Which faces (to take them away from this person) and where they are in
+            # the picture as shown (x, y, w, h as fractions, to point them out).
+            seen[face.person_id]["faces"].append(str(face.pk))
             seen[face.person_id]["boxes"].append([round(v, 4) for v in (face.x, face.y, face.w, face.h)])
     return sorted(seen.values(), key=lambda p: (not p["name"], p["name"].lower()))
 
