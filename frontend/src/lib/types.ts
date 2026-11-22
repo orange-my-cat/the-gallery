@@ -219,6 +219,8 @@ export interface PersonRef {
   readonly name: string
   /** Their face in this photo. */
   readonly faceUrl?: string
+  /** Where their face is in the picture as shown: x, y, width, height as fractions. */
+  readonly boxes?: readonly (readonly [number, number, number, number])[]
 }
 
 export interface PersonSummary {

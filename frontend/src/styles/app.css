@@ -492,6 +492,13 @@ button { font: inherit; }
   opacity: 0; transition: opacity var(--duration-base) var(--ease-standard);
 }
 .stage .live-motion.on { opacity: 1; }
+/* A person's face, pointed out while their chip in the info panel is hovered. */
+.stage .face-box {
+  position: absolute; pointer-events: none; border: 2px solid var(--color-text-on-media);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45), inset 0 0 0 1px rgb(0 0 0 / 0.45);
+  animation: face-box-in var(--duration-base) var(--ease-standard);
+}
+@keyframes face-box-in { from { opacity: 0; transform: scale(1.15); } }
 .live-pill {
   position: absolute; left: 16px; top: 16px; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px;
   border: 0; border-radius: var(--radius-pill); background: var(--color-media-badge); color: var(--color-text-on-media);

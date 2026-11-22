@@ -313,6 +313,10 @@ def test_people_api_and_browsing_by_person(signed_in, album):
     item = next(a for a in only_ana if a["name"] == "both.jpg")
     assert [p["name"] for p in item["people"]] == ["Ana", ""]
     assert all(p["faceUrl"].startswith("/media/face/") for p in item["people"])
+    for p in item["people"]:
+        assert len(p["boxes"]) == 1, "where each face is, to point it out in the viewer"
+        x, y, w, h = p["boxes"][0]
+        assert 0 <= x < 1 and 0 <= y < 1 and 0 < w <= 1 and 0 < h <= 1
 
     # Search finds people by a name no file name shares, every other word still applying.
     signed_in.patch(f"/api/people/{ben.pk}", {"name": "Ben Okafor"}, content_type="application/json")

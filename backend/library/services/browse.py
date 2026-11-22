@@ -161,16 +161,20 @@ def _media_kind(asset: Asset, primary: MediaFile, raw: MediaFile | None) -> str:
     return "jpg"
 
 
-def _people_in(files: list[MediaFile]) -> list[dict[str, str]]:
+def _people_in(files: list[MediaFile]) -> list[dict[str, Any]]:
     """PPL-03: the people whose faces are in these files, named ones first."""
-    seen: dict[int, dict[str, str]] = {}
+    seen: dict[int, dict[str, Any]] = {}
     for f in files:
         for face in f.faces.all():
-            if face.person_id and not face.ignored and face.person_id not in seen:
+            if not face.person_id or face.ignored:
+                continue
+            if face.person_id not in seen:
                 # Their face in this very photo, so even the unnamed are recognisable.
                 seen[face.person_id] = {
-                    "id": str(face.person_id), "name": face.person.name, "faceUrl": f"/media/face/{face.pk}",
+                    "id": str(face.person_id), "name": face.person.name, "faceUrl": f"/media/face/{face.pk}", "boxes": [],
                 }
+            # Where they are in the picture as shown (x, y, w, h as fractions), to point them out.
+            seen[face.person_id]["boxes"].append([round(v, 4) for v in (face.x, face.y, face.w, face.h)])
     return sorted(seen.values(), key=lambda p: (not p["name"], p["name"].lower()))
 
 

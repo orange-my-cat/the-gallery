@@ -102,6 +102,9 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
   // sound after the viewer has done something.
   const liveMode = useRef<'hover' | 'full'>('hover')
   const [editing, setEditing] = useState<{ field: Field; value: string; orig: string; error: boolean } | null>(null)
+  // The person whose chip is hovered in the info panel: their face is boxed in the picture.
+  const [pointed, setPointed] = useState<string | null>(null)
+  const pointedBoxes = asset.people?.find((p) => p.id === pointed)?.boxes ?? []
 
   const prev = items[index - 1]
   const next = items[index + 1]
@@ -512,6 +515,22 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
               onError={() => setLiveOn(false)}
             />
           )}
+          {pointedBoxes.map(([x, y, w, h], i) => (
+            <div
+              key={i}
+              className="face-box"
+              aria-hidden
+              style={{
+                left: `${x * 100}%`,
+                top: `${y * 100}%`,
+                width: `${w * 100}%`,
+                height: `${h * 100}%`,
+                // The picture is scaled to zoom; keep the outline the same thickness on screen.
+                borderWidth: 2 / zoom,
+                borderRadius: 6 / zoom,
+              }}
+            />
+          ))}
         </div>
         {asset.videoPending && (
           <div className="video-pending" role="status">
@@ -763,6 +782,10 @@ function ViewerBody({ asset, items, index, infoOpen, onToggleInfo, go }: BodyPro
                     className="tagc person-chip"
                     title={`Photos with ${p.name || 'this person'}`}
                     onClick={() => navigate(`/people/${p.id}`)}
+                    onPointerEnter={() => setPointed(p.id)}
+                    onPointerLeave={() => setPointed(null)}
+                    onFocus={() => setPointed(p.id)}
+                    onBlur={() => setPointed(null)}
                   >
                     {p.faceUrl && <span className="chip-face" style={{ backgroundImage: `url("${p.faceUrl}")` }} />}
                     {p.name || 'Unnamed'}
